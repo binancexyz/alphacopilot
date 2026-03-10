@@ -5,6 +5,7 @@ from src.models.schemas import AnalysisBrief
 
 ENTITY_EMOJI = {
     "Token:": "🪙",
+    "Brief:": "🧩",
     "Price:": "💵",
     "Signal:": "📡",
     "Wallet:": "👛",
@@ -69,9 +70,44 @@ def _format_price_card(brief: AnalysisBrief) -> str:
     return "\n".join(parts).strip() + "\n"
 
 
+def _format_compact_brief_card(brief: AnalysisBrief) -> str:
+    name, symbol, price, change, rank, signal_status, liquidity, top_risk, verdict = (brief.quick_verdict.split("|", 8) + ["", "", "0", "0", "0", "unknown", "0", "", ""])[:9]
+    try:
+        price_f = float(price or 0)
+        change_f = float(change or 0)
+        rank_i = int(rank or 0)
+        liquidity_f = float(liquidity or 0)
+    except ValueError:
+        return _entity_line(brief.entity)
+    arrow = "📈" if change_f > 0 else "📉" if change_f < 0 else "➖"
+    parts = [f"🧩 {name} ({symbol})"]
+    meta = []
+    if rank_i > 0:
+        meta.append(f"Rank #{rank_i}")
+    if signal_status and signal_status != "unknown":
+        meta.append(f"Signal: {signal_status}")
+    if meta:
+        parts.append(" | ".join(meta))
+    parts.append("")
+    if price_f > 0:
+        parts.append(f"💵 Price: ${price_f:,.2f} | 24h: {change_f:+.2f}% {arrow}")
+    else:
+        parts.append("💵 Price: unavailable")
+    if liquidity_f > 0:
+        parts.append(f"💧 Liquidity: {_human_money(liquidity_f)}")
+    if verdict:
+        parts.append("")
+        parts.append(f"⚡ {verdict}")
+    if top_risk:
+        parts.append(f"⚠️ Top Risk: {top_risk}")
+    return "\n".join(parts).strip() + "\n"
+
+
 def format_brief(brief: AnalysisBrief) -> str:
     if brief.entity.startswith("Price:"):
         return _format_price_card(brief)
+    if brief.entity.startswith("Brief:"):
+        return _format_compact_brief_card(brief)
 
     parts: list[str] = []
     parts.append(_entity_line(brief.entity))

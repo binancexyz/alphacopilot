@@ -7,6 +7,7 @@ from pathlib import Path
 if __package__ is None or __package__ == "":
     sys.path.append(str(Path(__file__).resolve().parents[1]))
 
+from src.analyzers.brief_analysis import analyze_brief
 from src.analyzers.market_watch import watch_today
 from src.analyzers.price_analysis import analyze_price
 from src.analyzers.signal_check import analyze_signal
@@ -23,6 +24,9 @@ def main() -> None:
     token_parser = subparsers.add_parser("token")
     token_parser.add_argument("symbol")
 
+    brief_parser = subparsers.add_parser("brief")
+    brief_parser.add_argument("symbol")
+
     price_parser = subparsers.add_parser("price")
     price_parser.add_argument("symbol")
 
@@ -38,6 +42,8 @@ def main() -> None:
 
     if args.command == "token":
         brief = analyze_token(normalize_token_input(args.symbol))
+    elif args.command == "brief":
+        brief = analyze_brief(normalize_token_input(args.symbol))
     elif args.command == "price":
         brief = analyze_price(normalize_token_input(args.symbol))
     elif args.command == "wallet":
