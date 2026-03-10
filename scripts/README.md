@@ -17,3 +17,12 @@ Runs a simple pre-release sanity path and captures demo output.
 
 ## `runtime_demo_all.sh`
 Runs the runtime-payload demo flow for all four core commands.
+
+## `setup_local_env.sh`
+Creates `.venv`, installs requirements, and prepares a local `.env` from template.
+
+## `run_and_test.sh`
+Activates `.venv`, runs checks/tests, and performs a quick smoke test.
+
+## `fill_env_checklist.sh`
+Shows which live env values should be filled before real usage.
