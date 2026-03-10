@@ -48,7 +48,7 @@ def _fetch_cmc_quote(symbol: str) -> dict[str, Any] | None:
         "percent_change_24h": float(quote.get("percent_change_24h") or 0),
         "high_24h": float(quote.get("high_24h") or 0),
         "low_24h": float(quote.get("low_24h") or 0),
-        "link": f"https://www.coingecko.com/en/coins/{slug}" if slug else "",
+        "link": f"https://coinmarketcap.com/currencies/{slug}/" if slug else "",
     }
 
 
