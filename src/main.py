@@ -10,6 +10,7 @@ if __package__ is None or __package__ == "":
 from src.analyzers.brief_analysis import analyze_brief
 from src.analyzers.market_watch import watch_today
 from src.analyzers.price_analysis import analyze_price
+from src.analyzers.risk_analysis import analyze_risk
 from src.analyzers.signal_check import analyze_signal
 from src.analyzers.token_analysis import analyze_token
 from src.analyzers.wallet_analysis import analyze_wallet
@@ -30,6 +31,9 @@ def main() -> None:
     price_parser = subparsers.add_parser("price")
     price_parser.add_argument("symbol")
 
+    risk_parser = subparsers.add_parser("risk")
+    risk_parser.add_argument("symbol")
+
     wallet_parser = subparsers.add_parser("wallet")
     wallet_parser.add_argument("address")
 
@@ -46,6 +50,8 @@ def main() -> None:
         brief = analyze_brief(normalize_token_input(args.symbol))
     elif args.command == "price":
         brief = analyze_price(normalize_token_input(args.symbol))
+    elif args.command == "risk":
+        brief = analyze_risk(normalize_token_input(args.symbol))
     elif args.command == "wallet":
         brief = analyze_wallet(normalize_wallet_input(args.address))
     elif args.command == "signal":

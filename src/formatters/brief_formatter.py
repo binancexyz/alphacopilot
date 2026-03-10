@@ -7,6 +7,7 @@ ENTITY_EMOJI = {
     "Token:": "🪙",
     "Brief:": "🧩",
     "Price:": "💵",
+    "Risk:": "🛡️",
     "Signal:": "📡",
     "Wallet:": "👛",
     "Market Watch": "🌐",
@@ -103,11 +104,37 @@ def _format_compact_brief_card(brief: AnalysisBrief) -> str:
     return "\n".join(parts).strip() + "\n"
 
 
+def _format_risk_card(brief: AnalysisBrief) -> str:
+    name, symbol, risk_level, audit_summary, top_risk, second_risk, liquidity, signal_status, verdict = (brief.quick_verdict.split("|", 8) + ["", "", "Medium", "", "", "", "0", "unknown", ""])[:9]
+    try:
+        liquidity_f = float(liquidity or 0)
+    except ValueError:
+        liquidity_f = 0.0
+    level_emoji = {"High": "🔴", "Medium": "🟠", "Low": "🟢"}.get(risk_level, "🟠")
+    parts = [f"🛡️ {name} ({symbol})", f"Risk Level: {risk_level} {level_emoji}"]
+    if signal_status and signal_status != "unknown":
+        parts.append(f"Signal Status: {signal_status}")
+    parts.append("")
+    if verdict:
+        parts.append(f"⚡ {verdict}")
+    if top_risk:
+        parts.append(f"⚠️ Top Risk: {top_risk}")
+    if second_risk:
+        parts.append(f"⚠️ Next Risk: {second_risk}")
+    if audit_summary:
+        parts.append(f"🔍 Audit: {audit_summary}")
+    if liquidity_f > 0:
+        parts.append(f"💧 Liquidity: {_human_money(liquidity_f)}")
+    return "\n".join(parts).strip() + "\n"
+
+
 def format_brief(brief: AnalysisBrief) -> str:
     if brief.entity.startswith("Price:"):
         return _format_price_card(brief)
     if brief.entity.startswith("Brief:"):
         return _format_compact_brief_card(brief)
+    if brief.entity.startswith("Risk:"):
+        return _format_risk_card(brief)
 
     parts: list[str] = []
     parts.append(_entity_line(brief.entity))
