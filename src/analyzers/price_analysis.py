@@ -36,99 +36,53 @@ def _fetch_cmc_quote(symbol: str) -> dict[str, Any] | None:
 
     entry = entries[0] or {}
     quote = (entry.get("quote") or {}).get("USD") or {}
+    slug = entry.get("slug") or ""
     return {
         "name": entry.get("name") or symbol.upper(),
         "symbol": entry.get("symbol") or symbol.upper(),
+        "slug": slug,
+        "rank": int(entry.get("cmc_rank") or 0),
         "price": float(quote.get("price") or 0),
         "market_cap": float(quote.get("market_cap") or 0),
         "volume_24h": float(quote.get("volume_24h") or 0),
         "percent_change_24h": float(quote.get("percent_change_24h") or 0),
+        "high_24h": float(quote.get("high_24h") or 0),
+        "low_24h": float(quote.get("low_24h") or 0),
+        "link": f"https://www.coingecko.com/en/coins/{slug}" if slug else "",
     }
 
 
 def analyze_price(symbol: str) -> AnalysisBrief:
     cmc = _fetch_cmc_quote(symbol)
     if cmc:
-        price_value = f"${cmc['price']:,.2f}" if cmc["price"] > 0 else "Price unavailable"
-        change_24h = cmc["percent_change_24h"]
-        market_cap = cmc["market_cap"]
-        volume_24h = cmc["volume_24h"]
-
-        if cmc["price"] > 0:
-            quick_verdict = f"{cmc['symbol']} is trading at {price_value}, with a {change_24h:+.2f}% move over 24h."
-            quality = "High"
-            conviction = "Medium"
-        else:
-            quick_verdict = f"{cmc['symbol']} quote lookup succeeded, but the returned price is still incomplete."
-            quality = "Low"
-            conviction = "Low"
-
-        direction = "up" if change_24h > 0 else "down" if change_24h < 0 else "flat"
+        arrow = "📈" if cmc["percent_change_24h"] > 0 else "📉" if cmc["percent_change_24h"] < 0 else "➖"
         return AnalysisBrief(
             entity=f"Price: {cmc['symbol']}",
-            quick_verdict=quick_verdict,
-            signal_quality=quality,
-            top_risks=["Price alone does not tell you whether the broader setup is strong or crowded."],
-            why_it_matters=f"24h volume: ${volume_24h:,.0f}. Market cap: ${market_cap:,.0f}.",
-            what_to_watch_next=[
-                f"whether the {direction} 24h move extends or cools off",
-                "whether volume stays supportive near this level",
-            ],
-            risk_tags=[
-                RiskTag(name="Source", level="Low", note="CoinMarketCap"),
-                RiskTag(name="24h Change", level="Low", note=f"{change_24h:+.2f}%"),
-                RiskTag(name="24h Volume", level="Low", note=f"${volume_24h:,.0f}"),
-            ],
-            conviction=conviction,
-            beginner_note="Useful for a quick check, not a full thesis.",
+            quick_verdict=f"{cmc['name']}|{cmc['symbol']}|{cmc['link']}|{cmc['rank']}",
+            signal_quality="High",
+            top_risks=[],
+            why_it_matters=(
+                f"{cmc['price']}|{cmc['percent_change_24h']}|{cmc['high_24h']}|{cmc['low_24h']}|"
+                f"{cmc['market_cap']}|{cmc['volume_24h']}|{arrow}"
+            ),
+            what_to_watch_next=[],
+            risk_tags=[RiskTag(name="Source", level="Low", note="CoinMarketCap")],
+            conviction=None,
+            beginner_note=None,
         )
 
     service = get_market_data_service()
     raw_context = service.get_token_context(symbol)
     ctx = normalize_token_context(raw_context)
 
-    price_value = f"${ctx.price:,.2f}" if ctx.price > 0 else "Price unavailable"
-    liquidity_note = f"Liquidity: ~${ctx.liquidity:,.0f}." if ctx.liquidity > 0 else "Liquidity context is limited."
-
-    if ctx.price > 0 and ctx.liquidity > 0:
-        quick_verdict = f"{ctx.symbol} is trading around {price_value}, using the internal token context fallback."
-        quality = "Medium"
-        conviction = "Low"
-    elif ctx.price > 0:
-        quick_verdict = f"{ctx.symbol} price is available at {price_value}, but surrounding market context is still thin."
-        quality = "Medium"
-        conviction = "Low"
-    else:
-        quick_verdict = f"{ctx.symbol} does not currently have a reliable price in the fallback path."
-        quality = "Low"
-        conviction = "Low"
-
-    top_risks = []
-    if ctx.price <= 0:
-        top_risks.append("Price data is missing or not clean enough to trust fully.")
-    if ctx.liquidity <= 0:
-        top_risks.append("Liquidity context is limited, which weakens the read.")
-    if not top_risks:
-        top_risks.append("Price alone is not enough to judge setup quality.")
-
     return AnalysisBrief(
         entity=f"Price: {ctx.symbol}",
-        quick_verdict=quick_verdict,
-        signal_quality=quality,
-        top_risks=top_risks,
-        why_it_matters=f"Current price: {price_value}. {liquidity_note}",
-        what_to_watch_next=[
-            "whether price stays stable and consistent",
-            "whether liquidity remains supportive",
-        ],
-        risk_tags=[
-            RiskTag(name="Price Confidence", level="Low" if ctx.price > 0 else "High", note=price_value),
-            RiskTag(
-                name="Liquidity",
-                level="Low" if ctx.liquidity > 0 else "Medium",
-                note=f"~${ctx.liquidity:,.0f}" if ctx.liquidity > 0 else "Unavailable",
-            ),
-        ],
-        conviction=conviction,
-        beginner_note="Useful for a quick check, not a full thesis.",
+        quick_verdict=f"{ctx.display_name}|{ctx.symbol}||0",
+        signal_quality="Low" if ctx.price <= 0 else "Medium",
+        top_risks=[],
+        why_it_matters=f"{ctx.price}|0|0|0|0|{ctx.liquidity}|➖",
+        what_to_watch_next=[],
+        risk_tags=[RiskTag(name="Source", level="Medium", note="Internal fallback")],
+        conviction=None,
+        beginner_note=None,
     )
