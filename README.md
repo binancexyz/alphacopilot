@@ -170,6 +170,8 @@ Its goal is not to maximize noise. Its goal is to improve conviction.
 - `docs/developer-flow.md` — practical day-to-day workflow
 - `docs/INDEX.md` — docs directory index
 - `docs/faq.md` — short project FAQ
+- `docs/local-dev.md` — local development quick guide
+- `docs/review-checklist.md` — change review checklist
 
 ## Judge-Friendly Pitch
 
