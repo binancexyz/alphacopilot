@@ -1,0 +1,21 @@
+{
+  "crypto-market-rank": {
+    "top_narratives": ["AI", "meme rotation", "L2"],
+    "summary": "Opportunity exists, but selectivity matters.",
+    "risks": [
+      "Trending sectors may already be overheated."
+    ]
+  },
+  "meme-rush": {
+    "top_narratives": ["meme rotation"],
+    "risks": [
+      "Short-lived attention can reverse quickly."
+    ]
+  },
+  "trading-signal": {
+    "strongest_signals": ["BNB strength", "AI inflows"],
+    "risks": [
+      "Signal quality can vary across the same narrative."
+    ]
+  }
+}

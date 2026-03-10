@@ -96,6 +96,7 @@ Convert research output into a short social-ready market summary.
 - `scripts/demo_capture.sh` — print demo-friendly command output
 - `scripts/summary.sh` — print a quick repo/project summary
 - `scripts/export_examples.sh` — export current command outputs into example files
+- `scripts/runtime_demo_all.sh` — run the raw-payload runtime demo flow
 
 ## Project Status
 

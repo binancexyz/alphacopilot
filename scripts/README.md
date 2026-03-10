@@ -14,3 +14,6 @@ Exports current command outputs into generated example files.
 
 ## `release_prep.sh`
 Runs a simple pre-release sanity path and captures demo output.
+
+## `runtime_demo_all.sh`
+Runs the runtime-payload demo flow for all four core commands.
