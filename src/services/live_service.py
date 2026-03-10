@@ -1,22 +1,122 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+from typing import Any
+
+import httpx
+
+from src.services.live_extractors import (
+    extract_signal_context,
+    extract_token_context,
+    extract_wallet_context,
+    extract_watch_today_context,
+)
 from src.services.types import NormalizedDict
 
 
 class LiveMarketDataService:
+    """
+    Runtime-facing adapter for live mode.
+
+    Supported input paths:
+    1. HTTP bridge: point ``base_url`` at a small adapter that returns raw skill outputs.
+    2. File bridge: point ``base_url`` at a directory using ``file:///absolute/path`` and
+       provide JSON payload files named after the command/entity.
+
+    Expected raw payload shapes match ``src/services/live_extractors.py``.
+    """
+
     def __init__(self, base_url: str, api_key: str = "", api_secret: str = "") -> None:
-        self.base_url = base_url
+        self.base_url = (base_url or "").strip()
         self.api_key = api_key
         self.api_secret = api_secret
 
     def get_token_context(self, symbol: str) -> NormalizedDict:
-        raise NotImplementedError("Wire this to real Binance/OpenClaw-backed token context.")
+        raw = self._load_payload("token", symbol)
+        return extract_token_context(raw, symbol)
 
     def get_wallet_context(self, address: str) -> NormalizedDict:
-        raise NotImplementedError("Wire this to real Binance/OpenClaw-backed wallet context.")
+        raw = self._load_payload("wallet", address)
+        return extract_wallet_context(raw, address)
 
     def get_watch_today_context(self) -> NormalizedDict:
-        raise NotImplementedError("Wire this to real Binance/OpenClaw-backed watch-today context.")
+        raw = self._load_payload("watchtoday")
+        return extract_watch_today_context(raw)
 
     def get_signal_context(self, token: str) -> NormalizedDict:
-        raise NotImplementedError("Wire this to real Binance/OpenClaw-backed signal context.")
+        raw = self._load_payload("signal", token)
+        return extract_signal_context(raw, token)
+
+    def _load_payload(self, command: str, entity: str = "") -> dict[str, Any]:
+        if not self.base_url:
+            raise RuntimeError(
+                "APP_MODE=live requires BINANCE_SKILLS_BASE_URL. "
+                "Use an HTTP adapter URL or file:///path/to/payload-dir."
+            )
+
+        if self.base_url.startswith("file://"):
+            return self._load_from_directory(command, entity)
+
+        return self._load_from_http(command, entity)
+
+    def _load_from_directory(self, command: str, entity: str = "") -> dict[str, Any]:
+        base_path = Path(self.base_url.removeprefix("file://")).expanduser()
+        candidates = self._candidate_paths(base_path, command, entity)
+        for path in candidates:
+            if path.exists() and path.is_file():
+                with open(path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+        raise FileNotFoundError(
+            "No live payload file found for "
+            f"command={command!r} entity={entity!r}. Checked: {', '.join(str(p) for p in candidates)}"
+        )
+
+    def _load_from_http(self, command: str, entity: str = "") -> dict[str, Any]:
+        params = {"command": command}
+        if entity:
+            params["entity"] = entity
+
+        headers = {"Accept": "application/json"}
+        if self.api_key:
+            headers["X-API-Key"] = self.api_key
+        if self.api_secret:
+            headers["X-API-Secret"] = self.api_secret
+
+        endpoint = self.base_url.rstrip("/")
+        with httpx.Client(timeout=20.0, follow_redirects=True) as client:
+            response = client.get(endpoint, params=params, headers=headers)
+            response.raise_for_status()
+            payload = response.json()
+
+        if not isinstance(payload, dict):
+            raise RuntimeError(f"Live adapter returned non-object JSON for {command!r}: {type(payload).__name__}")
+
+        if "raw" in payload and isinstance(payload["raw"], dict):
+            return payload["raw"]
+        return payload
+
+    def _candidate_paths(self, base_path: Path, command: str, entity: str = "") -> list[Path]:
+        slug = self._slug(entity)
+        candidates: list[Path] = []
+        if entity:
+            candidates.extend(
+                [
+                    base_path / command / f"{slug}.json",
+                    base_path / command / f"{entity}.json",
+                    base_path / f"{command}-{slug}.json",
+                    base_path / f"{command}-{entity}.json",
+                ]
+            )
+        candidates.append(base_path / f"{command}.json")
+        return candidates
+
+    @staticmethod
+    def _slug(value: str) -> str:
+        cleaned = []
+        for ch in value.strip().lower():
+            cleaned.append(ch if ch.isalnum() else "-")
+        slug = "".join(cleaned).strip("-")
+        while "--" in slug:
+            slug = slug.replace("--", "-")
+        return slug or "default"

@@ -1,30 +1,23 @@
 # Live Adapter TODO
 
-## Token context
-- [ ] connect `query-token-info`
-- [ ] connect `crypto-market-rank`
-- [ ] connect `trading-signal`
-- [ ] connect `query-token-audit`
-- [ ] normalize result shape for `get_token_context()`
+## Repo-side adapter status
+- [x] normalize result shape for `get_token_context()`
+- [x] normalize result shape for `get_wallet_context()`
+- [x] normalize result shape for `get_watch_today_context()`
+- [x] normalize result shape for `get_signal_context()`
+- [x] add tests for file-based live adapter loading
+- [x] add documentation for file/HTTP live mode
 
-## Wallet context
-- [ ] connect `query-address-info`
-- [ ] enrich major holdings if needed
-- [ ] normalize result shape for `get_wallet_context()`
-
-## Watch today context
-- [ ] connect `crypto-market-rank`
-- [ ] connect `meme-rush`
-- [ ] connect `trading-signal`
-- [ ] normalize result shape for `get_watch_today_context()`
-
-## Signal context
-- [ ] connect `trading-signal`
-- [ ] connect `query-token-info`
-- [ ] connect `query-token-audit`
-- [ ] normalize result shape for `get_signal_context()`
+## Still external to this repo
+- [ ] connect real `query-token-info`
+- [ ] connect real `crypto-market-rank`
+- [ ] connect real `trading-signal`
+- [ ] connect real `query-token-audit`
+- [ ] connect real `query-address-info`
+- [ ] connect real `meme-rush`
+- [ ] deploy or wire a production OpenClaw/Binance adapter endpoint
 
 ## Final polish
-- [ ] add tests for normalized context
-- [ ] add examples for live mode
-- [ ] add error handling / fallback messaging
+- [x] add examples for live mode
+- [x] add fallback path that can operate once a raw payload is available
+- [ ] add richer user-facing fallback messaging for partially failed upstream calls

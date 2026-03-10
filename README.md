@@ -115,6 +115,11 @@ What still depends on runtime integration:
 - real Binance Skills Hub tool invocation
 - live payload collection from runtime outputs
 
+What is now available for local live-mode development:
+- file-based live payload loading via `BINANCE_SKILLS_BASE_URL=file:///absolute/path/to/payloads`
+- HTTP adapter loading via `BINANCE_SKILLS_BASE_URL=https://...`
+- runtime bridge template flows that use raw payloads when provided
+
 ## Architecture
 
 ### Layer 1 — OpenClaw
