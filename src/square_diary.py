@@ -17,44 +17,34 @@ from src.services.square_posts import masked_square_key, publish_square_post
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "config" / "square_diary.json"
 
-
 DEFAULT_CONFIG = {
     "timezone": "Asia/Phnom_Penh",
-    "morning_time": "07:30",
-    "night_time": "21:30",
     "autopost": True,
-    "voice": "short personal diary with builder/dev log and market thoughts",
+    "market_focus": ["BNB", "BTC", "SOL"],
     "custom_lines": [
         "Built around Binance Skills + OpenClaw.",
-        "Less noise, better conviction.",
+        "Still aiming for less noise, better conviction.",
     ],
-    "market_focus": ["BNB", "BTC", "SOL"],
+    "schedule": {
+        "morning-diary": "07:30",
+        "education-1": "09:30",
+        "market-1": "11:30",
+        "builder-1": "13:30",
+        "ecosystem-1": "15:30",
+        "motivation-1": "18:30",
+        "night-diary": "21:30"
+    }
 }
 
-
-MORNING_OPENERS = [
-    "Morning diary.",
-    "Good morning build note.",
-    "Morning check-in.",
-]
-
-NIGHT_OPENERS = [
-    "Night diary.",
-    "Evening wrap-up.",
-    "End-of-day note.",
-]
-
-MORNING_MARKET_LINES = [
-    "Market mood this morning: stay selective, follow real signals, ignore random noise.",
-    "This morning's market thought: conviction matters more than speed when headlines get loud.",
-    "Quick market note: I care more about clean setups and risk control than chasing every move.",
-]
-
-NIGHT_MARKET_LINES = [
-    "Tonight's market thought: the best edge is often clarity, not activity.",
-    "Night market note: strong process beats reactive trading when the tape gets emotional.",
-    "End-of-day market thought: clean risk framing is usually more valuable than one extra hot take.",
-]
+OPENERS = {
+    "morning-diary": ["Morning diary.", "Good morning build note.", "Morning check-in."],
+    "night-diary": ["Night diary.", "Evening wrap-up.", "End-of-day note."],
+    "education-1": ["Quick education post.", "Short lesson for today.", "Education note."],
+    "market-1": ["Market thought.", "Market note for today.", "Current market take."],
+    "builder-1": ["Builder log.", "Dev update.", "Product thought."],
+    "ecosystem-1": ["Ecosystem note.", "BNB Chain / skills thought.", "Infra thought."],
+    "motivation-1": ["Motivation post.", "Builder reminder.", "Discipline note."],
+}
 
 
 def load_config() -> dict:
@@ -65,14 +55,7 @@ def load_config() -> dict:
 
 def run_git(*args: str) -> str:
     try:
-        result = subprocess.run(
-            ["git", *args],
-            cwd=ROOT,
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
+        result = subprocess.run(["git", *args], cwd=ROOT, check=False, capture_output=True, text=True, timeout=10)
         return (result.stdout or "").strip()
     except Exception:
         return ""
@@ -96,8 +79,9 @@ def working_tree_summary() -> str:
     return f"Current dev state: {len(lines)} local change(s) still in motion."
 
 
-def project_line() -> str:
-    return "I'm shaping Clawbot into something more useful: clearer research briefs, smoother posting, and fewer brittle steps."
+def focus_line(config: dict, prefix: str = "Watching") -> str:
+    focus = [str(x).upper() for x in config.get("market_focus", []) if str(x).strip()]
+    return f"{prefix} {', '.join(focus[:3])}." if focus else ""
 
 
 def custom_line(config: dict) -> str:
@@ -105,36 +89,79 @@ def custom_line(config: dict) -> str:
     return random.choice(lines) if lines else ""
 
 
-def focus_line(config: dict, phase: str) -> str:
-    focus = [str(x).upper() for x in config.get("market_focus", []) if str(x).strip()]
-    if not focus:
-        return ""
-    if phase == "morning":
-        return f"Today I'm watching {', '.join(focus[:3])} for cleaner context instead of hype." 
-    return f"Closing watchlist for tonight: {', '.join(focus[:3])}."
+def project_line() -> str:
+    return "I'm shaping Clawbot into something more useful: clearer research briefs, smoother posting, and fewer brittle steps."
 
 
+def build_post(slot: str, config: dict) -> str:
+    opener = random.choice(OPENERS.get(slot, ["Post update."]))
+    if slot == "morning-diary":
+        bits = [
+            opener,
+            recent_commit_summary(),
+            working_tree_summary(),
+            project_line(),
+            focus_line(config, "Today I'm watching"),
+            "Quick market note: I care more about clean setups and risk control than chasing every move.",
+            custom_line(config),
+        ]
+    elif slot == "night-diary":
+        bits = [
+            opener,
+            recent_commit_summary(),
+            working_tree_summary(),
+            "Today reminded me that real progress is usually quiet, cumulative, and earned.",
+            focus_line(config, "Closing watchlist for tonight:"),
+            "End-of-day market thought: clean risk framing is usually more valuable than one extra hot take.",
+            custom_line(config),
+        ]
+    elif slot == "education-1":
+        bits = [
+            opener,
+            "Crypto lesson: information is not the same as judgment.",
+            "Good workflows matter because raw dashboards, hot takes, and alerts can still leave people confused.",
+            "The real edge is turning scattered data into a clear decision process: signal, risk, liquidity, and what would invalidate the idea.",
+            custom_line(config),
+        ]
+    elif slot == "market-1":
+        bits = [
+            opener,
+            "Market today feels like a reminder to stay selective.",
+            "There is always enough movement to create FOMO, but not every move deserves attention.",
+            "Right now I care more about liquidity, confirmation, and whether strength is actually sustainable than about chasing noise.",
+            focus_line(config),
+        ]
+    elif slot == "builder-1":
+        bits = [
+            opener,
+            recent_commit_summary(),
+            project_line(),
+            "Most product work is not one giant breakthrough. It's dozens of small fixes that make the system calmer, sharper, and more trustworthy.",
+            working_tree_summary(),
+        ]
+    elif slot == "ecosystem-1":
+        bits = [
+            opener,
+            "BNB Chain MCP + skills feels like the right direction for practical agent infrastructure.",
+            "If agents can plug into reusable chain-native skills instead of rebuilding the same glue every time, the user experience gets much better.",
+            "I'm especially interested in workflows around BNB Chain MCP, bnbchain-skills, and visible agent identity via 8004scan.",
+            custom_line(config),
+        ]
+    else:
+        bits = [
+            opener,
+            "Builder reminder: you do not need perfect conditions to make meaningful progress.",
+            "Start with rough tools, small wins, and one clear improvement at a time.",
+            "In crypto, noise is everywhere. Discipline is the edge. Keep building.",
+        ]
 
-def build_post(phase: str, config: dict) -> str:
-    opener = random.choice(MORNING_OPENERS if phase == "morning" else NIGHT_OPENERS)
-    market_line = random.choice(MORNING_MARKET_LINES if phase == "morning" else NIGHT_MARKET_LINES)
-    bits = [
-        opener,
-        recent_commit_summary(),
-        working_tree_summary(),
-        project_line(),
-        focus_line(config, phase),
-        market_line,
-        custom_line(config),
-    ]
     text = " ".join(bit.strip() for bit in bits if bit and bit.strip())
     return text[:999].rstrip()
 
 
-
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Draft or publish a scheduled Binance Square diary post")
-    parser.add_argument("phase", choices=["morning", "night"])
+    parser = argparse.ArgumentParser(description="Draft or publish a scheduled Binance Square post")
+    parser.add_argument("slot", choices=list(DEFAULT_CONFIG["schedule"].keys()))
     parser.add_argument("--publish", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -142,14 +169,13 @@ def main() -> None:
     config = load_config()
     tz = ZoneInfo(str(config.get("timezone", DEFAULT_CONFIG["timezone"])))
     now = datetime.now(tz)
-    text = build_post(args.phase, config)
-
+    text = build_post(args.slot, config)
     publish = args.publish or (config.get("autopost", False) and not args.dry_run)
     result = publish_square_post(text, dry_run=not publish)
 
     print(text)
     print()
-    print(f"phase: {args.phase}")
+    print(f"slot: {args.slot}")
     print(f"now: {now.isoformat()}")
     print(f"timezone: {config.get('timezone')}")
     print(f"mode: {result.mode}")

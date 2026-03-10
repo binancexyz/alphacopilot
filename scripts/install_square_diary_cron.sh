@@ -5,8 +5,15 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOG_DIR="$ROOT/tmp"
 mkdir -p "$LOG_DIR"
 
-MORNING_JOB="30 7 * * * cd $ROOT && . .venv/bin/activate && set -a && . .env && set +a && python src/square_diary.py morning --publish >> $LOG_DIR/square-diary-morning.log 2>&1"
-NIGHT_JOB="30 21 * * * cd $ROOT && . .venv/bin/activate && set -a && . .env && set +a && python src/square_diary.py night --publish >> $LOG_DIR/square-diary-night.log 2>&1"
+slots=(
+  "07:30|morning-diary"
+  "09:30|education-1"
+  "11:30|market-1"
+  "13:30|builder-1"
+  "15:30|ecosystem-1"
+  "18:30|motivation-1"
+  "21:30|night-diary"
+)
 
 EXISTING="$(crontab -l 2>/dev/null | grep -v 'src/square_diary.py' || true)"
 {
@@ -14,9 +21,14 @@ EXISTING="$(crontab -l 2>/dev/null | grep -v 'src/square_diary.py' || true)"
   if [[ -n "$EXISTING" ]]; then
     printf '%s\n' "$EXISTING"
   fi
-  printf '%s\n' "$MORNING_JOB"
-  printf '%s\n' "$NIGHT_JOB"
+  for item in "${slots[@]}"; do
+    time="${item%%|*}"
+    slot="${item##*|}"
+    hour="${time%%:*}"
+    minute="${time##*:}"
+    printf '%s %s * * * cd %s && . .venv/bin/activate && set -a && . .env && set +a && python src/square_diary.py %s --publish >> %s/square-%s.log 2>&1\n' "$minute" "$hour" "$ROOT" "$slot" "$LOG_DIR" "$slot"
+  done
 } | crontab -
 
-echo "Installed Binance Square diary cron jobs:"
+echo "Installed Binance Square schedule:"
 crontab -l | grep 'src/square_diary.py' || true
