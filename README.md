@@ -98,6 +98,21 @@ Convert research output into a short social-ready market summary.
 - `scripts/export_examples.sh` — export current command outputs into example files
 - `scripts/runtime_demo_all.sh` — run the raw-payload runtime demo flow
 
+## API Mode
+
+A lightweight FastAPI app is included for serving formatted briefs:
+
+```bash
+make api
+```
+
+Endpoints:
+- `/health`
+- `/brief/token?symbol=BNB`
+- `/brief/signal?token=DOGE`
+- `/brief/wallet?address=0x1234567890ab`
+- `/brief/watchtoday`
+
 ## Project Status
 
 This repo is currently a **strong runnable scaffold**.

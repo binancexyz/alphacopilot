@@ -11,6 +11,8 @@ class Settings:
     binance_skills_base_url: str = os.getenv("BINANCE_SKILLS_BASE_URL", "")
     binance_api_key: str = os.getenv("BINANCE_API_KEY", "")
     binance_api_secret: str = os.getenv("BINANCE_API_SECRET", "")
+    api_host: str = os.getenv("API_HOST", "0.0.0.0")
+    api_port: int = int(os.getenv("API_PORT", "8000"))
 
 
 settings = Settings()

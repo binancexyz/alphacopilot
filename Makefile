@@ -1,6 +1,6 @@
 PYTHON=python3
 
-.PHONY: token wallet watchtoday signal check test runtime-demo
+.PHONY: token wallet watchtoday signal check test runtime-demo api
 
 token:
 	$(PYTHON) src/main.py token BNB
@@ -17,8 +17,11 @@ signal:
 runtime-demo:
 	$(PYTHON) src/runtime_demo.py token BNB examples/payloads/token-bnb.json
 
+api:
+	uvicorn src.api:app --host 0.0.0.0 --port 8000
+
 check:
-	$(PYTHON) -m py_compile src/main.py src/runtime_demo.py src/config.py src/analyzers/*.py src/formatters/*.py src/models/*.py src/services/*.py src/utils/*.py tests/*.py
+	$(PYTHON) -m py_compile src/main.py src/runtime_demo.py src/config.py src/api.py src/analyzers/*.py src/formatters/*.py src/models/*.py src/services/*.py src/utils/*.py tests/*.py
 
 test:
 	$(PYTHON) tests/run_tests.py
