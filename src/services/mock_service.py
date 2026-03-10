@@ -22,9 +22,16 @@ class MockMarketDataService:
     def get_wallet_context(self, address: str) -> dict:
         return {
             "address": address,
-            "signal_quality": "Medium",
-            "quick_context": "Wallet appears concentrated and worth monitoring for behavior patterns.",
-            "risks": [
+            "portfolio_value": 245000.0,
+            "holdings_count": 12,
+            "top_holdings": [
+                {"symbol": "BNB", "weight_pct": 41.2},
+                {"symbol": "DOGE", "weight_pct": 19.8},
+            ],
+            "top_concentration_pct": 61.0,
+            "change_24h": 8.4,
+            "notable_exposures": ["meme", "AI"],
+            "major_risks": [
                 "Low diversification can amplify drawdowns.",
                 "Wallet size alone does not prove smart-money quality.",
             ],
@@ -32,9 +39,11 @@ class MockMarketDataService:
 
     def get_watch_today_context(self) -> dict:
         return {
-            "signal_quality": "Medium",
-            "quick_context": "Multiple narratives are active, but filtering matters more than speed.",
-            "risks": [
+            "top_narratives": ["AI", "meme rotation", "L2"],
+            "strongest_signals": ["BNB strength", "AI inflows"],
+            "risk_zones": ["overheated meme names"],
+            "market_takeaway": "Opportunity exists, but selectivity matters.",
+            "major_risks": [
                 "Trending sectors may already be overheated.",
                 "Signal quality can vary across the same narrative.",
             ],
