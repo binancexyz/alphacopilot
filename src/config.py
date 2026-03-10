@@ -17,6 +17,7 @@ class Settings:
     square_api_base_url: str = os.getenv("BINANCE_SQUARE_API_BASE_URL", "https://www.binance.com")
     square_api_publish_path: str = os.getenv("BINANCE_SQUARE_API_PUBLISH_PATH", "/bapi/composite/v1/public/pgc/openApi/content/add")
     square_api_key_header: str = os.getenv("BINANCE_SQUARE_API_KEY_HEADER", "X-Square-OpenAPI-Key")
+    coinmarketcap_api_key: str = os.getenv("COINMARKETCAP_API_KEY", "")
     bridge_live_enabled: bool = os.getenv("BRIDGE_LIVE_ENABLED", "false").lower() == "true"
     bridge_default_chain_id: str = os.getenv("BRIDGE_DEFAULT_CHAIN_ID", "56")
 
