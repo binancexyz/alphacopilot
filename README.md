@@ -11,8 +11,12 @@ Bibipilot is an OpenClaw-based AI research assistant powered by Binance Skills H
 ```bash
 cd bibipilot
 python3 src/main.py token BNB
+python3 src/main.py brief BNB
+python3 src/main.py price BNB
+python3 src/main.py risk BNB
 python3 src/main.py wallet 0x1234567890ab
 python3 src/main.py watchtoday
+python3 src/main.py watch today
 python3 src/main.py signal DOGE
 ```
 
@@ -157,7 +161,7 @@ Responses include:
 This repo is currently a **strong runnable scaffold**.
 
 What is already here:
-- command architecture for `/token`, `/signal`, `/wallet`, and `/watchtoday`
+- command architecture for `/token`, `/brief`, `/price`, `/risk`, `/signal`, `/wallet`, `/watchtoday`, and `watch today`
 - normalized data contracts
 - mock/live service split
 - heuristics and formatter logic

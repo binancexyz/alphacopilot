@@ -40,6 +40,9 @@ def main() -> None:
     signal_parser = subparsers.add_parser("signal")
     signal_parser.add_argument("token")
 
+    watch_parser = subparsers.add_parser("watch")
+    watch_parser.add_argument("scope", nargs="?", default="today")
+
     subparsers.add_parser("watchtoday")
 
     args = parser.parse_args()
@@ -56,6 +59,11 @@ def main() -> None:
         brief = analyze_wallet(normalize_wallet_input(args.address))
     elif args.command == "signal":
         brief = analyze_signal(normalize_token_input(args.token))
+    elif args.command == "watch":
+        scope = str(args.scope or "today").strip().lower().replace("-", "")
+        if scope not in {"today", "todays"}:
+            raise SystemExit("watch currently supports only: watch today")
+        brief = watch_today()
     else:
         brief = watch_today()
 
