@@ -6,6 +6,7 @@ from typing import Any
 
 import httpx
 
+from src.services.fallbacks import missing_context_warning
 from src.services.live_extractors import (
     extract_signal_context,
     extract_token_context,
@@ -34,19 +35,23 @@ class LiveMarketDataService:
 
     def get_token_context(self, symbol: str) -> NormalizedDict:
         raw = self._load_payload("token", symbol)
-        return extract_token_context(raw, symbol)
+        context = extract_token_context(raw, symbol)
+        return self._apply_fallbacks("token", context)
 
     def get_wallet_context(self, address: str) -> NormalizedDict:
         raw = self._load_payload("wallet", address)
-        return extract_wallet_context(raw, address)
+        context = extract_wallet_context(raw, address)
+        return self._apply_fallbacks("wallet", context)
 
     def get_watch_today_context(self) -> NormalizedDict:
         raw = self._load_payload("watchtoday")
-        return extract_watch_today_context(raw)
+        context = extract_watch_today_context(raw)
+        return self._apply_fallbacks("watchtoday", context)
 
     def get_signal_context(self, token: str) -> NormalizedDict:
         raw = self._load_payload("signal", token)
-        return extract_signal_context(raw, token)
+        context = extract_signal_context(raw, token)
+        return self._apply_fallbacks("signal", context)
 
     def _load_payload(self, command: str, entity: str = "") -> dict[str, Any]:
         if not self.base_url:
@@ -120,3 +125,11 @@ class LiveMarketDataService:
         while "--" in slug:
             slug = slug.replace("--", "-")
         return slug or "default"
+
+    def _apply_fallbacks(self, command: str, context: dict[str, Any]) -> dict[str, Any]:
+        context = dict(context)
+        risks = list(context.get("major_risks", []))
+        if not risks:
+            risks.append(missing_context_warning(command))
+        context["major_risks"] = risks
+        return context

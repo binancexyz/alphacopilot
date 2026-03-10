@@ -9,6 +9,7 @@ def test_health():
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
+    assert "mode" in response.json()
 
 
 def test_token_endpoint():
@@ -17,6 +18,7 @@ def test_token_endpoint():
     payload = response.json()
     assert payload["command"] == "token"
     assert payload["entity"] == "BNB"
+    assert payload["mode"] in {"mock", "live"}
     assert "Token: BNB" in payload["rendered"]
 
 
@@ -25,6 +27,7 @@ def test_watchtoday_endpoint():
     assert response.status_code == 200
     payload = response.json()
     assert payload["command"] == "watchtoday"
+    assert payload["mode"] in {"mock", "live"}
     assert "Market Watch" in payload["rendered"]
 
 

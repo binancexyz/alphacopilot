@@ -2,6 +2,7 @@
 
 ## Requirements
 - Python 3.10+
+- for local venv setup on Ubuntu/Debian: `python3-venv`
 
 ## Quick start
 ```bash
@@ -12,6 +13,14 @@ python3 src/main.py token BNB
 python3 src/main.py watchtoday
 python3 src/main.py wallet 0x1234567890ab
 python3 src/main.py signal DOGE
+```
+
+## API quick start
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+make api
 ```
 
 ## Environment

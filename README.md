@@ -113,6 +113,13 @@ Endpoints:
 - `/brief/wallet?address=0x1234567890ab`
 - `/brief/watchtoday`
 
+Responses include:
+- `command`
+- `entity`
+- `mode`
+- `rendered`
+- optional `warning`
+
 ## Project Status
 
 This repo is currently a **strong runnable scaffold**.
