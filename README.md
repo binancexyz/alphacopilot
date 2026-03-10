@@ -174,6 +174,8 @@ Its goal is not to maximize noise. Its goal is to improve conviction.
 - `docs/faq.md` — short project FAQ
 - `docs/local-dev.md` — local development quick guide
 - `docs/review-checklist.md` — change review checklist
+- `docs/release-prep.md` — quick release-prep path
+- `docs/final-hand-off.md` — best resume/handoff notes
 
 ## Judge-Friendly Pitch
 
