@@ -6,32 +6,31 @@ from src.models.schemas import AnalysisBrief, RiskTag
 
 
 def _watch_why_it_matters(ctx: WatchTodayContext) -> str:
-    narrative_count = len(ctx.top_narratives)
-    signal_count = len(ctx.strongest_signals)
-    if narrative_count or signal_count:
-        return (
-            f"The market is throwing up {narrative_count} narrative lane(s) and {signal_count} stronger signal area(s), "
-            "so the job is no longer finding movement — it is filtering for durability and cleaner risk." 
-        )
-    return "When market context is noisy, prioritization matters more than simply tracking what is trending."
+    strongest = ", ".join(ctx.strongest_signals[:2]) if ctx.strongest_signals else "no clean signal leaders yet"
+    narratives = ", ".join(ctx.top_narratives[:3]) if ctx.top_narratives else "no durable narrative leaders yet"
+    return (
+        f"Top signal lanes: {strongest}. "
+        f"Narratives getting the most attention: {narratives}. "
+        "The edge today is ranking what still has structure versus what is just loud."
+    )
 
 
 def _watch_next(ctx: WatchTodayContext) -> list[str]:
     watch: list[str] = []
-    if ctx.top_narratives:
-        watch.append(f"whether top narratives like {', '.join(ctx.top_narratives[:2])} keep attracting real follow-through")
-    else:
-        watch.append("whether any narrative starts showing durable strength instead of one-cycle attention")
-
     if ctx.strongest_signals:
-        watch.append(f"whether stronger signals such as {', '.join(ctx.strongest_signals[:2])} persist beyond the first spike")
+        watch.append(f"whether the cleanest setup stays with {ctx.strongest_signals[0]} instead of rolling over fast")
     else:
-        watch.append("whether strong signal clusters emerge instead of scattered noise")
+        watch.append("whether a genuinely clean setup appears instead of scattered noise")
+
+    if ctx.top_narratives:
+        watch.append(f"whether attention in {', '.join(ctx.top_narratives[:2])} stays durable instead of turning into rotation-chasing")
+    else:
+        watch.append("whether any narrative starts separating from the pack with real follow-through")
 
     if ctx.risk_zones:
-        watch.append(f"whether risk pockets like {', '.join(ctx.risk_zones[:2])} cool off or keep widening")
+        watch.append(f"whether risk pockets like {', '.join(ctx.risk_zones[:2])} cool down or keep trapping late attention")
     else:
-        watch.append("whether hype starts outrunning contract quality and liquidity")
+        watch.append("whether hype starts outrunning liquidity and contract quality")
     return watch
 
 
@@ -44,13 +43,15 @@ def build_watchtoday_brief(ctx: WatchTodayContext) -> AnalysisBrief:
         risk_tags.append(RiskTag(name="Narrative Risk", level="High", note=", ".join(ctx.risk_zones[:3])))
     if ctx.strongest_signals:
         risk_tags.append(RiskTag(name="Signal Density", level="Medium", note=f"{len(ctx.strongest_signals)} active signal areas identified."))
+    if ctx.top_narratives:
+        risk_tags.append(RiskTag(name="Hot Narratives", level="Medium", note=", ".join(ctx.top_narratives[:3])))
 
     if ctx.market_takeaway:
         quick_verdict = ctx.market_takeaway
     elif quality == "High":
-        quick_verdict = "There is real opportunity on the board today, but the edge comes from filtering, not from chasing every active narrative."
+        quick_verdict = "There is real opportunity on the board today, but the edge comes from ranking clean setups ahead of noisy narratives."
     elif quality == "Medium":
-        quick_verdict = "The tape is active enough to matter, but selectivity still matters more than raw participation."
+        quick_verdict = "There is enough movement to care today, but only a small part of it looks worth trusting."
     else:
         quick_verdict = "Today looks noisier than clean, so preservation and filtering matter more than excitement."
 

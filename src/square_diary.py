@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import re
 import subprocess
 import sys
 from datetime import datetime
@@ -493,10 +494,30 @@ def seo_tail(config: dict, topic: str) -> str:
     return f"{lead}, {topic}. {tags}"
 
 
+COMMON_SIMILARITY_WORDS = {
+    "the", "a", "an", "and", "or", "to", "of", "in", "on", "for", "with", "is", "it", "this", "that",
+    "i", "we", "you", "not", "but", "are", "be", "as", "at", "from", "into", "still", "more", "than",
+    "just", "today", "right", "now", "really", "what", "why", "how"
+}
+
+
+def _similarity_terms(text: str) -> set[str]:
+    terms = set(re.findall(r"[a-z0-9][a-z0-9\-]+", text.lower()))
+    return {term for term in terms if term not in COMMON_SIMILARITY_WORDS and len(term) >= 4}
+
+
 def post_too_similar(text: str, state: dict[str, Any]) -> bool:
-    for recent in state.get("recent_posts", [])[:6]:
-        overlap = len(set(text.lower().split()) & set(recent.lower().split()))
-        if overlap >= 26:
+    current_terms = _similarity_terms(text)
+    if not current_terms:
+        return False
+    for recent in state.get("recent_posts", [])[:8]:
+        recent_terms = _similarity_terms(recent)
+        if not recent_terms:
+            continue
+        overlap_terms = current_terms & recent_terms
+        union_terms = current_terms | recent_terms
+        overlap_ratio = len(overlap_terms) / max(len(union_terms), 1)
+        if len(overlap_terms) >= 18 and overlap_ratio >= 0.58:
             return True
     return False
 

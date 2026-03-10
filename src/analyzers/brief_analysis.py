@@ -35,6 +35,9 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
     elif token.price > 0:
         price = token.price
 
+    if not price and token.price > 0:
+        price = token.price
+
     display_name, display_symbol = _preferred_identity(symbol, token.display_name, token.symbol, quote)
 
     signal_quality = "High" if signal.signal_status in {"triggered", "bullish"} else "Medium" if signal.signal_status in {"watch"} else "Low"
