@@ -1,0 +1,39 @@
+# Docs Index
+
+## Core
+- `submission.md`
+- `submission-short.md`
+- `submission-medium.md`
+- `demo-script.md`
+- `maintainer-summary.md`
+
+## Integration
+- `live-integration-checklist.md`
+- `live-command-mapping.md`
+- `live-runtime-pseudocode.md`
+- `live-runtime-handoff.md`
+- `token-live-design.md`
+- `signal-live-design.md`
+- `wallet-live-design.md`
+- `watchtoday-live-design.md`
+
+## Heuristics
+- `token-heuristics.md`
+- `signal-heuristics.md`
+- `wallet-heuristics.md`
+- `watchtoday-heuristics.md`
+- `heuristics-overview.md`
+
+## Release / repo
+- `github-metadata.md`
+- `release-checklist.md`
+- `repo-description.md`
+- `repo-topics.md`
+- `public-release-message.md`
+
+## Operations
+- `install.md`
+- `developer-flow.md`
+- `quick-reference.md`
+- `build-checklist.md`
+- `first-session-checklist.md`

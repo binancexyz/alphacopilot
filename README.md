@@ -168,6 +168,8 @@ Its goal is not to maximize noise. Its goal is to improve conviction.
 - `docs/commands-overview.md` — command intent at a glance
 - `docs/heuristics-overview.md` — current heuristic layer summary
 - `docs/developer-flow.md` — practical day-to-day workflow
+- `docs/INDEX.md` — docs directory index
+- `docs/faq.md` — short project FAQ
 
 ## Judge-Friendly Pitch
 
