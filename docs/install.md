@@ -6,6 +6,8 @@
 ## Quick start
 ```bash
 cd binance-alpha-copilot
+make check
+make test
 python3 src/main.py token BNB
 python3 src/main.py watchtoday
 python3 src/main.py wallet 0x1234567890ab

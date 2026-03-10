@@ -139,8 +139,10 @@ Its goal is not to maximize noise. Its goal is to improve conviction.
 - `docs/token-live-design.md` — first real live integration target
 - `docs/live-command-mapping.md` — live command architecture
 - `docs/normalized-data-contracts.md` — normalized context shapes
+- `docs/live-integration-checklist.md` — final engineering checklist
 - `docs/github-metadata.md` — repo naming and metadata
 - `docs/release-checklist.md` — launch checklist
+- `docs/maintainer-summary.md` — shortest return-to-project summary
 
 ## Judge-Friendly Pitch
 
