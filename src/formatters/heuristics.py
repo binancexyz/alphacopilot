@@ -40,9 +40,25 @@ def signal_quality_from_signal(ctx: SignalContext) -> str:
 
 
 def wallet_signal_quality(ctx: WalletContext) -> str:
-    if ctx.top_concentration_pct >= 70:
+    score = 0
+    if ctx.portfolio_value > 0:
+        score += 1
+    if ctx.holdings_count >= 5:
+        score += 1
+    if ctx.top_holdings:
+        score += 1
+    if ctx.change_24h != 0:
+        score += 1
+
+    concentration = ctx.top_concentration_pct
+    if concentration >= 80:
+        score -= 2
+    elif concentration >= 65:
+        score -= 1
+
+    if score >= 3:
         return "Medium"
-    if ctx.top_concentration_pct > 0:
+    if score >= 1:
         return "Low"
     return "Low"
 
