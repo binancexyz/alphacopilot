@@ -160,6 +160,9 @@ Its goal is not to maximize noise. Its goal is to improve conviction.
 - `docs/github-metadata.md` — repo naming and metadata
 - `docs/release-checklist.md` — launch checklist
 - `docs/maintainer-summary.md` — shortest return-to-project summary
+- `docs/commands-overview.md` — command intent at a glance
+- `docs/heuristics-overview.md` — current heuristic layer summary
+- `docs/developer-flow.md` — practical day-to-day workflow
 
 ## Judge-Friendly Pitch
 

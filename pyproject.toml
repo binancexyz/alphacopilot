@@ -1,0 +1,15 @@
+[project]
+name = "alphacopilot"
+version = "0.1.0"
+description = "Signal-and-risk research copilot built around OpenClaw and Binance Skills Hub"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "Dara" }
+]
+
+[tool.alphacopilot]
+product_name = "Binance Alpha Copilot"
+short_name = "AlphaCopilot"
+tagline = "Less noise. Better conviction."
