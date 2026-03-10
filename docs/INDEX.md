@@ -4,6 +4,7 @@
 - `submission.md`
 - `submission-short.md`
 - `submission-medium.md`
+- `prd.md`
 - `demo-script.md`
 - `maintainer-summary.md`
 
