@@ -13,6 +13,10 @@ class Settings:
     binance_api_secret: str = os.getenv("BINANCE_API_SECRET", "")
     api_host: str = os.getenv("API_HOST", "0.0.0.0")
     api_port: int = int(os.getenv("API_PORT", "8000"))
+    square_api_key: str = os.getenv("BINANCE_SQUARE_API_KEY", "")
+    square_api_base_url: str = os.getenv("BINANCE_SQUARE_API_BASE_URL", "")
+    square_api_publish_path: str = os.getenv("BINANCE_SQUARE_API_PUBLISH_PATH", "/posts")
+    square_api_key_header: str = os.getenv("BINANCE_SQUARE_API_KEY_HEADER", "X-API-Key")
 
 
 settings = Settings()

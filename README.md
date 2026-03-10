@@ -108,6 +108,15 @@ Note: the core CLI works in mock mode without optional API/live HTTP dependencie
 make api
 ```
 
+## Binance Square Posting
+
+A safe Square posting scaffold is included.
+It supports draft mode now and env-based publish mode once the exact Binance Square endpoint/spec is confirmed.
+
+```bash
+python3 src/square_cli.py token BNB
+```
+
 Endpoints:
 - `/health`
 - `/brief/token?symbol=BNB`

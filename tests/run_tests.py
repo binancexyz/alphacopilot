@@ -9,6 +9,10 @@ from tests.test_live_service import (
     test_live_service_supports_nested_command_paths,
     test_live_service_watchtoday_and_wallet_file_modes,
 )
+from tests.test_square_posts import (
+    test_build_square_post_contains_key_fields,
+    test_publish_square_post_dry_run,
+)
 from tests.test_normalizers import (
     test_normalize_signal_context,
     test_normalize_token_context,
@@ -41,6 +45,8 @@ def main() -> None:
     test_live_service_loads_token_payload_from_file_directory(Path("/tmp/ac_test_live1"))
     test_live_service_supports_nested_command_paths(Path("/tmp/ac_test_live2"))
     test_live_service_watchtoday_and_wallet_file_modes(Path("/tmp/ac_test_live3"))
+    test_build_square_post_contains_key_fields()
+    test_publish_square_post_dry_run()
 
     try:
         from tests.test_api import (
