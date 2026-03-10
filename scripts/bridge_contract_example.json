@@ -1,0 +1,76 @@
+{
+  "command": "token",
+  "entity": "BNB",
+  "raw": {
+    "query-token-info": {
+      "search": [
+        {
+          "chainId": "56",
+          "contractAddress": "0x...",
+          "symbol": "BNB",
+          "name": "BNB",
+          "price": "612.5",
+          "volume24h": "53803143.23",
+          "marketCap": "162260777.94",
+          "liquidity": "13393863.14",
+          "holdersTop10Percent": "93.26"
+        }
+      ],
+      "metadata": {
+        "symbol": "BNB",
+        "name": "BNB",
+        "chainId": "56",
+        "creatorAddress": "0x..."
+      },
+      "dynamic": {
+        "price": "612.5",
+        "liquidity": "13393863.14",
+        "holders": "78255",
+        "percentChange24h": "0.01"
+      }
+    },
+    "crypto-market-rank": {
+      "data": {
+        "leaderBoardList": [
+          {
+            "socialHypeInfo": {
+              "socialSummaryBriefTranslated": "BNB remains visible in current market discussion."
+            }
+          }
+        ]
+      }
+    },
+    "trading-signal": {
+      "data": [
+        {
+          "ticker": "BNB",
+          "direction": "buy",
+          "status": "active",
+          "alertPrice": "600",
+          "currentPrice": "612.5",
+          "maxGain": "3.2",
+          "exitRate": 12,
+          "smartMoneyCount": 4
+        }
+      ]
+    },
+    "query-token-audit": {
+      "data": {
+        "hasResult": true,
+        "isSupported": true,
+        "riskLevelEnum": "LOW",
+        "riskLevel": 1,
+        "extraInfo": {
+          "buyTax": "0",
+          "sellTax": "0",
+          "isVerified": true
+        },
+        "riskItems": []
+      }
+    }
+  },
+  "meta": {
+    "source": "bridge-example",
+    "generatedAt": "2026-03-10T00:00:00Z"
+  }
+}
