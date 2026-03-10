@@ -90,6 +90,23 @@ Convert research output into a short social-ready market summary.
 - **Telegram** — primary chat/demo interface
 - **GitHub** — source control and long-term project home
 
+## Project Status
+
+This repo is currently a **strong runnable scaffold**.
+
+What is already here:
+- command architecture for `/token`, `/signal`, `/wallet`, and `/watchtoday`
+- normalized data contracts
+- mock/live service split
+- heuristics and formatter logic
+- tests and repo automation
+- submission and launch docs
+
+What still depends on runtime integration:
+- real OpenClaw live command wiring
+- real Binance Skills Hub tool invocation
+- live payload collection from runtime outputs
+
 ## Architecture
 
 ### Layer 1 — OpenClaw
