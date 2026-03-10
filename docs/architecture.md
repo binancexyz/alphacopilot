@@ -10,6 +10,7 @@ That lets the project:
 - use OpenClaw now for challenge alignment
 - keep Python logic reusable later
 - migrate to a different runtime if needed
+- align cleanly with Binance Skills as runtime-invoked capabilities rather than overfitting to guessed direct REST endpoints
 
 ## Layers
 
@@ -28,12 +29,14 @@ Current choice:
 - Binance Skills Hub
 
 Responsibilities:
-- token intelligence
-- wallet/address intelligence
-- market rankings
-- signal data
-- token audit checks
-- meme trend context
+- token intelligence via `query-token-info`
+- wallet/address intelligence via `query-address-info`
+- market rankings via `crypto-market-rank`
+- signal data via `trading-signal`
+- token audit checks via `query-token-audit`
+- meme trend context via `meme-rush`
+- optional publishing via `square-post`
+- deferred execution via `spot`
 
 ### 3. Domain Logic Layer
 Current choice:

@@ -30,14 +30,19 @@ Optional:
 - **Beginner Note**
 
 ## Skills Used
+Primary research skills:
 - `query-token-info`
 - `query-address-info`
 - `crypto-market-rank`
 - `trading-signal`
 - `query-token-audit`
 - `meme-rush`
-- optional: `square-post`
-- optional: `spot`
+
+Optional publishing skill:
+- `square-post`
+
+Deferred higher-risk execution skill:
+- `spot`
 
 ## Core Features
 ### Token Intel

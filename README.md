@@ -73,14 +73,30 @@ Convert research output into a short social-ready market summary.
 
 ## Binance Skills Used
 
+Primary research skills:
 - `query-token-info`
 - `query-address-info`
 - `crypto-market-rank`
 - `trading-signal`
 - `query-token-audit`
 - `meme-rush`
-- optional: `square-post`
-- optional: `spot`
+
+Optional output/publishing skill:
+- `square-post`
+
+Deferred higher-risk execution skill:
+- `spot`
+
+## Latest Integration Direction
+
+The latest project lesson is to treat Binance capabilities primarily as **Skills/runtime tools**, not as guessed standalone REST endpoints.
+
+That means the preferred live path is:
+- OpenClaw/runtime invokes Binance Skills
+- raw skill outputs are collected
+- Python extracts, normalizes, interprets, and formats
+
+This repo already supports the repo-side normalization/brief pipeline. The remaining live work is to connect the real Binance Skills/runtime layer cleanly.
 
 ## Recommended Stack
 

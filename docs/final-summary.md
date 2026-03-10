@@ -12,13 +12,23 @@
 - integration blueprint
 - installation notes
 - build checklist
+- API surface and deployment notes
+- Binance Square draft/publish scaffold
+- local setup/env helper scripts
+
+## Latest Binance Skills update
+The newest project understanding is:
+- Alpha Copilot should follow the **Binance Skills/runtime model**
+- primary research skills are `query-token-info`, `query-address-info`, `crypto-market-rank`, `trading-signal`, `query-token-audit`, and `meme-rush`
+- `square-post` should be treated as optional publishing output
+- `spot` should be treated as a deferred higher-risk execution skill
 
 ## What remains to become fully live
-- actual Binance Skills Hub tool invocation wiring
-- OpenClaw runtime bridge implementation
-- live normalization from real tool outputs
-- real signal/risk heuristics
+- actual Binance Skills tool invocation wiring in the runtime environment
+- OpenClaw runtime bridge implementation against real Binance Skills responses
+- validation against real skill schemas/examples
+- real signal/risk heuristics tuned from live outputs
 - final demo capture and submission
 
 ## Project state
-This is now a serious implementation scaffold, not just an idea draft.
+This is now a serious implementation scaffold with clearer live-direction assumptions, not just an idea draft.

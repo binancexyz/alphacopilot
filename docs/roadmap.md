@@ -8,19 +8,32 @@
 - Build `/signal`
 - Standardize output format
 - Prepare demo and submission
+- Keep scope research-first and human-supervised
 
-## Phase 2 — Product Polish
+## Phase 2 — Live Binance Skills Alignment
+- Wire real `query-token-info`
+- Wire real `query-address-info`
+- Wire real `crypto-market-rank`
+- Wire real `trading-signal`
+- Wire real `query-token-audit`
+- Wire real `meme-rush`
+- Validate payload/field assumptions against real Binance Skills outputs
+- Add `square-post` as optional publishing output after spec/runtime confirmation
+
+## Phase 3 — Product Polish
 - Add beginner/pro mode
 - Add shareable summary mode
 - Improve risk tags and conviction labels
 - Add better examples and screenshots
+- Improve fallback messaging from partial live skill failures
 
-## Phase 3 — Long-Term Productization
+## Phase 4 — Long-Term Productization
 - Add FastAPI service layer
 - Add watchlists and saved preferences
 - Add persistent reports/history
 - Add optional web UI
 - Add optional alerts and scheduled digests
+- Consider `spot` only as a later, explicitly gated, higher-risk execution capability
 
 ## Guiding Rule
-Build like a product, demo like a prototype.
+Build like a product, demo like a prototype, and keep execution features behind stricter safety gates than research features.
