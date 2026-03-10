@@ -13,7 +13,7 @@ If you come back later and want the shortest summary possible:
 - all four commands are shaped consistently
 - `/token BNB` live matching has been fixed end-to-end
 - live Binance Square publishing works
-- the repo now has a cron-driven 10-post/day Square content engine
+- the repo now has a cron-driven 7-post/day Square content engine with guardrails, topic rotation, CTAs, performance logging, and article seeds
 - docs are updated
 - GitHub repo is already pushed
 

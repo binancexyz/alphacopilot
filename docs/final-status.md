@@ -14,7 +14,7 @@
 - upgraded live extractor paths
 - `/token BNB` live matching fix across bridge and extractor layers
 - live Binance Square draft/publish flow
-- scheduled Binance Square autoposting with a 10-post/day content engine
+- scheduled Binance Square autoposting with a quality-focused 7-post/day content engine
 - tests and checks
 - GitHub repo pushed
 

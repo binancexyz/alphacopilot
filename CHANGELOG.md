@@ -2,13 +2,16 @@
 
 ## Unreleased
 ### Added
-- scheduled Binance Square content engine with 10 daily slots across diary, education, market, builder, ecosystem, and motivation formats
-- lightweight anti-repetition state tracking for high-frequency Square posting
+- scheduled Binance Square content engine with 7 daily slots across diary, education, market, builder, ecosystem, motivation, and night reflection formats
+- lightweight anti-repetition state tracking for recurring Square posting
+- performance logging, article seed capture, and weekly recap generation for the Square content engine
+- CTA rotation, topic rotation, series labels, and slot-specific voice profiles for Square posts
 
 ### Improved
-- README, scripts docs, and Binance Square docs updated to match the live publish/autopost flow
+- README, scripts docs, and Binance Square docs updated to match the latest live publish/autopost flow
 - Makefile targets updated for the current Square diary slot names
 - local ignore rules updated to keep generated `tmp/` artifacts out of git
+- project branding updated from AlphaCopilot to Bibipilot across docs, metadata, prompts, and local repo paths
 
 ### Fixed
 - live `/token BNB` matching across bridge and extractor layers

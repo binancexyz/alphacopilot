@@ -135,7 +135,7 @@ It now supports:
 
 ```bash
 python3 src/square_cli.py token BNB
-python3 src/square_diary.py ecosystem-1 --dry-run
+python3 src/square_diary.py ecosystem --dry-run
 ```
 
 Endpoints:
@@ -175,7 +175,7 @@ What is now available for local live-mode development:
 - runtime bridge template flows that use raw payloads when provided
 - improved end-to-end `/token BNB` live matching in both bridge and extractor layers
 - working live Binance Square publishing from chat and CLI
-- scheduled Binance Square autoposting with a 10-post/day content engine in `src/square_diary.py`
+- scheduled Binance Square autoposting with a quality-focused 7-post/day content engine in `src/square_diary.py`
 
 ## Architecture
 
