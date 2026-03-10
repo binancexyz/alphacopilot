@@ -95,6 +95,7 @@ Convert research output into a short social-ready market summary.
 - `scripts/check_all.sh` — run local checks
 - `scripts/demo_capture.sh` — print demo-friendly command output
 - `scripts/summary.sh` — print a quick repo/project summary
+- `scripts/export_examples.sh` — export current command outputs into example files
 
 ## Project Status
 
