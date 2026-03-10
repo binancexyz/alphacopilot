@@ -9,35 +9,86 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     signal = raw.get("trading-signal", {})
     audit = raw.get("query-token-audit", {})
 
+    search_item = _first_item(token_info.get("search")) or token_info
+    metadata = token_info.get("metadata", {})
+    dynamic = token_info.get("dynamic", {})
+    audit_payload = audit.get("data", audit)
+    audit_flags, audit_risks = _extract_audit_flags_and_risks(audit_payload)
+    market_risks = _extract_market_rank_risks(market_rank)
+    signal_risks = _extract_signal_risks(signal)
+
     return {
-        "symbol": symbol,
-        "display_name": token_info.get("symbol") or symbol,
-        "price": token_info.get("price", 0.0),
-        "liquidity": token_info.get("liquidity", 0.0),
-        "holders": token_info.get("holders", 0),
-        "market_rank_context": market_rank.get("summary", ""),
-        "signal_status": signal.get("status", "unknown"),
-        "signal_trigger_context": signal.get("summary", ""),
-        "audit_flags": audit.get("flags", []),
-        "major_risks": _merge_risks(
-            signal.get("risks", []),
-            audit.get("risks", []),
-            market_rank.get("risks", []),
-        ),
+        "symbol": search_item.get("symbol") or metadata.get("symbol") or symbol,
+        "display_name": search_item.get("name") or metadata.get("name") or search_item.get("symbol") or symbol,
+        "price": _pick_number(dynamic, "price") or _pick_number(search_item, "price"),
+        "liquidity": _pick_number(dynamic, "liquidity") or _pick_number(search_item, "liquidity"),
+        "holders": _pick_int(dynamic, "holders") or _pick_int(search_item, "holders"),
+        "market_rank_context": _build_market_rank_context(market_rank),
+        "signal_status": signal.get("status") or signal.get("direction") or "unknown",
+        "signal_trigger_context": _build_signal_context(signal),
+        "audit_flags": audit_flags,
+        "major_risks": _merge_risks(signal_risks, audit_risks, market_risks),
     }
 
 
 def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
     address_info = raw.get("query-address-info", {})
+    items = address_info.get("list") or address_info.get("data", {}).get("list") or []
+
+    if not items and (address_info.get("top_holdings") or address_info.get("portfolio_value") is not None):
+        return {
+            "address": address,
+            "portfolio_value": _to_float(address_info.get("portfolio_value")),
+            "holdings_count": _to_int(address_info.get("holdings_count")),
+            "top_holdings": address_info.get("top_holdings", []),
+            "top_concentration_pct": _to_float(address_info.get("top_concentration_pct")),
+            "change_24h": _to_float(address_info.get("change_24h")),
+            "notable_exposures": [str(x) for x in address_info.get("notable_exposures", [])],
+            "major_risks": [str(x) for x in address_info.get("major_risks", [])],
+        }
+
+    holdings = []
+    portfolio_value = 0.0
+    biggest = 0.0
+    notable_exposures: list[str] = []
+    for item in items:
+        symbol = item.get("symbol", "UNKNOWN")
+        price = _to_float(item.get("price"))
+        qty = _to_float(item.get("remainQty"))
+        value = price * qty
+        portfolio_value += value
+        biggest = max(biggest, value)
+        holdings.append({"symbol": symbol, "value": value, "change_24h": _to_float(item.get("percentChange24h"))})
+        if symbol not in notable_exposures:
+            notable_exposures.append(symbol)
+
+    top_holdings = []
+    if portfolio_value > 0:
+        holdings.sort(key=lambda x: x["value"], reverse=True)
+        for item in holdings[:5]:
+            top_holdings.append({"symbol": item["symbol"], "weight_pct": (item["value"] / portfolio_value) * 100})
+
+    change_24h = 0.0
+    if portfolio_value > 0:
+        weighted = 0.0
+        for item in holdings:
+            weighted += item["value"] * item["change_24h"]
+        change_24h = weighted / portfolio_value
+
+    top_concentration_pct = (biggest / portfolio_value) * 100 if portfolio_value > 0 else 0.0
+    risks: list[str] = []
+    if top_concentration_pct >= 60:
+        risks.append("Wallet is highly concentrated in one token or theme.")
+
     return {
         "address": address,
-        "portfolio_value": address_info.get("portfolio_value", 0.0),
-        "holdings_count": address_info.get("holdings_count", 0),
-        "top_holdings": address_info.get("top_holdings", []),
-        "top_concentration_pct": address_info.get("top_concentration_pct", 0.0),
-        "change_24h": address_info.get("change_24h", 0.0),
-        "notable_exposures": address_info.get("notable_exposures", []),
-        "major_risks": address_info.get("major_risks", []),
+        "portfolio_value": portfolio_value,
+        "holdings_count": len(items),
+        "top_holdings": top_holdings,
+        "top_concentration_pct": top_concentration_pct,
+        "change_24h": change_24h,
+        "notable_exposures": notable_exposures[:5],
+        "major_risks": risks,
     }
 
 
@@ -45,29 +96,257 @@ def extract_watch_today_context(raw: dict[str, Any]) -> dict[str, Any]:
     market_rank = raw.get("crypto-market-rank", {})
     meme_rush = raw.get("meme-rush", {})
     signal = raw.get("trading-signal", {})
+
+    top_narratives = _extract_top_narratives(market_rank, meme_rush)
+    strongest_signals = _extract_strongest_signals(signal)
+    risk_zones = _extract_risk_zones(market_rank, meme_rush)
+
     return {
-        "top_narratives": market_rank.get("top_narratives", []) or meme_rush.get("top_narratives", []),
-        "strongest_signals": signal.get("strongest_signals", []),
-        "risk_zones": market_rank.get("risk_zones", []),
-        "market_takeaway": market_rank.get("summary", ""),
-        "major_risks": _merge_risks(market_rank.get("risks", []), meme_rush.get("risks", []), signal.get("risks", [])),
+        "top_narratives": top_narratives,
+        "strongest_signals": strongest_signals,
+        "risk_zones": risk_zones,
+        "market_takeaway": _build_market_rank_context(market_rank) or _extract_topic_summary(meme_rush),
+        "major_risks": _merge_risks(_extract_market_rank_risks(market_rank), _extract_meme_risks(meme_rush), _extract_signal_risks(signal)),
     }
 
 
 def extract_signal_context(raw: dict[str, Any], token: str) -> dict[str, Any]:
     signal = raw.get("trading-signal", {})
+    first_signal = _first_item(signal.get("data")) or signal
     audit = raw.get("query-token-audit", {})
+    audit_payload = audit.get("data", audit)
+    audit_flags, audit_risks = _extract_audit_flags_and_risks(audit_payload)
+
+    direction = str(first_signal.get("direction", "")).lower()
+    status = first_signal.get("status") or ("bullish" if direction == "buy" else "bearish" if direction == "sell" else "unknown")
+    supporting_context = _build_signal_context(signal)
+
     return {
-        "token": token,
-        "signal_status": signal.get("status", "unknown"),
-        "trigger_price": signal.get("trigger_price", 0.0),
-        "current_price": signal.get("current_price", 0.0),
-        "max_gain": signal.get("max_gain", 0.0),
-        "exit_rate": signal.get("exit_rate", 0.0),
-        "audit_flags": audit.get("flags", []),
-        "supporting_context": signal.get("summary", ""),
-        "major_risks": _merge_risks(signal.get("risks", []), audit.get("risks", [])),
+        "token": first_signal.get("ticker") or token,
+        "signal_status": status,
+        "trigger_price": _pick_number(first_signal, "alertPrice", "trigger_price"),
+        "current_price": _pick_number(first_signal, "currentPrice", "current_price"),
+        "max_gain": _pick_number(first_signal, "maxGain", "max_gain"),
+        "exit_rate": _pick_number(first_signal, "exitRate", "exit_rate"),
+        "audit_flags": audit_flags,
+        "supporting_context": supporting_context,
+        "major_risks": _merge_risks(_extract_signal_risks(signal), audit_risks),
     }
+
+
+def _extract_audit_flags_and_risks(audit: dict[str, Any]) -> tuple[list[str], list[str]]:
+    if not audit:
+        return [], []
+
+    if "flags" in audit or "risks" in audit:
+        return _unique([str(x) for x in audit.get("flags", [])]), _unique([str(x) for x in audit.get("risks", [])])
+
+    if not audit.get("hasResult") or not audit.get("isSupported"):
+        return [], []
+
+    flags: list[str] = []
+    risks: list[str] = []
+    level = _to_int(audit.get("riskLevel"))
+    if level >= 4:
+        flags.append(f"Risk level {level} ({audit.get('riskLevelEnum', 'HIGH')})")
+    elif level >= 2:
+        flags.append(f"Risk level {level} ({audit.get('riskLevelEnum', 'MEDIUM')})")
+
+    buy_tax = _to_float((audit.get("extraInfo") or {}).get("buyTax"))
+    sell_tax = _to_float((audit.get("extraInfo") or {}).get("sellTax"))
+    for label, value in (("Buy tax", buy_tax), ("Sell tax", sell_tax)):
+        if value > 10:
+            flags.append(f"{label} above 10%")
+        elif value >= 5:
+            risks.append(f"{label} is elevated at {value:.2f}%.")
+
+    for item in audit.get("riskItems", []) or []:
+        category = item.get("name") or item.get("id") or "Risk"
+        for detail in item.get("details", []) or []:
+            if detail.get("isHit"):
+                title = detail.get("title") or "Risk detected"
+                desc = detail.get("description") or ""
+                flags.append(title)
+                risks.append(f"{category}: {title}. {desc}".strip())
+    return _unique(flags), _unique(risks)
+
+
+def _extract_market_rank_risks(market_rank: dict[str, Any]) -> list[str]:
+    risks = list(market_rank.get("risks", []) or [])
+    for token in market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []:
+        top10 = _pick_number(token, "holdersTop10Percent", "top10HoldersPercentage")
+        if top10 >= 80:
+            risks.append(f"{token.get('symbol', 'Token')} has very high top-10 holder concentration.")
+        audit_info = token.get("auditInfo") or {}
+        risk_num = _to_int(audit_info.get("riskNum"))
+        caution_num = _to_int(audit_info.get("cautionNum"))
+        if risk_num > 0 or caution_num > 0:
+            risks.append(f"{token.get('symbol', 'Token')} shows audit cautions in market rank context.")
+    return _unique(risks)
+
+
+def _extract_signal_risks(signal: dict[str, Any]) -> list[str]:
+    risks = list(signal.get("risks", []) or [])
+    first = _first_item(signal.get("data")) or signal
+    exit_rate = _pick_number(first, "exitRate", "exit_rate")
+    status = str(first.get("status", ""))
+    if status == "timeout":
+        risks.append("Signal timed out and may no longer be actionable.")
+    if exit_rate >= 70:
+        risks.append("Smart money exit rate is high, which may indicate the move is aging.")
+    return _unique(risks)
+
+
+def _extract_meme_risks(meme_rush: dict[str, Any]) -> list[str]:
+    risks = list(meme_rush.get("risks", []) or [])
+    items = meme_rush.get("data", []) or meme_rush.get("tokens", []) or []
+    for item in items[:5]:
+        if _to_int(item.get("tagDevWashTrading")) == 1:
+            risks.append(f"{item.get('symbol', 'Token')} shows dev wash-trading risk.")
+        if _to_int(item.get("tagInsiderWashTrading")) == 1:
+            risks.append(f"{item.get('symbol', 'Token')} shows insider wash-trading risk.")
+        if _pick_number(item, "holdersTop10Percent") >= 80:
+            risks.append(f"{item.get('symbol', 'Token')} has concentrated top-10 holders.")
+    return _unique(risks)
+
+
+def _build_market_rank_context(market_rank: dict[str, Any]) -> str:
+    leaderboard = market_rank.get("data", {}).get("leaderBoardList", []) or market_rank.get("leaderBoardList", []) or []
+    if leaderboard:
+        top = leaderboard[0]
+        return top.get("socialHypeInfo", {}).get("socialSummaryBriefTranslated") or top.get("socialHypeInfo", {}).get("socialSummaryBrief") or ""
+
+    tokens = market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []
+    if tokens:
+        top = tokens[0]
+        symbol = top.get("symbol", "Top token")
+        return f"{symbol} leads current market-rank screens with visible liquidity and activity context."
+
+    pnl = market_rank.get("data", {}).get("data", []) or market_rank.get("data", []) or []
+    if pnl:
+        top = pnl[0]
+        label = top.get("addressLabel") or top.get("address") or "top trader"
+        return f"Top trader context is active, led by {label}."
+
+    return market_rank.get("summary", "")
+
+
+def _build_signal_context(signal: dict[str, Any]) -> str:
+    first = _first_item(signal.get("data")) or signal
+    ticker = first.get("ticker", "This token")
+    direction = str(first.get("direction", "")).lower()
+    platform = first.get("launchPlatform") or ""
+    count = _to_int(first.get("smartMoneyCount"))
+    status = first.get("status") or "unknown"
+    parts = [f"{ticker} has a {direction or 'smart-money'} signal"]
+    if count:
+        parts.append(f"from {count} smart-money addresses")
+    if platform:
+        parts.append(f"on {platform}")
+    parts.append(f"with status {status}")
+    return " ".join(parts).strip() + "."
+
+
+def _extract_top_narratives(market_rank: dict[str, Any], meme_rush: dict[str, Any]) -> list[str]:
+    direct_market = [str(x) for x in market_rank.get("top_narratives", []) or []]
+    if direct_market:
+        return direct_market
+
+    out: list[str] = []
+    leaderboard = market_rank.get("data", {}).get("leaderBoardList", []) or market_rank.get("leaderBoardList", []) or []
+    for item in leaderboard[:3]:
+        brief = item.get("socialHypeInfo", {}).get("socialSummaryBriefTranslated") or item.get("socialHypeInfo", {}).get("socialSummaryBrief")
+        if brief:
+            out.append(brief)
+    topics = meme_rush.get("data", []) or []
+    for topic in topics[:3]:
+        name = topic.get("name", {}).get("topicNameEn") or topic.get("name", {}).get("topicNameCn") or topic.get("type")
+        if name:
+            out.append(str(name))
+    out.extend([str(x) for x in meme_rush.get("top_narratives", []) or []])
+    return _unique(out)
+
+
+def _extract_topic_summary(meme_rush: dict[str, Any]) -> str:
+    topics = meme_rush.get("data", []) or []
+    if topics:
+        top = topics[0]
+        name = top.get("name", {}).get("topicNameEn") or top.get("type") or "topic"
+        inflow = top.get("topicNetInflow") or top.get("topicNetInflowAth")
+        if inflow:
+            return f"{name} is a leading topic with visible net inflow of {inflow}."
+        return f"{name} is a leading topic in current topic-rush context."
+    return ""
+
+
+def _extract_strongest_signals(signal: dict[str, Any]) -> list[str]:
+    items = signal.get("data", []) or []
+    if signal.get("strongest_signals"):
+        return [str(x) for x in signal.get("strongest_signals", [])]
+    if not items and signal.get("status"):
+        return [str(signal.get("summary") or signal.get("status"))]
+    out = []
+    for item in items[:5]:
+        ticker = item.get("ticker") or "Token"
+        direction = item.get("direction") or "signal"
+        status = item.get("status") or "unknown"
+        out.append(f"{ticker}: {direction} ({status})")
+    return _unique(out)
+
+
+def _extract_risk_zones(market_rank: dict[str, Any], meme_rush: dict[str, Any]) -> list[str]:
+    zones = list(market_rank.get("risk_zones", []) or [])
+    for item in meme_rush.get("data", [])[:5] or []:
+        if _to_int(item.get("tagDevWashTrading")) == 1 or _to_int(item.get("tagInsiderWashTrading")) == 1:
+            zones.append(f"{item.get('symbol', 'Token')} shows wash-trading related caution.")
+        if _to_int(item.get("migrateStatus")) == 0 and _pick_number(item, "progress") >= 90:
+            zones.append(f"{item.get('symbol', 'Token')} is near migration and may be volatile.")
+    return _unique(zones)
+
+
+def _first_item(value: Any) -> dict[str, Any] | None:
+    if isinstance(value, list) and value:
+        first = value[0]
+        if isinstance(first, dict):
+            return first
+    return None
+
+
+def _pick_number(data: dict[str, Any], *keys: str) -> float:
+    for key in keys:
+        if key in data:
+            return _to_float(data.get(key))
+    return 0.0
+
+
+def _pick_int(data: dict[str, Any], *keys: str) -> int:
+    for key in keys:
+        if key in data:
+            return _to_int(data.get(key))
+    return 0
+
+
+def _to_float(value: Any) -> float:
+    try:
+        return float(value or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _to_int(value: Any) -> int:
+    try:
+        return int(float(value or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _unique(items: list[str]) -> list[str]:
+    out: list[str] = []
+    for item in items:
+        text = str(item).strip()
+        if text and text not in out:
+            out.append(text)
+    return out
 
 
 def _merge_risks(*risk_lists: list[Any]) -> list[str]:
