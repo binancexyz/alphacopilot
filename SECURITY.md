@@ -16,3 +16,9 @@ Be especially careful around:
 
 ## Rule
 Never commit secrets to the repository.
+
+## Project-specific guidance
+Also review:
+- `SECURITY-CHECKLIST.md`
+- `docs/security-principles.md`
+- `docs/security-notes.md`

@@ -176,6 +176,8 @@ Its goal is not to maximize noise. Its goal is to improve conviction.
 - `docs/review-checklist.md` — change review checklist
 - `docs/release-prep.md` — quick release-prep path
 - `docs/final-hand-off.md` — best resume/handoff notes
+- `SECURITY-CHECKLIST.md` — project security checklist
+- `docs/security-principles.md` — core security approach
 
 ## Judge-Friendly Pitch
 
