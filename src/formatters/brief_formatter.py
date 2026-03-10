@@ -5,6 +5,7 @@ from src.models.schemas import AnalysisBrief
 
 ENTITY_EMOJI = {
     "Token:": "🪙",
+    "Price:": "💵",
     "Signal:": "📡",
     "Wallet:": "👛",
     "Market Watch": "🌐",
