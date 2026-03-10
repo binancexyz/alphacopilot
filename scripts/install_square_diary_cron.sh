@@ -7,15 +7,18 @@ mkdir -p "$LOG_DIR"
 
 slots=(
   "07:30|morning-diary"
-  "09:30|education-1"
-  "11:30|market-1"
-  "13:30|builder-1"
-  "15:30|ecosystem-1"
-  "18:30|motivation-1"
+  "09:00|education-1"
+  "10:30|market-open"
+  "12:00|builder-1"
+  "13:30|ecosystem-1"
+  "15:00|education-2"
+  "16:30|market-close"
+  "18:00|motivation-1"
+  "19:30|builder-2"
   "21:30|night-diary"
 )
 
-EXISTING="$(crontab -l 2>/dev/null | grep -v 'src/square_diary.py' || true)"
+EXISTING="$(crontab -l 2>/dev/null | grep -v 'src/square_diary.py' | grep -v '^CRON_TZ=Asia/Phnom_Penh$' || true)"
 {
   printf 'CRON_TZ=Asia/Phnom_Penh\n'
   if [[ -n "$EXISTING" ]]; then
