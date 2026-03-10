@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from src.analyzers.token_live_brief import build_token_brief
+from src.models.schemas import AnalysisBrief
 from src.services.factory import get_market_data_service
 from src.services.normalizers import normalize_token_context
 
 
-def analyze_token(symbol: str):
+def analyze_token(symbol: str) -> AnalysisBrief:
     service = get_market_data_service()
     raw_context = service.get_token_context(symbol)
     token_context = normalize_token_context(raw_context)

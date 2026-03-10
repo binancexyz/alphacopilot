@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from src.analyzers.wallet_live_brief import build_wallet_brief
+from src.models.schemas import AnalysisBrief
 from src.services.factory import get_market_data_service
 from src.services.normalizers import normalize_wallet_context
 
 
-def analyze_wallet(address: str):
+def analyze_wallet(address: str) -> AnalysisBrief:
     service = get_market_data_service()
     raw_context = service.get_wallet_context(address)
     wallet_context = normalize_wallet_context(raw_context)

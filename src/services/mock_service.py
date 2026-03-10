@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from src.services.types import NormalizedDict
+
 
 class MockMarketDataService:
-    def get_token_context(self, symbol: str) -> dict:
+    def get_token_context(self, symbol: str) -> NormalizedDict:
         return {
             "symbol": symbol,
             "display_name": symbol,
@@ -19,7 +21,7 @@ class MockMarketDataService:
             ],
         }
 
-    def get_wallet_context(self, address: str) -> dict:
+    def get_wallet_context(self, address: str) -> NormalizedDict:
         return {
             "address": address,
             "portfolio_value": 245000.0,
@@ -37,7 +39,7 @@ class MockMarketDataService:
             ],
         }
 
-    def get_watch_today_context(self) -> dict:
+    def get_watch_today_context(self) -> NormalizedDict:
         return {
             "top_narratives": ["AI", "meme rotation", "L2"],
             "strongest_signals": ["BNB strength", "AI inflows"],
@@ -49,7 +51,7 @@ class MockMarketDataService:
             ],
         }
 
-    def get_signal_context(self, token: str) -> dict:
+    def get_signal_context(self, token: str) -> NormalizedDict:
         return {
             "token": token,
             "signal_status": "watch",
