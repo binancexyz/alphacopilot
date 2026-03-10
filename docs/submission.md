@@ -38,7 +38,7 @@ Primary research skills:
 - `query-token-audit`
 - `meme-rush`
 
-Optional publishing skill:
+Required publishing skill:
 - `square-post`
 
 Deferred higher-risk execution skill:
@@ -57,8 +57,8 @@ Summarize top narratives, strongest signals, and major risk zones.
 ### Signal Check
 Explain whether a signal is meaningful, fragile, or worth monitoring.
 
-### Optional Shareable Summary
-Convert research output into a concise social-ready market brief.
+### Square Publishing
+Convert research output into a concise Binance Square-ready market brief as a core user-facing output.
 
 ## What Makes It Stand Out
 - combines **signal + risk**, not just hype

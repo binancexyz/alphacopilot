@@ -20,7 +20,8 @@
 The newest project understanding is:
 - Alpha Copilot should follow the **Binance Skills/runtime model**
 - primary research skills are `query-token-info`, `query-address-info`, `crypto-market-rank`, `trading-signal`, `query-token-audit`, and `meme-rush`
-- `square-post` should be treated as optional publishing output
+- `square-post` is a required product output/publishing skill
+- `square-post` should be treated as a required publishing/output skill
 - `spot` should be treated as a deferred higher-risk execution skill
 
 ## What remains to become fully live

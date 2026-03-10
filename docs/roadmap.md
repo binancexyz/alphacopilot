@@ -8,7 +8,7 @@
 - Build `/signal`
 - Standardize output format
 - Prepare demo and submission
-- Keep scope research-first and human-supervised
+- Keep scope research-first and human-supervised while making Square publishing part of the core output path
 
 ## Phase 2 — Live Binance Skills Alignment
 - Wire real `query-token-info`
@@ -18,7 +18,7 @@
 - Wire real `query-token-audit`
 - Wire real `meme-rush`
 - Validate payload/field assumptions against real Binance Skills outputs
-- Add `square-post` as optional publishing output after spec/runtime confirmation
+- Make `square-post` a must-have publishing/output path after spec/runtime confirmation
 
 ## Phase 3 — Product Polish
 - Add beginner/pro mode

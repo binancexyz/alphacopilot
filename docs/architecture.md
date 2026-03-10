@@ -35,7 +35,7 @@ Responsibilities:
 - signal data via `trading-signal`
 - token audit checks via `query-token-audit`
 - meme trend context via `meme-rush`
-- optional publishing via `square-post`
+- required publishing via `square-post`
 - deferred execution via `spot`
 
 ### 3. Domain Logic Layer

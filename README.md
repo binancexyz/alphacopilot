@@ -68,8 +68,8 @@ Summarize top narratives, strongest signals, and main risk zones.
 ### 4. Signal Check
 Explain whether a trading signal is meaningful, fragile, or worth monitoring.
 
-### 5. Optional Shareable Summary
-Convert research output into a short social-ready market summary.
+### 5. Square Publishing
+Convert research output into a Binance Square-ready short post and treat publishing capability as a core part of the product.
 
 ## Binance Skills Used
 
@@ -81,7 +81,7 @@ Primary research skills:
 - `query-token-audit`
 - `meme-rush`
 
-Optional output/publishing skill:
+Required publishing/output skill:
 - `square-post`
 
 Deferred higher-risk execution skill:
@@ -126,7 +126,7 @@ make api
 
 ## Binance Square Posting
 
-A safe Square posting scaffold is included.
+A required Square posting scaffold is included.
 It supports draft mode now and env-based publish mode once the exact Binance Square endpoint/spec is confirmed.
 
 ```bash
