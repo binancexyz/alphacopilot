@@ -1,8 +1,19 @@
 from __future__ import annotations
 
+from src.analyzers.price_analysis import _fetch_cmc_quote
 from src.services.factory import get_market_data_service
 from src.services.normalizers import normalize_signal_context, normalize_token_context
 from src.models.schemas import AnalysisBrief
+
+
+_MAJOR_SYMBOLS = {"BTC", "ETH", "BNB", "SOL", "XRP", "DOGE", "ADA", "TRX", "TON", "AVAX", "LINK"}
+
+
+def _preferred_identity(requested_symbol: str, token_name: str, token_symbol: str, quote: dict | None) -> tuple[str, str]:
+    requested = requested_symbol.upper()
+    if quote and requested in _MAJOR_SYMBOLS:
+        return str(quote.get("name") or token_name), str(quote.get("symbol") or requested)
+    return token_name, token_symbol
 
 
 def analyze_risk(symbol: str) -> AnalysisBrief:
@@ -12,6 +23,8 @@ def analyze_risk(symbol: str) -> AnalysisBrief:
 
     token = normalize_token_context(token_raw)
     signal = normalize_signal_context(signal_raw)
+    quote = _fetch_cmc_quote(symbol)
+    display_name, display_symbol = _preferred_identity(symbol, token.display_name, token.symbol, quote)
 
     audit_summary = "; ".join(token.audit_flags[:2]) if token.audit_flags else "No obvious contract red flags surfaced in the current brief."
     top_risk = token.major_risks[0] if token.major_risks else signal.major_risks[0] if signal.major_risks else "Risk context is still incomplete, so caution should stay elevated."
@@ -31,8 +44,8 @@ def analyze_risk(symbol: str) -> AnalysisBrief:
         verdict = "Risk is present but looks more manageable than catastrophic right now."
 
     packed = "|".join([
-        token.display_name,
-        token.symbol,
+        display_name,
+        display_symbol,
         risk_level,
         audit_summary,
         top_risk,
@@ -43,7 +56,7 @@ def analyze_risk(symbol: str) -> AnalysisBrief:
     ])
 
     return AnalysisBrief(
-        entity=f"Risk: {token.symbol}",
+        entity=f"Risk: {display_symbol}",
         quick_verdict=packed,
         signal_quality=risk_level,
         top_risks=[],
