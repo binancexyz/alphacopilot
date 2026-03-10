@@ -100,7 +100,9 @@ Convert research output into a short social-ready market summary.
 
 ## API Mode
 
-A lightweight FastAPI app is included for serving formatted briefs:
+A lightweight FastAPI app is included for serving formatted briefs.
+
+Note: the core CLI works in mock mode without optional API/live HTTP dependencies installed. The API and HTTP live mode require installing `requirements.txt`.
 
 ```bash
 make api

@@ -4,8 +4,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-import httpx
-
 from src.services.fallbacks import missing_context_warning
 from src.services.live_extractors import (
     extract_signal_context,
@@ -78,6 +76,14 @@ class LiveMarketDataService:
         )
 
     def _load_from_http(self, command: str, entity: str = "") -> dict[str, Any]:
+        try:
+            import httpx  # type: ignore
+        except ModuleNotFoundError as exc:
+            raise RuntimeError(
+                "HTTP live mode requires the optional dependency 'httpx'. "
+                "Install requirements.txt or use file:// live mode."
+            ) from exc
+
         params = {"command": command}
         if entity:
             params["entity"] = entity
