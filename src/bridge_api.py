@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, UTC
 from typing import Any
 from uuid import uuid4
+import re
 
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -127,7 +128,7 @@ def _fetch_live_token_bundle(entity: str) -> dict[str, Any]:
         signal_resp.raise_for_status()
         signal_json = signal_resp.json()
         signal_items = signal_json.get("data") or []
-        signal_matches = [item for item in signal_items if str(item.get("ticker", "")).upper() == symbol]
+        signal_matches = _matching_signal_items(signal_items, symbol, contract)
 
         audit_resp = client.post(
             f"{base}/bapi/defi/v1/public/wallet-direct/security/token/audit",
@@ -172,10 +173,81 @@ def _require_httpx():
 
 
 def _first_matching_token(items: list[dict[str, Any]], symbol: str) -> dict[str, Any] | None:
+    if not items:
+        return None
+
+    target = _normalize_match_key(symbol)
+    scored: list[tuple[int, dict[str, Any]]] = []
     for item in items:
-        if str(item.get("symbol", "")).upper() == symbol:
-            return item
-    return items[0] if items else None
+        score = _token_match_score(item, target)
+        if score > 0:
+            scored.append((score, item))
+
+    if scored:
+        scored.sort(key=lambda pair: pair[0], reverse=True)
+        return scored[0][1]
+
+    return items[0]
+
+
+def _matching_signal_items(items: list[dict[str, Any]], symbol: str, contract: str | None) -> list[dict[str, Any]]:
+    target_symbol = _normalize_match_key(symbol)
+    target_contract = _normalize_contract(contract)
+    contract_matches: list[dict[str, Any]] = []
+    symbol_matches: list[dict[str, Any]] = []
+
+    for item in items:
+        item_symbol = _normalize_match_key(_pick_value(item, "ticker", "symbol", "tokenSymbol", "baseAsset"))
+        item_contract = _normalize_contract(_pick_value(item, "contractAddress", "address", "tokenAddress"))
+
+        if target_contract and item_contract == target_contract:
+            contract_matches.append(item)
+        if item_symbol == target_symbol:
+            symbol_matches.append(item)
+
+    if contract_matches:
+        narrowed = [item for item in contract_matches if _normalize_match_key(_pick_value(item, "ticker", "symbol", "tokenSymbol", "baseAsset")) == target_symbol]
+        return narrowed or contract_matches
+
+    return symbol_matches
+
+
+def _token_match_score(item: dict[str, Any], target: str) -> int:
+    exact_symbol_fields = ["symbol", "ticker", "tokenSymbol", "baseAsset"]
+    exact_name_fields = ["name", "tokenName", "baseAssetName"]
+
+    for field in exact_symbol_fields:
+        if _normalize_match_key(item.get(field)) == target:
+            return 100
+
+    for field in exact_name_fields:
+        if _normalize_match_key(item.get(field)) == target:
+            return 80
+
+    for field in exact_symbol_fields + exact_name_fields:
+        candidate = _normalize_match_key(item.get(field))
+        if candidate.startswith(target) or target.startswith(candidate):
+            return 40
+        if target and target in candidate:
+            return 20
+
+    return 0
+
+
+def _pick_value(item: dict[str, Any], *keys: str) -> Any:
+    for key in keys:
+        value = item.get(key)
+        if value not in (None, ""):
+            return value
+    return None
+
+
+def _normalize_match_key(value: Any) -> str:
+    return re.sub(r"[^A-Z0-9]", "", str(value or "").upper())
+
+
+def _normalize_contract(value: Any) -> str:
+    return str(value or "").strip().lower()
 
 
 def _skills_for(command: str) -> list[str] | None:
