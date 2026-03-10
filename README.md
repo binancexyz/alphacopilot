@@ -90,6 +90,11 @@ Convert research output into a short social-ready market summary.
 - **Telegram** — primary chat/demo interface
 - **GitHub** — source control and long-term project home
 
+## Helper Scripts
+
+- `scripts/check_all.sh` — run local checks
+- `scripts/demo_capture.sh` — print demo-friendly command output
+
 ## Project Status
 
 This repo is currently a **strong runnable scaffold**.
