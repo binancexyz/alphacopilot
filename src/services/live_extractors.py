@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 
@@ -9,21 +10,22 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     signal = raw.get("trading-signal", {})
     audit = raw.get("query-token-audit", {})
 
-    search_item = _first_item(token_info.get("search")) or token_info
     metadata = token_info.get("metadata", {})
+    search_item = _best_token_match(token_info.get("search"), symbol, metadata) or metadata or token_info
     dynamic = token_info.get("dynamic", {})
+    resolved_symbol = str(search_item.get("symbol") or metadata.get("symbol") or symbol)
     audit_payload = audit.get("data", audit)
     audit_flags, audit_risks = _extract_audit_flags_and_risks(audit_payload)
-    market_risks = _extract_market_rank_risks(market_rank)
+    market_risks = _extract_market_rank_risks(market_rank, resolved_symbol)
     signal_risks = _extract_signal_risks(signal)
 
     return {
-        "symbol": search_item.get("symbol") or metadata.get("symbol") or symbol,
+        "symbol": resolved_symbol,
         "display_name": search_item.get("name") or metadata.get("name") or search_item.get("symbol") or symbol,
         "price": _pick_number(dynamic, "price") or _pick_number(search_item, "price"),
         "liquidity": _pick_number(dynamic, "liquidity") or _pick_number(search_item, "liquidity"),
-        "holders": _pick_int(dynamic, "holders") or _pick_int(search_item, "holders"),
-        "market_rank_context": _build_market_rank_context(market_rank),
+        "holders": _pick_int(dynamic, "holders", "kycHolderCount") or _pick_int(search_item, "holders"),
+        "market_rank_context": _build_market_rank_context(market_rank, resolved_symbol),
         "signal_status": signal.get("status") or signal.get("direction") or "unknown",
         "signal_trigger_context": _build_signal_context(signal),
         "audit_flags": audit_flags,
@@ -171,17 +173,22 @@ def _extract_audit_flags_and_risks(audit: dict[str, Any]) -> tuple[list[str], li
     return _unique(flags), _unique(risks)
 
 
-def _extract_market_rank_risks(market_rank: dict[str, Any]) -> list[str]:
+def _extract_market_rank_risks(market_rank: dict[str, Any], symbol: str | None = None) -> list[str]:
     risks = list(market_rank.get("risks", []) or [])
-    for token in market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []:
-        top10 = _pick_number(token, "holdersTop10Percent", "top10HoldersPercentage")
-        if top10 >= 80:
-            risks.append(f"{token.get('symbol', 'Token')} has very high top-10 holder concentration.")
-        audit_info = token.get("auditInfo") or {}
-        risk_num = _to_int(audit_info.get("riskNum"))
-        caution_num = _to_int(audit_info.get("cautionNum"))
-        if risk_num > 0 or caution_num > 0:
-            risks.append(f"{token.get('symbol', 'Token')} shows audit cautions in market rank context.")
+    tokens = market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []
+    target = _normalize_match_key(symbol)
+    token = _best_symbol_match(tokens, target) if target else None
+    if not token:
+        return _unique(risks)
+
+    top10 = _pick_number(token, "holdersTop10Percent", "top10HoldersPercentage")
+    if top10 >= 80:
+        risks.append(f"{token.get('symbol', 'Token')} has very high top-10 holder concentration.")
+    audit_info = token.get("auditInfo") or {}
+    risk_num = _to_int(audit_info.get("riskNum"))
+    caution_num = _to_int(audit_info.get("cautionNum"))
+    if risk_num > 0 or caution_num > 0:
+        risks.append(f"{token.get('symbol', 'Token')} shows audit cautions in market rank context.")
     return _unique(risks)
 
 
@@ -210,25 +217,15 @@ def _extract_meme_risks(meme_rush: dict[str, Any]) -> list[str]:
     return _unique(risks)
 
 
-def _build_market_rank_context(market_rank: dict[str, Any]) -> str:
-    leaderboard = market_rank.get("data", {}).get("leaderBoardList", []) or market_rank.get("leaderBoardList", []) or []
-    if leaderboard:
-        top = leaderboard[0]
-        return top.get("socialHypeInfo", {}).get("socialSummaryBriefTranslated") or top.get("socialHypeInfo", {}).get("socialSummaryBrief") or ""
-
+def _build_market_rank_context(market_rank: dict[str, Any], symbol: str | None = None) -> str:
     tokens = market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []
-    if tokens:
-        top = tokens[0]
-        symbol = top.get("symbol", "Top token")
-        return f"{symbol} leads current market-rank screens with visible liquidity and activity context."
+    target = _normalize_match_key(symbol)
+    matched = _best_symbol_match(tokens, target) if target else None
+    if matched:
+        matched_symbol = matched.get("symbol", symbol or "This token")
+        return f"{matched_symbol} appears in current market-rank screens with visible liquidity and activity context."
 
-    pnl = market_rank.get("data", {}).get("data", []) or market_rank.get("data", []) or []
-    if pnl:
-        top = pnl[0]
-        label = top.get("addressLabel") or top.get("address") or "top trader"
-        return f"Top trader context is active, led by {label}."
-
-    return market_rank.get("summary", "")
+    return ""
 
 
 def _build_signal_context(signal: dict[str, Any]) -> str:
@@ -310,6 +307,81 @@ def _first_item(value: Any) -> dict[str, Any] | None:
         if isinstance(first, dict):
             return first
     return None
+
+
+def _best_token_match(items: Any, symbol: str, metadata: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    if not isinstance(items, list):
+        return metadata if metadata else None
+
+    target = _normalize_match_key(symbol)
+    target_contract = _normalize_contract((metadata or {}).get("contractAddress"))
+    scored: list[tuple[int, dict[str, Any]]] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        score = _token_match_score(item, target, target_contract)
+        if score > 0:
+            scored.append((score, item))
+
+    if scored:
+        scored.sort(key=lambda pair: pair[0], reverse=True)
+        return scored[0][1]
+
+    return metadata if metadata else _first_item(items)
+
+
+def _best_symbol_match(items: Any, target: str) -> dict[str, Any] | None:
+    if not isinstance(items, list) or not target:
+        return None
+    scored: list[tuple[int, dict[str, Any]]] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        score = _token_match_score(item, target)
+        if score > 0:
+            scored.append((score, item))
+    if not scored:
+        return None
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    return scored[0][1]
+
+
+def _token_match_score(item: dict[str, Any], target: str, target_contract: str = "") -> int:
+    if target_contract:
+        item_contract = _normalize_contract(item.get("contractAddress"))
+        token_addresses = item.get("tokenAddresses") or []
+        if item_contract == target_contract:
+            return 200
+        for entry in token_addresses:
+            if isinstance(entry, dict) and _normalize_contract(entry.get("contractAddress")) == target_contract:
+                return 200
+
+    symbol_fields = ["symbol", "ticker", "tokenSymbol", "baseAsset"]
+    name_fields = ["name", "tokenName", "baseAssetName"]
+
+    for field in symbol_fields:
+        if _normalize_match_key(item.get(field)) == target:
+            return 120
+    for field in name_fields:
+        if _normalize_match_key(item.get(field)) == target:
+            return 90
+    for field in symbol_fields + name_fields:
+        candidate = _normalize_match_key(item.get(field))
+        if not candidate:
+            continue
+        if candidate.startswith(target) or target.startswith(candidate):
+            return 40
+        if target in candidate:
+            return 20
+    return 0
+
+
+def _normalize_match_key(value: Any) -> str:
+    return re.sub(r"[^A-Z0-9]", "", str(value or "").upper())
+
+
+def _normalize_contract(value: Any) -> str:
+    return str(value or "").strip().lower()
 
 
 def _pick_number(data: dict[str, Any], *keys: str) -> float:
