@@ -8,10 +8,10 @@ It does not execute OpenClaw tools directly from this repo yet.
 Instead, it defines the shape the runtime-facing bridge should follow.
 """
 
-from src.analyzers.market_watch import watch_today
-from src.analyzers.signal_check import analyze_signal
-from src.analyzers.token_analysis import analyze_token
-from src.analyzers.wallet_analysis import analyze_wallet
+from src.analyzers.signal_live_brief import build_signal_brief
+from src.analyzers.token_live_brief import build_token_brief
+from src.analyzers.wallet_live_brief import build_wallet_brief
+from src.analyzers.watchtoday_live_brief import build_watchtoday_brief
 from src.formatters.brief_formatter import format_brief
 from src.services.live_extractors import (
     extract_signal_context,
@@ -30,26 +30,26 @@ from src.services.normalizers import (
 def token_from_raw(symbol: str, raw_payload: dict) -> str:
     ctx_dict = extract_token_context(raw_payload, symbol)
     ctx = normalize_token_context(ctx_dict)
-    brief = analyze_token(symbol)
+    brief = build_token_brief(ctx)
     return format_brief(brief)
 
 
 def signal_from_raw(token: str, raw_payload: dict) -> str:
     ctx_dict = extract_signal_context(raw_payload, token)
     ctx = normalize_signal_context(ctx_dict)
-    brief = analyze_signal(token)
+    brief = build_signal_brief(ctx)
     return format_brief(brief)
 
 
 def wallet_from_raw(address: str, raw_payload: dict) -> str:
     ctx_dict = extract_wallet_context(raw_payload, address)
     ctx = normalize_wallet_context(ctx_dict)
-    brief = analyze_wallet(address)
+    brief = build_wallet_brief(ctx)
     return format_brief(brief)
 
 
 def watchtoday_from_raw(raw_payload: dict) -> str:
     ctx_dict = extract_watch_today_context(raw_payload)
     ctx = normalize_watch_today_context(ctx_dict)
-    brief = watch_today()
+    brief = build_watchtoday_brief(ctx)
     return format_brief(brief)
