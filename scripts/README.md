@@ -26,3 +26,6 @@ Activates `.venv`, runs checks/tests, and performs a quick smoke test.
 
 ## `fill_env_checklist.sh`
 Shows which live env values should be filled before real usage.
+
+## `install_square_diary_cron.sh`
+Installs two cron jobs for Binance Square diary posting at 07:30 and 21:30 Asia/Phnom_Penh.

@@ -1,6 +1,6 @@
 PYTHON=python3
 
-.PHONY: token wallet watchtoday signal check test runtime-demo api bridge-api square-draft square-publish
+.PHONY: token wallet watchtoday signal check test runtime-demo api bridge-api square-draft square-publish diary-morning diary-night install-diary-cron
 
 token:
 	$(PYTHON) src/main.py token BNB
@@ -28,6 +28,15 @@ square-draft:
 
 square-publish:
 	$(PYTHON) src/square_cli.py token BNB --publish
+
+diary-morning:
+	$(PYTHON) src/square_diary.py morning
+
+diary-night:
+	$(PYTHON) src/square_diary.py night
+
+install-diary-cron:
+	bash scripts/install_square_diary_cron.sh
 
 check:
 	$(PYTHON) -m py_compile src/main.py src/runtime_demo.py src/config.py src/api.py src/bridge_api.py src/square_cli.py src/analyzers/*.py src/formatters/*.py src/models/*.py src/services/*.py src/utils/*.py tests/*.py

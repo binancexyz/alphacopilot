@@ -1,0 +1,13 @@
+{
+  "timezone": "Asia/Phnom_Penh",
+  "morning_time": "07:30",
+  "night_time": "21:30",
+  "autopost": true,
+  "voice": "short personal diary + builder/dev log + market thoughts + mixed",
+  "market_focus": ["BNB", "BTC", "SOL"],
+  "custom_lines": [
+    "Built around Binance Skills + OpenClaw.",
+    "I want the product to feel sharper, calmer, and more useful each day.",
+    "Still aiming for less noise, better conviction."
+  ]
+}
