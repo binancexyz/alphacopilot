@@ -66,6 +66,8 @@ The scheduled engine now includes:
 - performance logging in `tmp/square_post_log.jsonl`
 - article seed capture in `tmp/square_article_seeds.jsonl`
 - weekly recap generation in `tmp/square_weekly_recap.md`
+- a stronger ecosystem intelligence pack for BNB Chain MCP, Binance Skills, bnbchain-skills, 8004scan, AI agents, and agent infrastructure
+- article draft generation via `python3 src/square_diary.py <slot> --article-draft`
 
 ## Success behavior
 On success, Binance returns a content id. The post URL format is:

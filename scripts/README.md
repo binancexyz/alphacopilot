@@ -44,4 +44,6 @@ The scheduler now works with a stronger quality layer around `src/square_diary.p
 - slot-specific hooks, voice, and series labels
 - CTA rotation for interaction
 - article seed capture in `tmp/square_article_seeds.jsonl`
+- article draft generation to `tmp/square_article_drafts.md`
 - weekly recap generation in `tmp/square_weekly_recap.md`
+- a stronger BNB ecosystem intelligence pack for ecosystem-aware post generation

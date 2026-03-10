@@ -20,6 +20,7 @@ CONFIG_PATH = ROOT / "config" / "square_diary.json"
 STATE_PATH = ROOT / "tmp" / "square_diary_state.json"
 LOG_PATH = ROOT / "tmp" / "square_post_log.jsonl"
 ARTICLE_SEEDS_PATH = ROOT / "tmp" / "square_article_seeds.jsonl"
+ARTICLE_DRAFTS_PATH = ROOT / "tmp" / "square_article_drafts.md"
 WEEKLY_RECAP_PATH = ROOT / "tmp" / "square_weekly_recap.md"
 
 DEFAULT_CONFIG = {
@@ -49,8 +50,8 @@ DEFAULT_CONFIG = {
         "builder": "13:30",
         "ecosystem": "15:30",
         "motivation": "18:30",
-        "night-diary": "21:30"
-    }
+        "night-diary": "21:30",
+    },
 }
 
 SERIES_NAMES = {
@@ -71,6 +72,33 @@ VOICE_GUIDE = {
     "ecosystem": "visionary, practical, BNB Chain-native",
     "motivation": "memorable, punchy, not cheesy",
     "night-diary": "earned, calm, reflective",
+}
+
+ECOSYSTEM_FACTS = {
+    "BNB Chain MCP": [
+        "BNB Chain MCP is useful because it gives agents a cleaner way to plug into chain-aware workflows instead of improvising every integration from scratch.",
+        "The practical value of BNB Chain MCP is not just connectivity — it is the chance to standardize useful agent behavior around onchain tasks.",
+    ],
+    "Binance Skills": [
+        "Binance Skills matter because they turn raw platform capabilities into reusable building blocks that agents can call repeatedly with better structure.",
+        "The strongest part of Binance Skills is leverage: builders can compose capabilities instead of rewriting the same glue code every time.",
+    ],
+    "bnbchain-skills": [
+        "The bnbchain-skills repo is interesting because it pushes toward reusable chain-native capabilities instead of one-off demos.",
+        "Reusable bnbchain-skills can shorten the path from idea to useful agent behavior, which is exactly what practical ecosystems need.",
+    ],
+    "8004scan": [
+        "8004scan adds a useful trust angle because visible agent identity and registration make ecosystems feel more inspectable.",
+        "Visible agent presence through 8004scan can help make agent infrastructure feel less opaque and more accountable.",
+    ],
+    "agent infrastructure": [
+        "Good agent infrastructure is not about making agents louder. It is about making them more reliable, inspectable, and composable.",
+        "The quality bar for agent infrastructure should be usefulness under pressure, not just impressive demos.",
+    ],
+    "AI agents": [
+        "AI agents become more useful when they can rely on reusable skills, cleaner state, and explicit workflows instead of prompt-only improvisation.",
+        "What makes AI agents valuable in crypto is not personality alone. It is reliable access to useful capabilities and good decision structure.",
+    ],
 }
 
 HOOKS = {
@@ -389,10 +417,16 @@ def pick_fresh(options: list[str], seen: list[str]) -> str:
     return random.choice(pool)
 
 
-def pick_topic(config: dict, state: dict[str, Any]) -> str:
+def pick_topic(config: dict, state: dict[str, Any], slot: str) -> str:
     topics = [str(x).strip() for x in config.get("topics", []) if str(x).strip()]
     if not topics:
         return "BNB Chain MCP"
+    if slot == "ecosystem":
+        preferred = [topic for topic in topics if topic in ECOSYSTEM_FACTS]
+        if preferred:
+            topic = pick_fresh(preferred, state.get("recent_topics", []))
+            remember(state, "recent_topics", topic)
+            return topic
     topic = pick_fresh(topics, state.get("recent_topics", []))
     remember(state, "recent_topics", topic)
     return topic
@@ -422,10 +456,19 @@ def pick_hook(slot: str, state: dict[str, Any]) -> tuple[str, str]:
     return hook_type, hook
 
 
+def ecosystem_fact(topic: str) -> str:
+    facts = ECOSYSTEM_FACTS.get(topic)
+    if not facts:
+        fallback = ECOSYSTEM_FACTS.get("agent infrastructure", [])
+        return random.choice(fallback) if fallback else ""
+    return random.choice(facts)
+
+
 def pick_body(slot: str, topic: str) -> list[str]:
     variants = BODY_BANK.get(slot, [])
     chosen = list(random.choice(variants)) if variants else []
     if slot == "ecosystem":
+        chosen.append(ecosystem_fact(topic))
         chosen.append(f"Right now the topic I keep coming back to is {topic}.")
     elif slot == "education":
         chosen.append(f"That is exactly why topics like {topic} deserve clearer workflows, not just more content.")
@@ -476,7 +519,7 @@ def cringe_filter(text: str, state: dict[str, Any]) -> list[str]:
 
 
 def build_post(slot: str, config: dict, state: dict[str, Any]) -> tuple[str, dict[str, str]]:
-    topic = pick_topic(config, state)
+    topic = pick_topic(config, state, slot)
     series = pick_series(slot, state)
     hook_type, hook = pick_hook(slot, state)
     bits = [f"{series}: {hook}"]
@@ -539,6 +582,33 @@ def generate_post(slot: str, config: dict, state: dict[str, Any]) -> tuple[str, 
     return last_text, last_meta, last_issues
 
 
+def article_outline(meta: dict[str, str], seed_text: str) -> str:
+    topic = meta.get("topic", "Topic")
+    series = meta.get("series", "Bibipilot Notes")
+    slot = meta.get("slot", "note")
+    outline = [
+        f"# {series} — {topic}\n",
+        f"_Source slot: {slot} | Voice: {meta.get('voice', 'clear')}_\n\n",
+        "## Hook\n",
+        f"{seed_text}\n\n",
+        "## Why this matters\n",
+        f"- Explain why {topic} matters now for builders, researchers, or users.\n",
+        "- Clarify what practical problem it solves better than generic tooling.\n",
+        "- Show the decision or workflow benefit, not just the concept.\n\n",
+        "## Key insight\n",
+        f"- Distill the strongest claim around {topic}.\n",
+        "- Contrast reusable skills/workflows with ad hoc prompts or noisy dashboards.\n",
+        "- Add one concrete example the reader can imagine using.\n\n",
+        "## Practical application\n",
+        "- How Bibipilot could use this in research, publishing, or ecosystem workflows.\n",
+        "- What builders should test next.\n",
+        "- What would make the workflow genuinely better, not just more complex.\n\n",
+        "## Closing take\n",
+        "- End with one strong takeaway and one forward-looking question.\n\n",
+    ]
+    return "".join(outline)
+
+
 def save_article_seed(now: datetime, meta: dict[str, str], text: str) -> None:
     if meta.get("slot") not in {"education", "ecosystem", "builder"}:
         return
@@ -549,8 +619,20 @@ def save_article_seed(now: datetime, meta: dict[str, str], text: str) -> None:
         "series": meta.get("series"),
         "title": f"Expand: {meta.get('series')} — {meta.get('topic')}",
         "seed_text": text,
+        "outline": article_outline(meta, text),
     }
     append_jsonl(ARTICLE_SEEDS_PATH, seed)
+
+
+def generate_article_draft(slot: str, config: dict, state: dict[str, Any]) -> tuple[str, dict[str, str]]:
+    text, meta, _ = generate_post(slot, config, state)
+    draft = article_outline(meta, text)
+    stamp = datetime.now().isoformat(timespec="seconds")
+    article_block = f"\n---\nGenerated: {stamp}\n\n{draft}"
+    ensure_tmp_dir()
+    with ARTICLE_DRAFTS_PATH.open("a", encoding="utf-8") as fh:
+        fh.write(article_block)
+    return draft, meta
 
 
 def refresh_weekly_recap() -> None:
@@ -586,12 +668,25 @@ def main() -> None:
     parser.add_argument("slot", choices=list(DEFAULT_CONFIG["schedule"].keys()))
     parser.add_argument("--publish", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--article-draft", action="store_true")
     args = parser.parse_args()
 
     config = load_config()
     state = load_state()
     tz = ZoneInfo(str(config.get("timezone", DEFAULT_CONFIG["timezone"])))
     now = datetime.now(tz)
+
+    if args.article_draft:
+        draft, meta = generate_article_draft(args.slot, config, state)
+        print(draft)
+        print()
+        print(f"slot: {args.slot}")
+        print(f"topic: {meta.get('topic')}")
+        print(f"series: {meta.get('series')}")
+        print(f"voice: {meta.get('voice')}")
+        print(f"saved_to: {ARTICLE_DRAFTS_PATH}")
+        return
+
     text, meta, issues = generate_post(args.slot, config, state)
     publish = args.publish or (config.get("autopost", False) and not args.dry_run)
     if issues and publish:
