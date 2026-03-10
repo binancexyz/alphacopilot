@@ -55,7 +55,7 @@ def analyze_price(symbol: str) -> AnalysisBrief:
         volume_24h = cmc["volume_24h"]
 
         if cmc["price"] > 0:
-            quick_verdict = f"{cmc['symbol']} price is coming from CoinMarketCap and looks clean enough for a direct market check right now."
+            quick_verdict = f"{cmc['symbol']} is trading at {price_value}, with a {change_24h:+.2f}% move over 24h."
             quality = "High"
             conviction = "Medium"
         else:
@@ -64,33 +64,23 @@ def analyze_price(symbol: str) -> AnalysisBrief:
             conviction = "Low"
 
         direction = "up" if change_24h > 0 else "down" if change_24h < 0 else "flat"
-        top_risks = [
-            "A clean price quote still does not tell you whether the broader setup is strong, crowded, or weakening.",
-        ]
-        why_it_matters = (
-            f"Current price: {price_value}. 24h change is {change_24h:+.2f}%, market cap is ${market_cap:,.0f}, "
-            f"and 24h volume is ${volume_24h:,.0f}."
-        )
-        what_to_watch_next = [
-            f"whether the {direction} 24h move extends or mean-reverts",
-            "whether volume stays supportive around the current price zone",
-            "whether the token still looks strong once price is compared with broader signal and risk context",
-        ]
-        risk_tags = [
-            RiskTag(name="Price Source", level="Low", note="CoinMarketCap quote"),
-            RiskTag(name="24h Change", level="Low", note=f"{change_24h:+.2f}%"),
-            RiskTag(name="24h Volume", level="Low", note=f"${volume_24h:,.0f}"),
-        ]
         return AnalysisBrief(
             entity=f"Price: {cmc['symbol']}",
             quick_verdict=quick_verdict,
             signal_quality=quality,
-            top_risks=top_risks,
-            why_it_matters=why_it_matters,
-            what_to_watch_next=what_to_watch_next,
-            risk_tags=risk_tags,
+            top_risks=["Price alone does not tell you whether the broader setup is strong or crowded."],
+            why_it_matters=f"24h volume: ${volume_24h:,.0f}. Market cap: ${market_cap:,.0f}.",
+            what_to_watch_next=[
+                f"whether the {direction} 24h move extends or cools off",
+                "whether volume stays supportive near this level",
+            ],
+            risk_tags=[
+                RiskTag(name="Source", level="Low", note="CoinMarketCap"),
+                RiskTag(name="24h Change", level="Low", note=f"{change_24h:+.2f}%"),
+                RiskTag(name="24h Volume", level="Low", note=f"${volume_24h:,.0f}"),
+            ],
             conviction=conviction,
-            beginner_note="A good quote is useful, but price alone is never the whole thesis.",
+            beginner_note="Useful for a quick check, not a full thesis.",
         )
 
     service = get_market_data_service()
@@ -98,20 +88,18 @@ def analyze_price(symbol: str) -> AnalysisBrief:
     ctx = normalize_token_context(raw_context)
 
     price_value = f"${ctx.price:,.2f}" if ctx.price > 0 else "Price unavailable"
-    liquidity_note = (
-        f"Liquidity context is visible at roughly ${ctx.liquidity:,.0f}." if ctx.liquidity > 0 else "Liquidity context is missing or weak."
-    )
+    liquidity_note = f"Liquidity: ~${ctx.liquidity:,.0f}." if ctx.liquidity > 0 else "Liquidity context is limited."
 
     if ctx.price > 0 and ctx.liquidity > 0:
-        quick_verdict = f"{ctx.display_name} price is available from the internal token context, with enough surrounding market detail to make a quick read usable."
+        quick_verdict = f"{ctx.symbol} is trading around {price_value}, using the internal token context fallback."
         quality = "Medium"
         conviction = "Low"
     elif ctx.price > 0:
-        quick_verdict = f"{ctx.display_name} price is available, but supporting market context is still thinner than ideal."
+        quick_verdict = f"{ctx.symbol} price is available at {price_value}, but surrounding market context is still thin."
         quality = "Medium"
         conviction = "Low"
     else:
-        quick_verdict = f"{ctx.display_name} does not currently have reliable price detail in this fallback path, so treat any quick read cautiously."
+        quick_verdict = f"{ctx.symbol} does not currently have a reliable price in the fallback path."
         quality = "Low"
         conviction = "Low"
 
@@ -119,38 +107,28 @@ def analyze_price(symbol: str) -> AnalysisBrief:
     if ctx.price <= 0:
         top_risks.append("Price data is missing or not clean enough to trust fully.")
     if ctx.liquidity <= 0:
-        top_risks.append("Liquidity context is limited, which weakens a simple price read.")
+        top_risks.append("Liquidity context is limited, which weakens the read.")
     if not top_risks:
-        top_risks.append("A visible price alone does not tell you whether the setup is strong, crowded, or weakening.")
-
-    why_it_matters = f"Current price: {price_value}. {liquidity_note}"
-    if ctx.market_rank_context:
-        why_it_matters += f" {ctx.market_rank_context}"
-
-    what_to_watch_next = [
-        "whether price context stays available and consistent",
-        "whether liquidity remains supportive around the current level",
-        "whether the token setup strengthens or weakens beyond the raw price print",
-    ]
-
-    risk_tags: list[RiskTag] = []
-    risk_tags.append(RiskTag(name="Price Confidence", level="Low" if ctx.price > 0 else "High", note=price_value))
-    risk_tags.append(
-        RiskTag(
-            name="Liquidity Context",
-            level="Low" if ctx.liquidity > 0 else "Medium",
-            note=f"~${ctx.liquidity:,.0f} liquidity" if ctx.liquidity > 0 else "Liquidity detail unavailable",
-        )
-    )
+        top_risks.append("Price alone is not enough to judge setup quality.")
 
     return AnalysisBrief(
         entity=f"Price: {ctx.symbol}",
         quick_verdict=quick_verdict,
         signal_quality=quality,
         top_risks=top_risks,
-        why_it_matters=why_it_matters,
-        what_to_watch_next=what_to_watch_next,
-        risk_tags=risk_tags,
+        why_it_matters=f"Current price: {price_value}. {liquidity_note}",
+        what_to_watch_next=[
+            "whether price stays stable and consistent",
+            "whether liquidity remains supportive",
+        ],
+        risk_tags=[
+            RiskTag(name="Price Confidence", level="Low" if ctx.price > 0 else "High", note=price_value),
+            RiskTag(
+                name="Liquidity",
+                level="Low" if ctx.liquidity > 0 else "Medium",
+                note=f"~${ctx.liquidity:,.0f}" if ctx.liquidity > 0 else "Unavailable",
+            ),
+        ],
         conviction=conviction,
-        beginner_note="Price is only one layer of the story. Context, liquidity, and risk still matter.",
+        beginner_note="Useful for a quick check, not a full thesis.",
     )
