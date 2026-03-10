@@ -5,9 +5,15 @@ class MockMarketDataService:
     def get_token_context(self, symbol: str) -> dict:
         return {
             "symbol": symbol,
-            "signal_quality": "Medium",
-            "quick_context": f"{symbol} has early positive context but still requires confirmation.",
-            "risks": [
+            "display_name": symbol,
+            "price": 0.0,
+            "liquidity": 1000000.0,
+            "holders": 10000,
+            "market_rank_context": f"{symbol} has visible market relevance, but attention still needs confirmation.",
+            "signal_status": "watch",
+            "signal_trigger_context": f"{symbol} has early positive context but still requires confirmation.",
+            "audit_flags": [],
+            "major_risks": [
                 "Signal may weaken if volume does not confirm.",
                 "Market sentiment can reverse short-term strength.",
             ],
