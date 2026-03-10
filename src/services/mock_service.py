@@ -43,9 +43,14 @@ class MockMarketDataService:
     def get_signal_context(self, token: str) -> dict:
         return {
             "token": token,
-            "signal_quality": "Medium",
-            "quick_context": f"{token} has a monitor-worthy setup, but the signal remains fragile.",
-            "risks": [
+            "signal_status": "watch",
+            "trigger_price": 0.0,
+            "current_price": 0.0,
+            "max_gain": 0.0,
+            "exit_rate": 0.0,
+            "audit_flags": [],
+            "supporting_context": f"{token} has a monitor-worthy setup, but the signal remains fragile.",
+            "major_risks": [
                 "A visible signal does not guarantee continuation.",
                 "Weak follow-through can turn momentum into noise.",
             ],
