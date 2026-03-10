@@ -1,7 +1,18 @@
 # Changelog
 
 ## Unreleased
-- Reserved for future live integration and polish updates.
+### Added
+- scheduled Binance Square content engine with 10 daily slots across diary, education, market, builder, ecosystem, and motivation formats
+- lightweight anti-repetition state tracking for high-frequency Square posting
+
+### Improved
+- README, scripts docs, and Binance Square docs updated to match the live publish/autopost flow
+- Makefile targets updated for the current Square diary slot names
+- local ignore rules updated to keep generated `tmp/` artifacts out of git
+
+### Fixed
+- live `/token BNB` matching across bridge and extractor layers
+- token brief risk leakage from unrelated ranked tokens
 
 ## 2026-03-10
 ### Added

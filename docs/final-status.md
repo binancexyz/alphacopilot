@@ -11,16 +11,19 @@
 - Python scaffold
 - mock/live split
 - normalized contracts
-- live extractor stubs
-- 4 upgraded command paths
+- upgraded live extractor paths
+- `/token BNB` live matching fix across bridge and extractor layers
+- live Binance Square draft/publish flow
+- scheduled Binance Square autoposting with a 10-post/day content engine
 - tests and checks
 - GitHub repo pushed
 
 ## What remains external/runtime-dependent
-- real OpenClaw runtime wiring
-- live Binance Skills Hub tool invocation
+- deeper real OpenClaw runtime wiring beyond the current bridge path
+- broader live Binance Skills Hub tool invocation coverage
 - final demo assets/screenshots/video
+- optional future media/article support for Binance Square
 
 ## Project state
-AlphaCopilot is now a strong public scaffold and a credible contest submission base.
-It is ready for the next engineering phase: real live runtime integration.
+AlphaCopilot is now beyond a scaffold: it has working live publishing, a maintained cron-based Square engine, and a clearer runtime-first Binance Skills direction.
+It is ready for continued quality tuning and broader live integration.

@@ -11,12 +11,14 @@ If you come back later and want the shortest summary possible:
 ## Current repo quality
 - scaffold is real and runnable
 - all four commands are shaped consistently
-- tests pass
-- docs are strong
+- `/token BNB` live matching has been fixed end-to-end
+- live Binance Square publishing works
+- the repo now has a cron-driven 10-post/day Square content engine
+- docs are updated
 - GitHub repo is already pushed
 
 ## Best next engineering move
-Implement the first live `/token` bridge.
+Improve content quality further with stronger hook selection, better topic rotation, and richer performance tracking.
 
 ## Best next presentation move
-Add screenshots and a short demo asset.
+Add screenshots, a short demo asset, and a few example live Square post links.

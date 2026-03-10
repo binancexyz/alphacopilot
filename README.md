@@ -126,11 +126,16 @@ make api
 
 ## Binance Square Posting
 
-A required Square posting scaffold is included.
-It supports draft mode now and env-based publish mode once the exact Binance Square endpoint/spec is confirmed.
+A required Square posting flow is included.
+It now supports:
+- Binance Square draft/publish via `src/square_cli.py`
+- scheduled high-frequency posting via `src/square_diary.py`
+- direct autoposting with env-based credentials
+- rotating diary / education / market / builder / ecosystem / motivation content slots
 
 ```bash
 python3 src/square_cli.py token BNB
+python3 src/square_diary.py ecosystem-1 --dry-run
 ```
 
 Endpoints:
@@ -168,6 +173,9 @@ What is now available for local live-mode development:
 - file-based live payload loading via `BINANCE_SKILLS_BASE_URL=file:///absolute/path/to/payloads`
 - HTTP adapter loading via `BINANCE_SKILLS_BASE_URL=https://...`
 - runtime bridge template flows that use raw payloads when provided
+- improved end-to-end `/token BNB` live matching in both bridge and extractor layers
+- working live Binance Square publishing from chat and CLI
+- scheduled Binance Square autoposting with a 10-post/day content engine in `src/square_diary.py`
 
 ## Architecture
 

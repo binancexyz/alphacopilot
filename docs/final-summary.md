@@ -13,7 +13,8 @@
 - installation notes
 - build checklist
 - API surface and deployment notes
-- Binance Square draft/publish scaffold
+- Binance Square live draft/publish flow
+- scheduled Binance Square 10-post/day content engine
 - local setup/env helper scripts
 
 ## Latest Binance Skills update
