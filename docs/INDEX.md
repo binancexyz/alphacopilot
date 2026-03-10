@@ -16,6 +16,7 @@
 - `signal-live-design.md`
 - `wallet-live-design.md`
 - `watchtoday-live-design.md`
+- `binance-skills-architecture-summary.md`
 
 ## Heuristics
 - `token-heuristics.md`

@@ -16,6 +16,8 @@ class SquarePostResult:
     text: str
     detail: str = ""
     response_body: str = ""
+    post_id: str = ""
+    post_url: str = ""
 
 
 def build_square_post(brief: AnalysisBrief, *, max_chars: int = 280) -> str:
@@ -39,6 +41,13 @@ def build_square_post(brief: AnalysisBrief, *, max_chars: int = 280) -> str:
     return trimmed + "…"
 
 
+def masked_square_key() -> str:
+    key = settings.square_api_key.strip()
+    if len(key) <= 9:
+        return "<set>" if key else "<missing>"
+    return f"{key[:5]}...{key[-4:]}"
+
+
 def publish_square_post(text: str, *, dry_run: bool = False) -> SquarePostResult:
     text = text.strip()
     if not text:
@@ -47,7 +56,7 @@ def publish_square_post(text: str, *, dry_run: bool = False) -> SquarePostResult
     if dry_run:
         return SquarePostResult(ok=True, mode="dry-run", text=text, detail="Draft prepared; not published.")
 
-    if not settings.square_api_key:
+    if not settings.square_api_key or settings.square_api_key == "your_api_key":
         return SquarePostResult(
             ok=False,
             mode="config",
@@ -64,19 +73,43 @@ def publish_square_post(text: str, *, dry_run: bool = False) -> SquarePostResult
         )
 
     endpoint = settings.square_api_base_url.rstrip("/") + settings.square_api_publish_path
-    payload = json.dumps({"text": text}).encode("utf-8")
+    payload = json.dumps({"bodyTextOnly": text}).encode("utf-8")
     headers = {
         "Content-Type": "application/json",
         settings.square_api_key_header: settings.square_api_key,
+        "clienttype": "binanceSkill",
     }
 
     req = request.Request(endpoint, data=payload, headers=headers, method="POST")
     try:
         with request.urlopen(req, timeout=20) as resp:
             body = resp.read().decode("utf-8", errors="replace")
-            return SquarePostResult(ok=True, mode="live", text=text, detail=f"Posted to {endpoint}", response_body=body)
+            return _parse_square_response(text=text, body=body, fallback_detail=f"Posted to {endpoint}")
     except HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
-        return SquarePostResult(ok=False, mode="live", text=text, detail=f"HTTP {exc.code} from Square API", response_body=body)
+        return _parse_square_response(text=text, body=body, fallback_detail=f"HTTP {exc.code} from Square API", ok_override=False)
     except URLError as exc:
         return SquarePostResult(ok=False, mode="live", text=text, detail=f"Connection error: {exc}")
+
+
+def _parse_square_response(text: str, body: str, fallback_detail: str, ok_override: bool | None = None) -> SquarePostResult:
+    try:
+        payload = json.loads(body) if body else {}
+    except json.JSONDecodeError:
+        payload = {}
+
+    code = str(payload.get("code", ""))
+    message = payload.get("message")
+    post_id = str((payload.get("data") or {}).get("id", "") or "")
+    ok = (code == "000000") if ok_override is None else ok_override and code == "000000"
+
+    detail = fallback_detail
+    if message:
+        detail = str(message)
+    elif code and code != "000000":
+        detail = f"Square API returned code {code}"
+    elif code == "000000" and not post_id:
+        detail = "Post may have succeeded, but Binance did not return a content id. Check Square manually."
+
+    post_url = f"https://www.binance.com/square/post/{post_id}" if post_id else ""
+    return SquarePostResult(ok=ok, mode="live", text=text, detail=detail, response_body=body, post_id=post_id, post_url=post_url)

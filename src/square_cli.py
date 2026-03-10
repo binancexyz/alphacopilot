@@ -11,7 +11,7 @@ from src.analyzers.market_watch import watch_today
 from src.analyzers.signal_check import analyze_signal
 from src.analyzers.token_analysis import analyze_token
 from src.analyzers.wallet_analysis import analyze_wallet
-from src.services.square_posts import build_square_post, publish_square_post
+from src.services.square_posts import build_square_post, masked_square_key, publish_square_post
 from src.utils.parsing import normalize_token_input, normalize_wallet_input
 
 
@@ -56,8 +56,12 @@ def main() -> None:
     print()
     print(f"mode: {result.mode}")
     print(f"status: {'ok' if result.ok else 'error'}")
+    if publish:
+        print(f"key: {masked_square_key()}")
     if result.detail:
         print(f"detail: {result.detail}")
+    if result.post_url:
+        print(f"post_url: {result.post_url}")
     if result.response_body:
         print(result.response_body)
 

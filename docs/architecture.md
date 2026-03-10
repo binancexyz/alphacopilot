@@ -73,10 +73,10 @@ Future options:
 Input -> token info + market rank + trading signal + token audit -> structured brief
 
 ### `/wallet <address>`
-Input -> address info + enrichment -> behavior summary + risk posture
+Input -> address info + optional token enrichment + optional trader/market context -> behavior summary + risk posture
 
 ### `/watchtoday`
-Input -> market rank + meme rush + trading signals -> top narratives + risk zones
+Input -> market rank + meme rush + trading signals -> top narratives + smart-money context + risk zones
 
 ### `/signal <token>`
 Input -> trading signal + token context + audit -> signal quality + confirmation conditions
