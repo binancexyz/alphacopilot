@@ -4,7 +4,7 @@
 ### Added
 - scheduled Binance Square content engine with 7 daily slots across diary, education, market, builder, ecosystem, motivation, and night reflection formats
 - lightweight anti-repetition state tracking for recurring Square posting
-- performance logging, article seed capture, and weekly recap generation for the Square content engine
+- performance logging, internal writing-seed capture, and weekly recap generation for the Square content engine
 - CTA rotation, topic rotation, series labels, and slot-specific voice profiles for Square posts
 
 ### Improved

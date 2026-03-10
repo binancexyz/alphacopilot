@@ -22,7 +22,7 @@
 - deeper real OpenClaw runtime wiring beyond the current bridge path
 - broader live Binance Skills Hub tool invocation coverage
 - final demo assets/screenshots/video
-- optional future media/article support for Binance Square
+- optional future media support for Binance Square
 
 ## Project state
 Bibipilot is now beyond a scaffold: it has working live publishing, a maintained cron-based Square engine, and a clearer runtime-first Binance Skills direction.

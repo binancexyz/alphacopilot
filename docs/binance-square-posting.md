@@ -64,10 +64,10 @@ The scheduled engine now includes:
 - recurring series labels
 - a cringe/generic filter that can block weak posts before publish
 - performance logging in `tmp/square_post_log.jsonl`
-- article seed capture in `tmp/square_article_seeds.jsonl`
 - weekly recap generation in `tmp/square_weekly_recap.md`
 - a stronger ecosystem intelligence pack for BNB Chain MCP, Binance Skills, bnbchain-skills, 8004scan, AI agents, and agent infrastructure
-- article draft generation via `python3 src/square_diary.py <slot> --article-draft`
+
+Internal note: the code may still keep article-seed files for future writing workflows, but **article publishing is not a supported product path right now**. The confirmed live path is Binance Square text posts only.
 
 ## Success behavior
 On success, Binance returns a content id. The post URL format is:
