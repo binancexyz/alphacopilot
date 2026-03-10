@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an improvement for AlphaCopilot
+about: Suggest an improvement for Bibipilot
 ---
 
 ## Problem

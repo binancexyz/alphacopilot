@@ -1,17 +1,17 @@
 # Live Bridge Spec
 
-This is the recommended production bridge contract for Alpha Copilot.
+This is the recommended production bridge contract for Bibipilot.
 
 ## Purpose
-Provide a single HTTP adapter that invokes real Binance Skills and returns raw payload bundles to Alpha Copilot.
+Provide a single HTTP adapter that invokes real Binance Skills and returns raw payload bundles to Bibipilot.
 
-Alpha Copilot should not guess direct APIs in its main app flow. The bridge should own:
+Bibipilot should not guess direct APIs in its main app flow. The bridge should own:
 - Binance Skills invocation
 - skill auth/runtime wiring
 - raw response collection
 - optional caching/retry behavior
 
-Alpha Copilot should own:
+Bibipilot should own:
 - extraction
 - normalization
 - heuristics
@@ -24,7 +24,7 @@ Example:
 https://your-bridge.example.com/runtime
 ```
 
-Set in Alpha Copilot as:
+Set in Bibipilot as:
 ```env
 APP_MODE=live
 BINANCE_SKILLS_BASE_URL=https://your-bridge.example.com/runtime
@@ -119,7 +119,7 @@ Entity:
 
 ## Bridge behavior rules
 - call Binance Skills with their documented headers / request shapes
-- keep skill invocation separate from Alpha Copilot interpretation
+- keep skill invocation separate from Bibipilot interpretation
 - return raw payloads as faithfully as possible
 - preserve Binance field names
 - do not compress away useful fields prematurely
@@ -130,7 +130,7 @@ Entity:
 If one skill fails:
 - return what succeeded
 - include metadata for failed skill names
-- let Alpha Copilot degrade confidence gracefully
+- let Bibipilot degrade confidence gracefully
 
 Example:
 ```json
@@ -163,5 +163,5 @@ Example:
 6. spot only later and separately gated
 
 ## Important note
-Alpha Copilot already supports this bridge pattern in `src/services/live_service.py`.
+Bibipilot already supports this bridge pattern in `src/services/live_service.py`.
 The main remaining work is building and deploying the bridge itself.

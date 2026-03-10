@@ -1,9 +1,9 @@
-# Contributing to AlphaCopilot
+# Contributing to Bibipilot
 
 Thanks for contributing.
 
 ## Product intent
-AlphaCopilot is a **signal-and-risk research copilot**.
+Bibipilot is a **signal-and-risk research copilot**.
 
 It is not meant to be:
 - a hype bot

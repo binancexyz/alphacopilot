@@ -1,15 +1,15 @@
-# AlphaCopilot
+# Bibipilot
 
 **Less noise. Better conviction.**
 
-**AlphaCopilot** is the short name for **Binance Alpha Copilot**.
+**Bibipilot** is the active product and repo name.
 
-Binance Alpha Copilot is an OpenClaw-based AI research assistant powered by Binance Skills Hub. It helps users analyze tokens, wallets, market signals, and risk in one place, then turns fragmented crypto data into a clear research brief.
+Bibipilot is an OpenClaw-based AI research assistant powered by Binance Skills Hub. It helps users analyze tokens, wallets, market signals, and risk in one place, then turns fragmented crypto data into a clear research brief.
 
 ## Quick Start
 
 ```bash
-cd binance-alpha-copilot
+cd bibipilot
 python3 src/main.py token BNB
 python3 src/main.py wallet 0x1234567890ab
 python3 src/main.py watchtoday
@@ -25,7 +25,7 @@ Instead of focusing on hype alone, it focuses on whether a signal is actually wo
 
 Most crypto tools tell users what is moving.
 
-Binance Alpha Copilot goes further: it helps users understand whether a signal is actually worth attention, what the risks are, and what to watch next before conviction increases.
+Bibipilot goes further: it helps users understand whether a signal is actually worth attention, what the risks are, and what to watch next before conviction increases.
 
 ## Problem
 
@@ -40,7 +40,7 @@ This creates too much noise and not enough interpretation.
 
 ## Solution
 
-Binance Alpha Copilot combines Binance Skills Hub capabilities into a signal-and-risk research workflow.
+Bibipilot combines Binance Skills Hub capabilities into a signal-and-risk research workflow.
 
 It turns raw tool outputs into a concise structure:
 - **Quick Verdict**
@@ -212,7 +212,7 @@ What is now available for local live-mode development:
 
 ## What Makes It Different
 
-Binance Alpha Copilot is not just another crypto assistant.
+Bibipilot is not just another crypto assistant.
 
 It is a **signal-and-risk copilot**.
 
@@ -244,4 +244,4 @@ Its goal is not to maximize noise. Its goal is to improve conviction.
 
 ## Judge-Friendly Pitch
 
-Binance Alpha Copilot helps users understand not just what is moving, but whether it is actually worth attention.
+Bibipilot helps users understand not just what is moving, but whether it is actually worth attention.

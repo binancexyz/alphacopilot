@@ -3,8 +3,8 @@
 If you come back later and want the shortest summary possible:
 
 ## Identity
-- Product: Binance Alpha Copilot
-- Short name: AlphaCopilot
+- Product: Bibipilot
+- Short name: Bibipilot
 - Positioning: signal-and-risk research copilot
 - Tagline: Less noise. Better conviction.
 

@@ -3,7 +3,7 @@
 ## Opening
 Crypto research is fragmented. Users jump across too many tools just to understand whether a token, wallet, or signal is actually worth attention.
 
-Binance Alpha Copilot solves that by combining OpenClaw and Binance Skills Hub into a signal-and-risk research copilot.
+Bibipilot solves that by combining OpenClaw and Binance Skills Hub into a signal-and-risk research copilot.
 
 ## Token Demo
 Here the assistant combines token context, signal data, and risk checks into one structured brief.
@@ -23,4 +23,4 @@ It focuses on quality, fragility, and confirmation conditions instead of hype.
 
 ## Closing
 Most crypto tools show movement.
-Binance Alpha Copilot helps users decide whether that movement is actually worth conviction.
+Bibipilot helps users decide whether that movement is actually worth conviction.

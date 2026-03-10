@@ -25,5 +25,5 @@
 - optional future media/article support for Binance Square
 
 ## Project state
-AlphaCopilot is now beyond a scaffold: it has working live publishing, a maintained cron-based Square engine, and a clearer runtime-first Binance Skills direction.
+Bibipilot is now beyond a scaffold: it has working live publishing, a maintained cron-based Square engine, and a clearer runtime-first Binance Skills direction.
 It is ready for continued quality tuning and broader live integration.

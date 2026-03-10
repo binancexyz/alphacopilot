@@ -2,7 +2,7 @@
 
 ## Mission
 
-Binance Alpha Copilot helps users understand not just what is moving, but whether it is actually worth attention.
+Bibipilot helps users understand not just what is moving, but whether it is actually worth attention.
 
 ## Main Workflows
 

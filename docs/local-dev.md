@@ -2,7 +2,7 @@
 
 ## Recommended flow
 ```bash
-cd binance-alpha-copilot
+cd bibipilot
 make check
 make test
 make token

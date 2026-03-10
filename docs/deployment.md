@@ -2,10 +2,10 @@
 
 ## Option 1: Docker
 ```bash
-docker build -t alphacopilot .
+docker build -t bibipilot .
 docker run --rm -p 8000:8000 \
   -e APP_MODE=mock \
-  alphacopilot
+  bibipilot
 ```
 
 For live mode:
@@ -15,7 +15,7 @@ docker run --rm -p 8000:8000 \
   -e BINANCE_SKILLS_BASE_URL=https://adapter.example.com/runtime \
   -e BINANCE_API_KEY=... \
   -e BINANCE_API_SECRET=... \
-  alphacopilot
+  bibipilot
 ```
 
 ## Option 2: Local process

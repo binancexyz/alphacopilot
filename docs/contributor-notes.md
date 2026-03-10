@@ -1,7 +1,7 @@
 # Contributor Notes
 
 ## Project intent
-AlphaCopilot is a signal-and-risk research copilot, not a hype bot and not an auto-profit promise machine.
+Bibipilot is a signal-and-risk research copilot, not a hype bot and not an auto-profit promise machine.
 
 ## Contribution priorities
 Best contribution areas:

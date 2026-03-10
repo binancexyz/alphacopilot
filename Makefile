@@ -1,6 +1,6 @@
 PYTHON=python3
 
-.PHONY: token wallet watchtoday signal check test runtime-demo api bridge-api square-draft square-publish diary-morning diary-night education-post market-open builder-post ecosystem-post motivation-post install-diary-cron
+.PHONY: token wallet watchtoday signal check test runtime-demo api bridge-api square-draft square-publish diary-morning education-post market-post builder-post ecosystem-post motivation-post diary-night install-diary-cron
 
 token:
 	$(PYTHON) src/main.py token BNB
@@ -33,19 +33,19 @@ diary-morning:
 	$(PYTHON) src/square_diary.py morning-diary
 
 education-post:
-	$(PYTHON) src/square_diary.py education-1
+	$(PYTHON) src/square_diary.py education
 
-market-open:
-	$(PYTHON) src/square_diary.py market-open
+market-post:
+	$(PYTHON) src/square_diary.py market
 
 builder-post:
-	$(PYTHON) src/square_diary.py builder-1
+	$(PYTHON) src/square_diary.py builder
 
 ecosystem-post:
-	$(PYTHON) src/square_diary.py ecosystem-1
+	$(PYTHON) src/square_diary.py ecosystem
 
 motivation-post:
-	$(PYTHON) src/square_diary.py motivation-1
+	$(PYTHON) src/square_diary.py motivation
 
 diary-night:
 	$(PYTHON) src/square_diary.py night-diary

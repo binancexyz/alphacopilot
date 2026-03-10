@@ -1,19 +1,19 @@
 # GitHub Metadata
 
 ## Recommended Repo Name
-- `alphacopilot`
+- `bibipilot`
 
 ## Alternative Repo Name
-- `alpha-copilot`
+- `bibipilot`
 
 ## Public Product Name
-- **Binance Alpha Copilot**
+- **Bibipilot**
 
 ## Short Brand Name
-- **AlphaCopilot**
+- **Bibipilot**
 
 ## GitHub Description
-AlphaCopilot: OpenClaw + Binance Skills Hub research copilot for token, wallet, signal, and risk analysis.
+Bibipilot: OpenClaw + Binance Skills Hub research copilot for token, wallet, signal, and risk analysis.
 
 ## Suggested Topics
 - openclaw
@@ -27,7 +27,7 @@ AlphaCopilot: OpenClaw + Binance Skills Hub research copilot for token, wallet, 
 - trading-signals
 
 ## Suggested First Commit Message
-`Initial AlphaCopilot scaffold`
+`Initial Bibipilot scaffold`
 
 ## Suggested Follow-up Commit Messages
 - `Add submission and launch docs`

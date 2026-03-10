@@ -1,7 +1,7 @@
 # Quote Posts
 
 ## Version 1
-Building **Binance Alpha Copilot** with OpenClaw.
+Building **Bibipilot** with OpenClaw.
 
 A Binance Skills Hub-powered **signal-and-risk research copilot** for:
 - token analysis
@@ -12,7 +12,7 @@ A Binance Skills Hub-powered **signal-and-risk research copilot** for:
 Goal: help users understand **not just what is moving, but whether it is actually worth attention.**
 
 ## Version 2
-Building **Binance Alpha Copilot**.
+Building **Bibipilot**.
 
 A Binance Skills Hub-powered AI copilot for:
 - signal quality
@@ -23,7 +23,7 @@ A Binance Skills Hub-powered AI copilot for:
 **Less noise. Better conviction.**
 
 ## Version 3
-My project for the Binance builder campaign: **Binance Alpha Copilot**.
+My project for the Binance builder campaign: **Bibipilot**.
 
 An OpenClaw-based research assistant that combines Binance Skills Hub tools to turn fragmented crypto data into a clean brief with:
 - quick verdict

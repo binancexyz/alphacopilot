@@ -14,14 +14,14 @@ Most entries may focus on:
 - dashboards
 - generic crypto chat
 
-Binance Alpha Copilot is different because it focuses on:
+Bibipilot is different because it focuses on:
 - signal quality
 - risk interpretation
 - wallet behavior
 - what to watch next
 
 ## Best narrative for judges
-"Most crypto tools show movement. Binance Alpha Copilot helps users decide whether that movement is actually worth conviction."
+"Most crypto tools show movement. Bibipilot helps users decide whether that movement is actually worth conviction."
 
 ## What not to overdo
 - giant frontend

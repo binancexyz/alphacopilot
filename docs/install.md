@@ -6,7 +6,7 @@
 
 ## Quick start
 ```bash
-cd binance-alpha-copilot
+cd bibipilot
 make check
 make test
 python3 src/main.py token BNB

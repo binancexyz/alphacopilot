@@ -12,7 +12,7 @@ from src.formatters.brief_formatter import format_brief
 from src.utils.parsing import normalize_token_input, normalize_wallet_input
 from src.utils.validation import looks_like_wallet_address
 
-app = FastAPI(title="Binance Alpha Copilot API", version="0.2.1")
+app = FastAPI(title="Bibipilot API", version="0.2.1")
 
 
 class BriefResponse(BaseModel):

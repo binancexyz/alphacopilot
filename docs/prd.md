@@ -1,12 +1,12 @@
 # Product Requirements Document (PRD)
 
-# Binance Alpha Copilot
+# Bibipilot
 
-**Short name:** AlphaCopilot  
+**Short name:** Bibipilot  
 **Tagline:** Less noise. Better conviction.
 
 ## 1. Product Summary
-Binance Alpha Copilot is a research-first AI copilot built on OpenClaw and Binance Skills Hub. It helps users move from fragmented token, wallet, meme, and smart-money data to a concise decision-support brief.
+Bibipilot is a research-first AI copilot built on OpenClaw and Binance Skills Hub. It helps users move from fragmented token, wallet, meme, and smart-money data to a concise decision-support brief.
 
 The product is designed to answer a simple question:
 
@@ -35,7 +35,7 @@ Most tools show movement. Fewer help users judge whether the movement deserves c
 ## 3. Vision
 Build the best Binance Skills-powered **signal-and-risk research copilot**.
 
-Alpha Copilot should:
+Bibipilot should:
 - reduce noise
 - improve conviction
 - surface risk clearly
@@ -366,6 +366,6 @@ Still remaining for full live readiness:
 - web/app expansion if needed
 
 ## 18. Final Positioning
-Binance Alpha Copilot is not just another crypto assistant.
+Bibipilot is not just another crypto assistant.
 
 It is a **signal-and-risk research copilot** that turns Binance Skills outputs into clearer conviction — and then turns good insight into a Binance Square-ready post.

@@ -6,5 +6,5 @@
 - reduce ambiguity around raw payload typing
 
 ## Current stance
-AlphaCopilot code quality is strongest in architecture and weakest in heuristic maturity.
+Bibipilot code quality is strongest in architecture and weakest in heuristic maturity.
 That is acceptable for a scaffold, but explicit typing and clearer boundaries improve maintainability.

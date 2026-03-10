@@ -1,6 +1,6 @@
 # Release Notes Draft
 
-## AlphaCopilot v0.1.0
+## Bibipilot v0.1.0
 Initial public scaffold release.
 
 ### Includes

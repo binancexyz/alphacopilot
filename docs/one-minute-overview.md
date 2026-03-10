@@ -1,6 +1,6 @@
 # One-Minute Overview
 
-AlphaCopilot is the short name for Binance Alpha Copilot.
+Bibipilot is the short name for Bibipilot.
 
 It is a signal-and-risk research copilot designed for the OpenClaw + Binance Skills Hub direction.
 

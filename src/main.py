@@ -16,7 +16,7 @@ from src.utils.parsing import normalize_token_input, normalize_wallet_input
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Binance Alpha Copilot scaffold CLI")
+    parser = argparse.ArgumentParser(description="Bibipilot scaffold CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     token_parser = subparsers.add_parser("token")

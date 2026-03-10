@@ -1,5 +1,5 @@
 [project]
-name = "alphacopilot"
+name = "bibipilot"
 version = "0.1.0"
 description = "Signal-and-risk research copilot built around OpenClaw and Binance Skills Hub"
 readme = "README.md"
@@ -9,7 +9,7 @@ authors = [
   { name = "Dara" }
 ]
 
-[tool.alphacopilot]
-product_name = "Binance Alpha Copilot"
-short_name = "AlphaCopilot"
+[tool.bibipilot]
+product_name = "Bibipilot"
+short_name = "Bibipilot"
 tagline = "Less noise. Better conviction."

@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a bug in AlphaCopilot
+about: Report a bug in Bibipilot
 ---
 
 ## What happened?

@@ -1,21 +1,21 @@
 # Submission Draft
 
 ## Project Name
-**Binance Alpha Copilot**
+**Bibipilot**
 
-**Short Name:** AlphaCopilot
+**Short Name:** Bibipilot
 
 ## Tagline
 **Less noise. Better conviction.**
 
 ## Short Description
-Binance Alpha Copilot is an OpenClaw-based AI research assistant powered by Binance Skills Hub. It helps users analyze tokens, wallets, market narratives, trading signals, and token risk in one place. Instead of showing raw dashboards and fragmented data, it produces a concise research brief with a quick verdict, signal quality, top risks, why it matters, and what to watch next.
+Bibipilot is an OpenClaw-based AI research assistant powered by Binance Skills Hub. It helps users analyze tokens, wallets, market narratives, trading signals, and token risk in one place. Instead of showing raw dashboards and fragmented data, it produces a concise research brief with a quick verdict, signal quality, top risks, why it matters, and what to watch next.
 
 ## Problem
 Crypto research is fragmented and noisy. Users often switch across token trackers, wallet explorers, market dashboards, signal tools, and audit checkers just to understand a single opportunity. This slows decisions and makes it hard to separate meaningful signals from hype.
 
 ## Solution
-Binance Alpha Copilot combines Binance Skills Hub capabilities into one signal-and-risk research workflow. It brings together token intelligence, wallet intelligence, market ranking, trading signal data, meme narrative tracking, and token audit checks, then summarizes them into a clean, decision-supportive format.
+Bibipilot combines Binance Skills Hub capabilities into one signal-and-risk research workflow. It brings together token intelligence, wallet intelligence, market ranking, trading signal data, meme narrative tracking, and token audit checks, then summarizes them into a clean, decision-supportive format.
 
 ## Core Output Format
 - **Quick Verdict**
@@ -69,7 +69,7 @@ Convert research output into a concise Binance Square-ready market brief as a co
 - practical, credible, and scalable
 
 ## Why It Matters
-Binance Alpha Copilot makes Binance intelligence easier to use and more decision-supportive. It helps users move from fragmented crypto data to clearer conviction.
+Bibipilot makes Binance intelligence easier to use and more decision-supportive. It helps users move from fragmented crypto data to clearer conviction.
 
 ## Closing Line
-Binance Alpha Copilot turns fragmented crypto data into clear, risk-aware research intelligence using OpenClaw and Binance Skills Hub.
+Bibipilot turns fragmented crypto data into clear, risk-aware research intelligence using OpenClaw and Binance Skills Hub.

@@ -1,9 +1,9 @@
 # Binance Skills Architecture Summary
 
-This is the cleanest current model of how Alpha Copilot should use Binance Skills.
+This is the cleanest current model of how Bibipilot should use Binance Skills.
 
 ## Core principle
-Alpha Copilot should integrate with Binance primarily through the **Skills/runtime model**, not by guessing ad hoc REST endpoints.
+Bibipilot should integrate with Binance primarily through the **Skills/runtime model**, not by guessing ad hoc REST endpoints.
 
 The preferred flow is:
 1. OpenClaw/runtime invokes Binance Skills
@@ -150,7 +150,7 @@ This should stay behind explicit confirmation and stronger safety controls.
 - gate any `spot` execution path behind explicit human confirmation
 
 ## Current product stance
-Alpha Copilot should be:
+Bibipilot should be:
 - research-first
 - signal-and-risk oriented
 - Square-output capable

@@ -1,7 +1,7 @@
 # Security Principles
 
 ## 1. Research first, execution later
-AlphaCopilot should begin as a research copilot, not an execution bot.
+Bibipilot should begin as a research copilot, not an execution bot.
 
 ## 2. Least privilege
 If API keys are ever used, start with the minimum permissions possible. Read-only is strongly preferred for early versions.

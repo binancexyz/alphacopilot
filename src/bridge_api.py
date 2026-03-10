@@ -12,11 +12,11 @@ from src.config import settings
 from src.services.binance_skill_mapping import SIGNAL_SKILLS, TOKEN_SKILLS, WALLET_SKILLS, WATCH_TODAY_SKILLS
 from src.utils.parsing import normalize_token_input
 
-app = FastAPI(title="Binance Alpha Copilot Live Bridge", version="0.2.0")
+app = FastAPI(title="Bibipilot Live Bridge", version="0.2.0")
 
 
 class BridgeMeta(BaseModel):
-    source: str = "alpha-copilot-bridge"
+    source: str = "bibipilot-bridge"
     generatedAt: str
     skills: list[str] = Field(default_factory=list)
     status: str = "not-implemented"

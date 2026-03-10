@@ -18,6 +18,9 @@ from src.services.square_posts import masked_square_key, publish_square_post
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "config" / "square_diary.json"
 STATE_PATH = ROOT / "tmp" / "square_diary_state.json"
+LOG_PATH = ROOT / "tmp" / "square_post_log.jsonl"
+ARTICLE_SEEDS_PATH = ROOT / "tmp" / "square_article_seeds.jsonl"
+WEEKLY_RECAP_PATH = ROOT / "tmp" / "square_weekly_recap.md"
 
 DEFAULT_CONFIG = {
     "timezone": "Asia/Phnom_Penh",
@@ -28,189 +31,280 @@ DEFAULT_CONFIG = {
         "Built around Binance Skills + OpenClaw.",
         "Still aiming for less noise, better conviction.",
         "The goal is simple: clearer thinking, better tools, stronger execution.",
+        "Good systems should make better judgment easier, not harder.",
+    ],
+    "topics": [
+        "BNB Chain MCP",
+        "Binance Skills",
+        "AI agents",
+        "crypto market structure",
+        "builder workflow",
+        "signal and risk",
+        "OpenClaw product design",
     ],
     "schedule": {
         "morning-diary": "07:30",
-        "education-1": "09:00",
-        "market-open": "10:30",
-        "builder-1": "12:00",
-        "ecosystem-1": "13:30",
-        "education-2": "15:00",
-        "market-close": "16:30",
-        "motivation-1": "18:00",
-        "builder-2": "19:30",
+        "education": "09:30",
+        "market": "11:30",
+        "builder": "13:30",
+        "ecosystem": "15:30",
+        "motivation": "18:30",
         "night-diary": "21:30"
     }
 }
 
+SERIES_NAMES = {
+    "morning-diary": ["Clawbot Journal", "Morning Build Notes"],
+    "education": ["Market Lessons", "Better Conviction Notes"],
+    "market": ["Tape Notes", "Market Signals"],
+    "builder": ["Builder Notes", "Shipping Log"],
+    "ecosystem": ["BNB Chain Agent Ideas", "Skills and MCP Notes"],
+    "motivation": ["Discipline Notes", "Builder Momentum"],
+    "night-diary": ["Clawbot Journal", "Night Wrap"],
+}
+
+VOICE_GUIDE = {
+    "morning-diary": "reflective, calm, forward-looking",
+    "education": "crisp, practical, useful",
+    "market": "selective, sharp, risk-aware",
+    "builder": "honest, technical, grounded",
+    "ecosystem": "visionary, practical, BNB Chain-native",
+    "motivation": "memorable, punchy, not cheesy",
+    "night-diary": "earned, calm, reflective",
+}
+
 HOOKS = {
-    "morning-diary": [
-        "Morning diary.",
-        "Good morning build note.",
-        "Morning check-in.",
-        "New day, same mission: build something sharper.",
-    ],
-    "night-diary": [
-        "Night diary.",
-        "Evening wrap-up.",
-        "End-of-day note.",
-        "Quiet progress report for tonight.",
-    ],
-    "education-1": [
-        "Quick education post.",
-        "Short lesson for today.",
-        "Education note.",
-        "One useful idea for builders and traders.",
-    ],
-    "education-2": [
-        "Second education note for today.",
-        "Another practical lesson.",
-        "Useful reminder.",
-        "Here is the part many people skip.",
-    ],
-    "market-open": [
-        "Market open thought.",
-        "Today's market setup.",
-        "Current market take.",
-        "If I had to summarize the tape in one line.",
-    ],
-    "market-close": [
-        "Late-day market reflection.",
-        "Closing market thought.",
-        "Market wrap-up note.",
-        "What the market is teaching today.",
-    ],
-    "builder-1": [
-        "Builder log.",
-        "Dev update.",
-        "Product thought.",
-        "A small builder note.",
-    ],
-    "builder-2": [
-        "Second builder note.",
-        "Shipping thought.",
-        "Evening builder log.",
-        "Another product lesson from the trenches.",
-    ],
-    "ecosystem-1": [
-        "Ecosystem note.",
-        "BNB Chain / skills thought.",
-        "Infra thought.",
-        "One ecosystem idea worth watching.",
-    ],
-    "motivation-1": [
-        "Motivation post.",
-        "Builder reminder.",
-        "Discipline note.",
-        "For anyone building through messy conditions.",
-    ],
+    "morning-diary": {
+        "builder-confession": [
+            "Morning diary: the product usually gets better through quiet fixes, not dramatic moments.",
+            "Morning note: I still trust steady iteration more than hype cycles.",
+        ],
+        "sharp-opinion": [
+            "Strong products are often built before they are fully understood.",
+            "The best builder mood is calm urgency, not chaos.",
+        ],
+        "curiosity": [
+            "What actually compounds in crypto product work is rarely the noisiest thing on the screen.",
+            "The real question this morning is not what is moving, but what is worth attention.",
+        ],
+    },
+    "education": {
+        "contrarian": [
+            "More information does not automatically create better decisions.",
+            "A trader can consume more and still understand less.",
+        ],
+        "lesson": [
+            "One lesson worth repeating: structure beats noise.",
+            "Here is a practical lesson most people learn too late.",
+        ],
+        "warning": [
+            "The expensive mistake is not missing information. It is trusting weak structure.",
+            "Most bad decisions look reasonable before risk is framed properly.",
+        ],
+    },
+    "market": {
+        "warning": [
+            "The market always gives you enough movement to justify a bad decision.",
+            "Activity is everywhere today, but activity alone is not a thesis.",
+        ],
+        "sharp-opinion": [
+            "Clean setups deserve attention. Loud setups deserve skepticism.",
+            "In this market, patience is often more profitable than participation.",
+        ],
+        "curiosity": [
+            "The most useful market question today is whether strength is real or just well-marketed.",
+            "What matters today is not the loudest coin, but the strongest follow-through.",
+        ],
+    },
+    "builder": {
+        "builder-confession": [
+            "Builder note: most quality gains come from fixing boring things well.",
+            "Shipping gets easier when the system becomes clearer, not just bigger.",
+        ],
+        "sharp-opinion": [
+            "A product becomes trustworthy long before it becomes impressive.",
+            "The best infrastructure feels obvious only after someone did the hard work.",
+        ],
+        "lesson": [
+            "One product lesson: users feel friction faster than teams notice it.",
+            "The invisible work is often the work that makes the whole product believable.",
+        ],
+    },
+    "ecosystem": {
+        "sharp-opinion": [
+            "MCP becomes more interesting when it is paired with real reusable skills.",
+            "BNB Chain gets more compelling when agents can do useful work, not just talk about it.",
+        ],
+        "curiosity": [
+            "What happens when BNB Chain agents stop rebuilding the same glue every week?",
+            "The interesting question is not whether agents can connect, but whether they can stay useful.",
+        ],
+        "lesson": [
+            "Reusable skills are leverage, not just convenience.",
+            "A strong agent ecosystem is built on composable capabilities, not prompt theater.",
+        ],
+    },
+    "motivation": {
+        "builder-confession": [
+            "Some of the best progress starts on days when the work still feels messy.",
+            "Momentum usually belongs to the people who keep showing up before it looks glamorous.",
+        ],
+        "sharp-opinion": [
+            "Discipline is still one of the cleanest edges in crypto.",
+            "Consistency keeps winning long after excitement fades.",
+        ],
+        "warning": [
+            "Waiting for perfect conditions is one of the cleanest ways to stay stuck.",
+            "If you need ideal conditions to begin, you will begin too late.",
+        ],
+    },
+    "night-diary": {
+        "builder-confession": [
+            "Night diary: real progress still feels quiet while it is happening.",
+            "Evening note: the work compounds before the credit does.",
+        ],
+        "lesson": [
+            "The day usually teaches more when you review it calmly.",
+            "One honest end-of-day lesson: clarity is earned, not assumed.",
+        ],
+        "sharp-opinion": [
+            "A good day is not measured by noise. It is measured by signal.",
+            "What deserves respect is not volume of effort, but quality of progress.",
+        ],
+    },
 }
 
 BODY_BANK = {
-    "education-1": [
+    "morning-diary": [
         [
-            "Crypto lesson: information is not the same as judgment.",
-            "Good workflows matter because raw dashboards, hot takes, and alerts can still leave people confused.",
+            "I want the day to start with clean priorities, useful output, and less wasted motion.",
+            "The goal is not to do everything. It is to sharpen the right things.",
+        ],
+        [
+            "I care a lot more about clarity than activity right now.",
+            "Better systems make better judgment easier, which is still one of the main goals behind this project.",
+        ],
+    ],
+    "education": [
+        [
+            "Good research workflows matter because raw dashboards, hot takes, and alerts can still leave people confused.",
             "The real edge is turning scattered data into a clear decision process: signal, risk, liquidity, and invalidation.",
         ],
         [
-            "A lot of people consume more data and still make worse decisions.",
-            "The missing layer is structure: what matters, what is noise, and what would change your view.",
-            "Better frameworks usually beat more tabs.",
-        ],
-    ],
-    "education-2": [
-        [
-            "One underrated skill in crypto is learning how to say no quickly.",
-            "Not every trending coin deserves deep research, and not every strong story has strong structure underneath it.",
-            "Fast rejection is part of good analysis.",
-        ],
-        [
-            "Education matters because most mistakes are not technical — they are emotional and process-driven.",
-            "People often confuse movement with opportunity and speed with conviction.",
             "A cleaner checklist can save more money than a louder signal source.",
+            "The missing layer in a lot of crypto research is not data. It is interpretation.",
+        ],
+        [
+            "Fast rejection is part of good analysis.",
+            "Not every trending token deserves deep research, and not every strong story has strong structure underneath it.",
         ],
     ],
-    "market-open": [
+    "market": [
         [
-            "Market today feels like a reminder to stay selective.",
             "There is always enough movement to create FOMO, but not every move deserves attention.",
             "Right now I care more about liquidity, confirmation, and whether strength is actually sustainable than about chasing noise.",
         ],
         [
-            "The market is active, but activity alone is not a thesis.",
-            "I want to see clean structure, strong follow-through, and risk that actually makes sense.",
-            "Noise is cheap. Clarity is expensive.",
-        ],
-    ],
-    "market-close": [
-        [
-            "Late-day market thought: good days reward clarity and messy days punish impatience.",
-            "If the move only works when you ignore risk, it probably is not that strong.",
-            "I would rather miss a weak trade than force a bad one.",
+            "Good market days reward clarity and messy days punish impatience.",
+            "If the idea only works when risk is ignored, it is probably not that strong.",
         ],
         [
-            "By the end of the day, the market usually tells you whether the narrative had real depth or just volume.",
             "I keep coming back to the same question: did strength hold up when attention rotated?",
-            "That answer matters more than social hype.",
+            "That answer matters more than timeline excitement.",
         ],
     ],
-    "builder-1": [
+    "builder": [
         [
             "Most product work is not one giant breakthrough.",
             "It is dozens of small fixes that make the system calmer, sharper, and more trustworthy.",
-            "That is where real quality usually comes from.",
         ],
         [
-            "The work I respect most is usually invisible from the outside.",
             "Cleaner extraction, fewer brittle paths, better defaults, and tighter loops do not look flashy, but they compound.",
             "That is how rough tools become dependable.",
         ],
-    ],
-    "builder-2": [
         [
-            "Builder note: shipping is not just about adding features.",
             "A lot of the real craft is reducing friction, ambiguity, and failure points.",
             "Users feel quality long before they can explain it.",
         ],
-        [
-            "The more I build, the more I care about systems that stay useful under pressure.",
-            "Anyone can make a demo look smart. The hard part is making the product stay useful when inputs get messy.",
-            "That is the standard worth chasing.",
-        ],
     ],
-    "ecosystem-1": [
+    "ecosystem": [
         [
             "BNB Chain MCP + skills feels like the right direction for practical agent infrastructure.",
             "If agents can plug into reusable chain-native skills instead of rebuilding the same glue every time, the user experience gets much better.",
-            "I am especially interested in workflows around BNB Chain MCP, bnbchain-skills, and visible agent identity via 8004scan.",
         ],
         [
-            "The interesting part of the BNB Chain skills ecosystem is not just tooling — it is leverage.",
-            "Reusable skills shorten the path from idea to working agent, which means builders can spend more time on product quality and less on repetitive integration work.",
-            "That is how ecosystems become real force multipliers.",
+            "Reusable skills shorten the path from idea to working agent.",
+            "That means builders can spend more time on product quality and less time on repetitive integration work.",
+        ],
+        [
+            "I am especially interested in workflows around BNB Chain MCP, bnbchain-skills, and visible agent identity via 8004scan.",
+            "That stack feels promising because it connects capability, distribution, and trust.",
         ],
     ],
-    "motivation-1": [
+    "motivation": [
         [
-            "Builder reminder: you do not need perfect conditions to make meaningful progress.",
             "Start with rough tools, small wins, and one clear improvement at a time.",
-            "In crypto, noise is everywhere. Discipline is the edge. Keep building.",
+            "In crypto, noise is everywhere. Discipline is the edge.",
         ],
         [
-            "Some of the best momentum comes from showing up on days when the work still feels messy.",
-            "Strong products are rarely born polished. They become sharp because someone kept learning, fixing, and refusing to drift.",
-            "Consistency is underrated alpha.",
+            "Strong products are rarely born polished.",
+            "They become sharp because someone kept learning, fixing, and refusing to drift.",
         ],
+        [
+            "Consistency is underrated alpha.",
+            "The compounding usually starts before the recognition does.",
+        ],
+    ],
+    "night-diary": [
+        [
+            "Today reminded me that real progress is usually quiet, cumulative, and earned.",
+            "What matters most is whether the system got clearer and more useful.",
+        ],
+        [
+            "I would rather end the day with cleaner thinking than louder output.",
+            "That usually ages better in both markets and product work.",
+        ],
+    ],
+}
+
+CTA_BANK = {
+    "education": [
+        "What is one research habit that improved your decisions the most?",
+        "Which part of your process catches weak ideas early?",
+    ],
+    "market": [
+        "What are you watching most closely right now: liquidity, narrative, or confirmation?",
+        "What matters more to you today: strength, follow-through, or risk clarity?",
+    ],
+    "builder": [
+        "What is one invisible product improvement you think users feel immediately?",
+        "What is the most underrated part of shipping clean tools?",
+    ],
+    "ecosystem": [
+        "What BNB Chain skill would make an agent genuinely more useful?",
+        "Which matters more for agent ecosystems: better protocols or better reusable skills?",
+    ],
+    "motivation": [
+        "What has compounded more for you lately: discipline or inspiration?",
+        "What small improvement are you shipping next?",
     ],
 }
 
 SEO_ENDINGS = [
     "#BNBChain #BinanceSquare #Crypto",
     "#Crypto #BNBChain #Builders",
-    "#MarketThoughts #BNBChain #AI",
-    "#CryptoEducation #BinanceSquare #BNBChain",
+    "#AIAgents #BNBChain #BinanceSquare",
+    "#CryptoEducation #BNBChain #Builders",
 ]
+
+BANNED_FRAGMENTS = {
+    "very strong direction",
+    "actually worth using",
+    "the future of",
+    "game changer",
+    "next big thing",
+    "revolutionary",
+}
 
 
 def ensure_tmp_dir() -> None:
@@ -230,7 +324,15 @@ def load_state() -> dict[str, Any]:
             return json.loads(STATE_PATH.read_text(encoding="utf-8"))
         except Exception:
             pass
-    return {"recent_hooks": [], "recent_lines": [], "recent_posts": []}
+    return {
+        "recent_hooks": [],
+        "recent_lines": [],
+        "recent_posts": [],
+        "recent_topics": [],
+        "recent_ctas": [],
+        "recent_series": [],
+        "recent_hook_types": [],
+    }
 
 
 def save_state(state: dict[str, Any]) -> None:
@@ -244,6 +346,12 @@ def remember(state: dict[str, Any], key: str, value: str, limit: int = 12) -> No
     state[key] = items[:limit]
 
 
+def append_jsonl(path: Path, item: dict[str, Any]) -> None:
+    ensure_tmp_dir()
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(item, ensure_ascii=False) + "\n")
+
+
 def run_git(*args: str) -> str:
     try:
         result = subprocess.run(["git", *args], cwd=ROOT, check=False, capture_output=True, text=True, timeout=10)
@@ -253,7 +361,7 @@ def run_git(*args: str) -> str:
 
 
 def recent_commit_summary() -> str:
-    log = run_git("log", "-4", "--pretty=%s")
+    log = run_git("log", "-3", "--pretty=%s")
     commits = [line.strip() for line in log.splitlines() if line.strip()]
     if not commits:
         return "Still building steadily behind the scenes."
@@ -281,6 +389,15 @@ def pick_fresh(options: list[str], seen: list[str]) -> str:
     return random.choice(pool)
 
 
+def pick_topic(config: dict, state: dict[str, Any]) -> str:
+    topics = [str(x).strip() for x in config.get("topics", []) if str(x).strip()]
+    if not topics:
+        return "BNB Chain MCP"
+    topic = pick_fresh(topics, state.get("recent_topics", []))
+    remember(state, "recent_topics", topic)
+    return topic
+
+
 def custom_line(config: dict, state: dict[str, Any]) -> str:
     lines = [str(x).strip() for x in config.get("custom_lines", []) if str(x).strip()]
     if not lines:
@@ -290,67 +407,178 @@ def custom_line(config: dict, state: dict[str, Any]) -> str:
     return line
 
 
-def project_line() -> str:
-    return "I'm shaping Clawbot into something more useful: clearer research briefs, smoother posting, and fewer brittle steps."
+def pick_series(slot: str, state: dict[str, Any]) -> str:
+    series = pick_fresh(SERIES_NAMES.get(slot, ["Bibipilot Notes"]), state.get("recent_series", []))
+    remember(state, "recent_series", series)
+    return series
 
 
-def pick_hook(slot: str, state: dict[str, Any]) -> str:
-    hook = pick_fresh(HOOKS.get(slot, ["Post update."]), state.get("recent_hooks", []))
+def pick_hook(slot: str, state: dict[str, Any]) -> tuple[str, str]:
+    slot_hooks = HOOKS.get(slot, {"default": ["Post update."]})
+    hook_type = pick_fresh(list(slot_hooks.keys()), state.get("recent_hook_types", []))
+    remember(state, "recent_hook_types", hook_type)
+    hook = pick_fresh(slot_hooks[hook_type], state.get("recent_hooks", []))
     remember(state, "recent_hooks", hook)
-    return hook
+    return hook_type, hook
 
 
-def pick_body(slot: str) -> list[str]:
+def pick_body(slot: str, topic: str) -> list[str]:
     variants = BODY_BANK.get(slot, [])
-    return random.choice(variants) if variants else []
+    chosen = list(random.choice(variants)) if variants else []
+    if slot == "ecosystem":
+        chosen.append(f"Right now the topic I keep coming back to is {topic}.")
+    elif slot == "education":
+        chosen.append(f"That is exactly why topics like {topic} deserve clearer workflows, not just more content.")
+    elif slot == "builder":
+        chosen.append(f"That mindset matters a lot when building around {topic}.")
+    return chosen
 
 
-def seo_tail(config: dict) -> str:
+def pick_cta(slot: str, state: dict[str, Any]) -> str:
+    options = CTA_BANK.get(slot, [])
+    if not options:
+        return ""
+    cta = pick_fresh(options, state.get("recent_ctas", []))
+    remember(state, "recent_ctas", cta)
+    return cta
+
+
+def seo_tail(config: dict, topic: str) -> str:
     keywords = [str(x).strip() for x in config.get("seo_keywords", []) if str(x).strip()]
     tags = random.choice(SEO_ENDINGS)
-    if not keywords:
-        return tags
-    lead = random.choice(keywords)
-    return f"{lead}. {tags}"
+    lead = random.choice(keywords) if keywords else topic
+    return f"{lead}, {topic}. {tags}"
 
 
-def build_post(slot: str, config: dict, state: dict[str, Any]) -> str:
-    opener = pick_hook(slot, state)
+def post_too_similar(text: str, state: dict[str, Any]) -> bool:
+    for recent in state.get("recent_posts", [])[:6]:
+        overlap = len(set(text.lower().split()) & set(recent.lower().split()))
+        if overlap >= 26:
+            return True
+    return False
+
+
+def cringe_filter(text: str, state: dict[str, Any]) -> list[str]:
+    issues: list[str] = []
+    lower = text.lower()
+    for fragment in BANNED_FRAGMENTS:
+        if fragment in lower:
+            issues.append(f"banned phrase: {fragment}")
+    if len(text) < 220:
+        issues.append("too short")
+    if len(text) > 950:
+        issues.append("too long")
+    if text.count("#") > 3:
+        issues.append("too many hashtags")
+    if post_too_similar(text, state):
+        issues.append("too similar to recent post")
+    return issues
+
+
+def build_post(slot: str, config: dict, state: dict[str, Any]) -> tuple[str, dict[str, str]]:
+    topic = pick_topic(config, state)
+    series = pick_series(slot, state)
+    hook_type, hook = pick_hook(slot, state)
+    bits = [f"{series}: {hook}"]
 
     if slot == "morning-diary":
-        bits = [
-            opener,
-            recent_commit_summary(),
-            working_tree_summary(),
-            project_line(),
-            focus_line(config, "Today I'm watching"),
-            "Quick market note: I care more about clean setups and risk control than chasing every move.",
-            custom_line(config, state),
-            seo_tail(config),
-        ]
+        bits.extend(
+            [
+                *pick_body(slot, topic),
+                recent_commit_summary(),
+                working_tree_summary(),
+                focus_line(config, "Today I'm watching"),
+                custom_line(config, state),
+            ]
+        )
     elif slot == "night-diary":
-        bits = [
-            opener,
-            recent_commit_summary(),
-            working_tree_summary(),
-            "Today reminded me that real progress is usually quiet, cumulative, and earned.",
-            focus_line(config, "Closing watchlist for tonight:"),
-            "End-of-day market thought: clean risk framing is usually more valuable than one extra hot take.",
-            custom_line(config, state),
-            seo_tail(config),
-        ]
-    elif slot in BODY_BANK:
-        bits = [opener, *pick_body(slot)]
-        if slot in {"builder-1", "builder-2"}:
-            bits.extend([recent_commit_summary(), working_tree_summary()])
-        if slot in {"market-open", "market-close"}:
-            bits.append(focus_line(config))
-        bits.extend([custom_line(config, state), seo_tail(config)])
+        bits.extend(
+            [
+                *pick_body(slot, topic),
+                recent_commit_summary(),
+                working_tree_summary(),
+                focus_line(config, "Closing watchlist:"),
+                custom_line(config, state),
+            ]
+        )
+    elif slot == "market":
+        bits.extend([*pick_body(slot, topic), focus_line(config), custom_line(config, state), pick_cta(slot, state)])
+    elif slot == "builder":
+        bits.extend([*pick_body(slot, topic), recent_commit_summary(), working_tree_summary(), pick_cta(slot, state)])
+    elif slot == "ecosystem":
+        bits.extend([*pick_body(slot, topic), custom_line(config, state), pick_cta(slot, state)])
+    elif slot == "motivation":
+        bits.extend([*pick_body(slot, topic), custom_line(config, state), pick_cta(slot, state)])
     else:
-        bits = [opener, custom_line(config, state), seo_tail(config)]
+        bits.extend([*pick_body(slot, topic), custom_line(config, state), pick_cta(slot, state)])
 
+    bits.append(seo_tail(config, topic))
     text = " ".join(bit.strip() for bit in bits if bit and bit.strip())
-    return text[:999].rstrip()
+    text = text[:999].rstrip()
+
+    meta = {
+        "slot": slot,
+        "topic": topic,
+        "series": series,
+        "hook_type": hook_type,
+        "voice": VOICE_GUIDE.get(slot, "clear"),
+    }
+    return text, meta
+
+
+def generate_post(slot: str, config: dict, state: dict[str, Any]) -> tuple[str, dict[str, str], list[str]]:
+    last_text = ""
+    last_meta: dict[str, str] = {}
+    last_issues: list[str] = []
+    for _ in range(8):
+        text, meta = build_post(slot, config, state)
+        issues = cringe_filter(text, state)
+        last_text, last_meta, last_issues = text, meta, issues
+        if not issues:
+            return text, meta, issues
+    return last_text, last_meta, last_issues
+
+
+def save_article_seed(now: datetime, meta: dict[str, str], text: str) -> None:
+    if meta.get("slot") not in {"education", "ecosystem", "builder"}:
+        return
+    seed = {
+        "timestamp": now.isoformat(),
+        "slot": meta.get("slot"),
+        "topic": meta.get("topic"),
+        "series": meta.get("series"),
+        "title": f"Expand: {meta.get('series')} — {meta.get('topic')}",
+        "seed_text": text,
+    }
+    append_jsonl(ARTICLE_SEEDS_PATH, seed)
+
+
+def refresh_weekly_recap() -> None:
+    if not LOG_PATH.exists():
+        return
+    lines = [json.loads(line) for line in LOG_PATH.read_text(encoding="utf-8").splitlines() if line.strip()]
+    recent = lines[-20:]
+    if not recent:
+        return
+    topics: dict[str, int] = {}
+    slots: dict[str, int] = {}
+    for item in recent:
+        topics[item.get("topic", "unknown")] = topics.get(item.get("topic", "unknown"), 0) + 1
+        slots[item.get("slot", "unknown")] = slots.get(item.get("slot", "unknown"), 0) + 1
+    top_topics = sorted(topics.items(), key=lambda kv: (-kv[1], kv[0]))[:5]
+    top_slots = sorted(slots.items(), key=lambda kv: (-kv[1], kv[0]))[:5]
+    content = [
+        "# Binance Square Weekly Recap\n",
+        "## Recent posting mix\n",
+        *[f"- {slot}: {count}\n" for slot, count in top_slots],
+        "\n## Top recurring topics\n",
+        *[f"- {topic}: {count}\n" for topic, count in top_topics],
+        "\n## Latest post links\n",
+    ]
+    for item in recent[-5:]:
+        if item.get("post_url"):
+            content.append(f"- {item['slot']} — {item['post_url']}\n")
+    WEEKLY_RECAP_PATH.write_text("".join(content), encoding="utf-8")
 
 
 def main() -> None:
@@ -364,22 +592,49 @@ def main() -> None:
     state = load_state()
     tz = ZoneInfo(str(config.get("timezone", DEFAULT_CONFIG["timezone"])))
     now = datetime.now(tz)
-    text = build_post(args.slot, config, state)
+    text, meta, issues = generate_post(args.slot, config, state)
     publish = args.publish or (config.get("autopost", False) and not args.dry_run)
-    result = publish_square_post(text, dry_run=not publish)
+    if issues and publish:
+        result = publish_square_post("", dry_run=True)
+        result.ok = False
+        result.detail = f"Blocked by quality filter: {', '.join(issues)}"
+    else:
+        result = publish_square_post(text, dry_run=not publish)
 
     if result.ok:
         remember(state, "recent_posts", text, limit=20)
         save_state(state)
+        append_jsonl(
+            LOG_PATH,
+            {
+                "timestamp": now.isoformat(),
+                "slot": meta.get("slot"),
+                "topic": meta.get("topic"),
+                "series": meta.get("series"),
+                "hook_type": meta.get("hook_type"),
+                "voice": meta.get("voice"),
+                "mode": result.mode,
+                "post_url": result.post_url,
+                "text": text,
+            },
+        )
+        save_article_seed(now, meta, text)
+        refresh_weekly_recap()
 
     print(text)
     print()
     print(f"slot: {args.slot}")
+    print(f"topic: {meta.get('topic')}")
+    print(f"series: {meta.get('series')}")
+    print(f"hook_type: {meta.get('hook_type')}")
+    print(f"voice: {meta.get('voice')}")
     print(f"now: {now.isoformat()}")
     print(f"timezone: {config.get('timezone')}")
     print(f"mode: {result.mode}")
     print(f"status: {'ok' if result.ok else 'error'}")
-    if publish:
+    if issues:
+        print(f"quality_issues: {', '.join(issues)}")
+    if publish and result.ok:
         print(f"key: {masked_square_key()}")
     if result.detail:
         print(f"detail: {result.detail}")

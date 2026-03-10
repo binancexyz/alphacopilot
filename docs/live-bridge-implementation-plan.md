@@ -1,10 +1,10 @@
 # Live Bridge Implementation Plan
 
 ## Goal
-Get Alpha Copilot onto real Binance skill data with the least architectural mess.
+Get Bibipilot onto real Binance skill data with the least architectural mess.
 
 ## Best solution
-Build a small Binance Skills bridge and point Alpha Copilot at it with:
+Build a small Binance Skills bridge and point Bibipilot at it with:
 
 ```env
 APP_MODE=live
@@ -14,7 +14,7 @@ BINANCE_SKILLS_BASE_URL=https://your-bridge.example.com/runtime
 ## Why this is best
 - keeps live skill invocation separate from interpretation
 - matches the Binance Skills model
-- keeps Alpha Copilot reusable
+- keeps Bibipilot reusable
 - simplifies testing/debugging
 - lets Square posting remain a separate product/output capability
 
@@ -66,7 +66,7 @@ Bridge must call:
 - health endpoint
 - partial-failure reporting
 
-## Alpha Copilot-side checklist
+## Bibipilot-side checklist
 Already largely done in repo:
 - live adapter path
 - raw extractors
@@ -75,7 +75,7 @@ Already largely done in repo:
 - Square post scaffold
 - bridge scaffold API (`src/bridge_api.py`)
 
-Remaining Alpha Copilot-side improvements:
+Remaining Bibipilot-side improvements:
 - richer analyzer language tuned to real skill semantics
 - better partial failure wording
 - more real-payload fixture tests
@@ -89,6 +89,6 @@ Good options:
 ## Success condition
 A real live token request works end-to-end:
 1. bridge invokes Binance Skills
-2. Alpha Copilot receives raw payload bundle
-3. Alpha Copilot produces brief
+2. Bibipilot receives raw payload bundle
+3. Bibipilot produces brief
 4. optional Square post can be generated/published from real brief

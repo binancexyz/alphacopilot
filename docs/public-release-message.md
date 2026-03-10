@@ -1,6 +1,6 @@
 # Public Release Message
 
-Launching **AlphaCopilot** — the short name for **Binance Alpha Copilot**.
+Launching **Bibipilot** — the short name for **Bibipilot**.
 
 It’s an OpenClaw + Binance Skills Hub research copilot focused on:
 - token analysis

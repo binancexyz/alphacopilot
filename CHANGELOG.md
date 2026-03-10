@@ -16,7 +16,7 @@
 
 ## 2026-03-10
 ### Added
-- Initial AlphaCopilot scaffold
+- Initial Bibipilot scaffold
 - Submission, launch, and demo docs
 - Agent identity and operating files
 - Python command scaffold for `/token`, `/signal`, `/wallet`, `/watchtoday`

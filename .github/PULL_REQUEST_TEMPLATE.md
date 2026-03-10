@@ -1,6 +1,6 @@
 ## Summary
 - what changed?
-- why does it help AlphaCopilot?
+- why does it help Bibipilot?
 
 ## Checklist
 - [ ] I kept the signal-and-risk positioning intact

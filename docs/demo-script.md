@@ -3,7 +3,7 @@
 ## Opening
 Crypto research is fragmented. Users jump across too many tools just to understand whether a token, wallet, or signal is actually worth attention.
 
-**Binance Alpha Copilot** solves that by combining Binance Skills Hub tools into a signal-and-risk research copilot.
+**Bibipilot** solves that by combining Binance Skills Hub tools into a signal-and-risk research copilot.
 
 ## Demo 1 — `/token PEPE`
 Show:
@@ -46,4 +46,4 @@ The assistant explains whether a signal is meaningful, fragile, or worth waiting
 ## Closing
 Most crypto tools show movement.
 
-**Binance Alpha Copilot** helps users decide whether that movement is actually worth conviction.
+**Bibipilot** helps users decide whether that movement is actually worth conviction.

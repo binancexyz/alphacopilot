@@ -1,15 +1,15 @@
 # Medium Submission
 
 ## Project Name
-Binance Alpha Copilot
+Bibipilot
 
-**Short Name:** AlphaCopilot
+**Short Name:** Bibipilot
 
 ## Tagline
 Less noise. Better conviction.
 
 ## Description
-Binance Alpha Copilot is an OpenClaw-based signal-and-risk research copilot powered by Binance Skills Hub. It helps users analyze tokens, wallets, market narratives, and trading signals in one place.
+Bibipilot is an OpenClaw-based signal-and-risk research copilot powered by Binance Skills Hub. It helps users analyze tokens, wallets, market narratives, and trading signals in one place.
 
 Instead of forcing users to jump across fragmented crypto tools, it combines token context, wallet behavior, market ranking, signal data, and token risk into a concise research brief:
 - Quick Verdict
@@ -19,7 +19,7 @@ Instead of forcing users to jump across fragmented crypto tools, it combines tok
 - What To Watch Next
 
 ## What makes it different
-Most crypto tools show movement. Binance Alpha Copilot helps users decide whether that movement is actually worth attention.
+Most crypto tools show movement. Bibipilot helps users decide whether that movement is actually worth attention.
 
 ## Skills used
 - query-token-info

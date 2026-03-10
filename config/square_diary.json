@@ -1,7 +1,7 @@
 {
   "timezone": "Asia/Phnom_Penh",
   "autopost": true,
-  "voice": "best overall: strong hooks, interesting, educational, market-aware, builder-focused, BNB Chain ecosystem aware",
+  "voice": "best overall: strong hooks, quality guardrails, topic rotation, interaction, builder voice, BNB Chain relevance",
   "market_focus": ["BNB", "BTC", "SOL"],
   "seo_keywords": [
     "BNB Chain",
@@ -10,6 +10,18 @@
     "builder mindset",
     "AI agents",
     "BNB Chain MCP"
+  ],
+  "topics": [
+    "BNB Chain MCP",
+    "Binance Skills",
+    "AI agents",
+    "crypto market structure",
+    "builder workflow",
+    "signal and risk",
+    "OpenClaw product design",
+    "bnbchain-skills",
+    "8004scan",
+    "agent infrastructure"
   ],
   "custom_lines": [
     "Built around Binance Skills + OpenClaw.",
@@ -20,14 +32,11 @@
   ],
   "schedule": {
     "morning-diary": "07:30",
-    "education-1": "09:00",
-    "market-open": "10:30",
-    "builder-1": "12:00",
-    "ecosystem-1": "13:30",
-    "education-2": "15:00",
-    "market-close": "16:30",
-    "motivation-1": "18:00",
-    "builder-2": "19:30",
+    "education": "09:30",
+    "market": "11:30",
+    "builder": "13:30",
+    "ecosystem": "15:30",
+    "motivation": "18:30",
     "night-diary": "21:30"
   }
 }

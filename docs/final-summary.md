@@ -19,7 +19,7 @@
 
 ## Latest Binance Skills update
 The newest project understanding is:
-- Alpha Copilot should follow the **Binance Skills/runtime model**
+- Bibipilot should follow the **Binance Skills/runtime model**
 - primary research skills are `query-token-info`, `query-address-info`, `crypto-market-rank`, `trading-signal`, `query-token-audit`, and `meme-rush`
 - `square-post` is a required product output/publishing skill
 - `spot` should be treated as a deferred higher-risk execution skill

@@ -22,7 +22,7 @@ def load_json(path: str) -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Runtime payload demo for AlphaCopilot")
+    parser = argparse.ArgumentParser(description="Runtime payload demo for Bibipilot")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_token = sub.add_parser("token")

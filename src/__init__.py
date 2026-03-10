@@ -1,1 +1,1 @@
-# Binance Alpha Copilot source package
+# Bibipilot source package

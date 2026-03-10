@@ -1,7 +1,7 @@
 # Heuristics Overview
 
 ## Why heuristics exist
-AlphaCopilot should not dump raw tool data directly.
+Bibipilot should not dump raw tool data directly.
 Heuristics provide a first-pass interpretation layer.
 
 ## Current heuristic areas

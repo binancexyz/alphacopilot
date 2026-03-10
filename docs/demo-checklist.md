@@ -14,4 +14,4 @@
 4. `/watchtoday`
 
 ## Closing line
-"Most crypto tools show movement. AlphaCopilot helps users decide whether that movement is actually worth conviction."
+"Most crypto tools show movement. Bibipilot helps users decide whether that movement is actually worth conviction."

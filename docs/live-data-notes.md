@@ -1,7 +1,7 @@
 # Live Data Notes
 
 ## Reality Check
-To become a real product, Binance Alpha Copilot needs live data wiring.
+To become a real product, Bibipilot needs live data wiring.
 
 The current scaffold intentionally separates:
 - product behavior

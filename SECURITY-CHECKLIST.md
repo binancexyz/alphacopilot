@@ -1,6 +1,6 @@
 # Security Checklist
 
-Use this checklist before treating AlphaCopilot as anything more than a research scaffold.
+Use this checklist before treating Bibipilot as anything more than a research scaffold.
 
 ## Secrets
 - [ ] No API keys committed to the repo
@@ -33,7 +33,7 @@ Use this checklist before treating AlphaCopilot as anything more than a research
 - [ ] Dependency footprint stays minimal and intentional
 
 ## Recommended MVP posture
-For best safety, AlphaCopilot should remain:
+For best safety, Bibipilot should remain:
 - read-only
 - research-focused
 - signal-and-risk oriented

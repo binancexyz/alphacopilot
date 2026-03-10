@@ -4,7 +4,7 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_DIR"
 
-echo "== Alpha Copilot local setup =="
+echo "== Bibipilot local setup =="
 echo "repo: $REPO_DIR"
 
 echo
