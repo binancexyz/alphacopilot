@@ -47,7 +47,7 @@ def _format_price_card(brief: AnalysisBrief) -> str:
     except ValueError:
         return _entity_line(brief.entity)
 
-    title = f"💰 [{name}](<{link}>) ({symbol})" if link else f"💰 {name} ({symbol})"
+    title = f"💰 {name} ({symbol})"
     parts = [title]
     if rank_i > 0:
         parts.append(f"Rank #{rank_i}")
