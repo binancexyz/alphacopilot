@@ -73,6 +73,7 @@ Already largely done in repo:
 - normalizers
 - brief builders
 - Square post scaffold
+- bridge scaffold API (`src/bridge_api.py`)
 
 Remaining Alpha Copilot-side improvements:
 - richer analyzer language tuned to real skill semantics

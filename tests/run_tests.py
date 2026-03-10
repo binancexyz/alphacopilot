@@ -55,6 +55,11 @@ def main() -> None:
             test_wallet_endpoint_rejects_bad_address,
             test_watchtoday_endpoint,
         )
+        from tests.test_bridge_api import (
+            test_bridge_health,
+            test_bridge_runtime_requires_entity_for_token,
+            test_bridge_runtime_token_contract,
+        )
     except ModuleNotFoundError:
         print("Skipping API tests: FastAPI test dependencies are not installed on this host.")
     else:
@@ -62,6 +67,9 @@ def main() -> None:
         test_token_endpoint()
         test_watchtoday_endpoint()
         test_wallet_endpoint_rejects_bad_address()
+        test_bridge_health()
+        test_bridge_runtime_token_contract()
+        test_bridge_runtime_requires_entity_for_token()
 
     print("All tests passed.")
 
