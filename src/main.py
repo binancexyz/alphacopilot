@@ -1,0 +1,48 @@
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+if __package__ is None or __package__ == "":
+    sys.path.append(str(Path(__file__).resolve().parents[1]))
+
+from src.analyzers.market_watch import watch_today
+from src.analyzers.signal_check import analyze_signal
+from src.analyzers.token_analysis import analyze_token
+from src.analyzers.wallet_analysis import analyze_wallet
+from src.formatters.brief_formatter import format_brief
+from src.utils.parsing import normalize_token_input, normalize_wallet_input
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Binance Alpha Copilot scaffold CLI")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    token_parser = subparsers.add_parser("token")
+    token_parser.add_argument("symbol")
+
+    wallet_parser = subparsers.add_parser("wallet")
+    wallet_parser.add_argument("address")
+
+    signal_parser = subparsers.add_parser("signal")
+    signal_parser.add_argument("token")
+
+    subparsers.add_parser("watchtoday")
+
+    args = parser.parse_args()
+
+    if args.command == "token":
+        brief = analyze_token(normalize_token_input(args.symbol))
+    elif args.command == "wallet":
+        brief = analyze_wallet(normalize_wallet_input(args.address))
+    elif args.command == "signal":
+        brief = analyze_signal(normalize_token_input(args.token))
+    else:
+        brief = watch_today()
+
+    print(format_brief(brief))
+
+
+if __name__ == "__main__":
+    main()
