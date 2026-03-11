@@ -112,7 +112,7 @@ class LiveMarketDataService:
         candidates = self._candidate_paths(base_path, command, entity)
         for path in candidates:
             resolved = path.resolve()
-            if not str(resolved).startswith(str(base_path)):
+            if not resolved.is_relative_to(base_path):
                 continue
             if resolved.exists() and resolved.is_file():
                 with open(resolved, "r", encoding="utf-8") as f:
