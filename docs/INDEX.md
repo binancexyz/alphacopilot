@@ -18,6 +18,8 @@
 - `wallet-live-design.md`
 - `watchtoday-live-design.md`
 - `binance-skills-architecture-summary.md`
+- `skill-command-matrix.md`
+- `output-evolution-plan.md`
 - `live-bridge-spec.md`
 - `live-bridge-implementation-plan.md`
 

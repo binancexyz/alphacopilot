@@ -46,17 +46,22 @@ This creates too much noise and not enough interpretation.
 
 Bibipilot combines Binance Skills Hub capabilities into a signal-and-risk research workflow.
 
-It turns raw tool outputs into a concise structure:
-- **Quick Verdict**
-- **Signal Quality**
-- **Top Risks**
-- **Why It Matters**
-- **What To Watch Next**
+It does not force every command into one generic answer shape.
+Instead, each command is designed to answer its own question well:
 
-Optional:
-- **Risk Tags**
-- **Conviction Level**
-- **Beginner Note**
+- `/price` -> compact market card
+- `/brief` -> ultra-compact synthesis
+- `/risk` -> downside-first risk card
+- `/token` -> token setup + risk + watch view
+- `/signal` -> setup validity and timing read
+- `/wallet` -> wallet interpretation and followability
+- `/watchtoday` -> market prioritization
+
+The longer-term design direction is:
+
+**research -> judgment -> publishing**
+
+That means Binance Skills provide raw evidence, Bibipilot adds interpretation, and `square-post` becomes the publishing layer.
 
 ## Core Features
 

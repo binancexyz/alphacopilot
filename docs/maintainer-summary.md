@@ -10,7 +10,9 @@ If you come back later and want the shortest summary possible:
 
 ## Current repo quality
 - scaffold is real and runnable
-- all four commands are shaped consistently
+- slash layer is broader now: `/token`, `/brief`, `/price`, `/risk`, `/signal`, `/wallet`, `/watchtoday`, and `watch today`
+- `/price`, `/brief`, and `/risk` have compact purpose-specific layouts
+- `/token`, `/signal`, `/wallet`, and `/watchtoday` now use command-specific layouts instead of one generic long-form template
 - `/token BNB` live matching has been fixed end-to-end
 - live Binance Square publishing works
 - the repo now has a cron-driven 7-post/day Square content engine with guardrails, topic rotation, CTAs, performance logging, and stronger ecosystem-aware generation
@@ -18,7 +20,7 @@ If you come back later and want the shortest summary possible:
 - GitHub repo is already pushed
 
 ## Best next engineering move
-Improve content quality further with stronger hook selection, better topic rotation, and richer performance tracking.
+Implement the stronger Binance-skill judgment layer: audit hard gates, signal freshness, exit-rate interpretation, named-feed `/watchtoday`, and new `/audit` + `/meme` commands.
 
 ## Best next presentation move
-Add screenshots, a short demo asset, and a few example live Square post links.
+Turn the skill-to-command mapping and research -> judgment -> publishing story into the challenge package, then add screenshots, a short demo asset, and a few example live Square post links.
