@@ -1,259 +1,237 @@
 # Bibipilot
 
-**Less noise. Better conviction.**
+**Bibipilot checks what’s moving, filters what’s dangerous, and publishes what’s worth attention.**
 
-**Bibipilot** is the active product and repo name.
-
-Bibipilot is an OpenClaw-based AI research assistant powered by Binance Skills Hub. It helps users analyze tokens, wallets, market signals, and risk in one place, then turns fragmented crypto data into a clear research brief.
-
-## Quick Start
-
-```bash
-cd bibipilot
-python3 src/main.py token BNB
-python3 src/main.py brief BNB
-python3 src/main.py price BNB
-python3 src/main.py risk BNB
-python3 src/main.py wallet 0x1234567890ab
-python3 src/main.py watchtoday
-python3 src/main.py watch today
-python3 src/main.py signal DOGE
-```
-
-## Contest Framing
-
-This project is designed as a **signal-and-risk research copilot** for the Binance + OpenClaw builder direction.
-Instead of focusing on hype alone, it focuses on whether a signal is actually worth attention.
-
-## Core Idea
-
-Most crypto tools tell users what is moving.
-
-Bibipilot goes further: it helps users understand whether a signal is actually worth attention, what the risks are, and what to watch next before conviction increases.
-
-## Problem
-
-Crypto research is fragmented and noisy. Users often jump between:
-- token trackers
-- wallet explorers
-- market dashboards
-- signal tools
-- contract risk checkers
-
-This creates too much noise and not enough interpretation.
-
-## Solution
-
-Bibipilot combines Binance Skills Hub capabilities into a signal-and-risk research workflow.
-
-It does not force every command into one generic answer shape.
-Instead, each command is designed to answer its own question well:
-
-- `/price` -> compact market card
-- `/brief` -> ultra-compact synthesis
-- `/risk` -> downside-first risk card
-- `/token` -> token setup + risk + watch view
-- `/signal` -> setup validity and timing read
-- `/wallet` -> wallet interpretation and followability
-- `/watchtoday` -> market prioritization
-
-The longer-term design direction is:
+Bibipilot is a **Binance-native research copilot** built around a simple workflow:
 
 **research -> judgment -> publishing**
 
-That means Binance Skills provide raw evidence, Bibipilot adds interpretation, and `square-post` becomes the publishing layer.
+It uses Binance Skills as the evidence layer, adds a judgment layer on top, and can turn useful output into Binance Square posts.
 
-## Core Features
+> Status: **public alpha**
+>
+> Bibipilot already has a real command surface, live Binance Square publishing proof, and partially live bridge/runtime coverage. It is not finished, but it is well beyond concept stage.
 
-### 1. Token Intel
-Analyze token context, liquidity, holders, signal quality, and risk.
+---
 
-### 2. Wallet Intel
-Interpret wallet behavior, concentration, exposure, and risk posture.
+## Why Bibipilot exists
 
-### 3. Watch Today
-Summarize top narratives, strongest signals, and main risk zones.
+Crypto users can already find plenty of raw movement:
+- token activity
+- wallet activity
+- smart-money signals
+- trending sectors
+- risk tools
 
-### 4. Signal Check
-Explain whether a trading signal is meaningful, fragile, or worth monitoring.
+The harder part is deciding:
+- what is real
+- what is risky
+- what is late
+- what is worth publishing
 
-### 5. Square Publishing
-Convert research output into a Binance Square-ready short post and treat publishing capability as a core part of the product.
+Bibipilot is designed for that gap.
 
-## Binance Skills Used
+It does not try to be a full autonomous trading system.
+It tries to be the layer between **raw crypto signals** and **usable conviction**.
 
+---
+
+## What it does
+
+Bibipilot currently supports:
+
+- `/price` — compact market card
+- `/brief` — fast synthesis
+- `/risk` — downside-first risk read
+- `/audit` — security-first audit card
+- `/token` — token setup and conviction read
+- `/signal` — timing and setup validation
+- `/wallet` — wallet interpretation with follow verdict
+- `/watchtoday` — daily market board with live lanes
+- `/meme` — first-pass meme scan
+
+It also supports Binance Square publishing and a scheduled content engine.
+
+---
+
+## What makes it different
+
+### 1. It has a real judgment layer
+Bibipilot does not stop at surfacing movement.
+It tries to answer:
+- should I care?
+- should I trust this?
+- should I avoid this?
+- should this be published?
+
+### 2. It is Binance-native
+Bibipilot is built around Binance Skills for evidence and Binance Square for output.
+
+### 3. It has a real publishing loop
+Bibipilot is not just an analysis interface.
+It can publish live text posts to Binance Square and already includes a scheduled posting engine.
+
+### 4. It is command-specific
+Each command is shaped for its own job rather than forcing everything into one generic answer template.
+
+---
+
+## Current architecture
+
+### Evidence layer
 Primary research skills:
 - `query-token-info`
-- `query-address-info`
-- `crypto-market-rank`
-- `trading-signal`
 - `query-token-audit`
+- `query-address-info`
+- `trading-signal`
+- `crypto-market-rank`
 - `meme-rush`
 
-Required publishing/output skill:
+### Publishing layer
 - `square-post`
 
-Deferred higher-risk execution skill:
+### Deferred execution
 - `spot`
 
-## Latest Integration Direction
+### Product logic
+Binance Skills provide evidence.
+Bibipilot adds judgment.
+Binance Square becomes the publishing layer.
 
-The latest project lesson is to treat Binance capabilities primarily as **Skills/runtime tools**, not as guessed standalone REST endpoints.
+---
 
-That means the preferred live path is:
-- OpenClaw/runtime invokes Binance Skills
-- raw skill outputs are collected
-- Python extracts, normalizes, interprets, and formats
+## Quick start
 
-This repo already supports the repo-side normalization/brief pipeline. The remaining live work is to connect the real Binance Skills/runtime layer cleanly.
+### 1. Clone and install
+```bash
+git clone https://github.com/binancexyz/bibipilot.git
+cd bibipilot
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-## Recommended Stack
+### 2. Basic CLI usage
+```bash
+python3 src/main.py price BNB
+python3 src/main.py brief BTC
+python3 src/main.py audit BNB
+python3 src/main.py signal BNB
+python3 src/main.py wallet 0x1234567890ab
+python3 src/main.py watchtoday
+python3 src/main.py meme DOGE
+```
 
-- **OpenClaw** — agent runtime
-- **Binance Skills Hub** — crypto skill layer
-- **Python** — reusable logic and formatting
-- **Telegram** — primary chat/demo interface
-- **GitHub** — source control and long-term project home
-
-## Helper Scripts
-
-- `scripts/check_all.sh` — run local checks
-- `scripts/demo_capture.sh` — print demo-friendly command output
-- `scripts/summary.sh` — print a quick repo/project summary
-- `scripts/export_examples.sh` — export current command outputs into example files
-- `scripts/runtime_demo_all.sh` — run the raw-payload runtime demo flow
-
-## API Mode
-
-A lightweight FastAPI app is included for serving formatted briefs.
-
-Note: the core CLI works in mock mode without optional API/live HTTP dependencies installed. The API and HTTP live mode require installing `requirements.txt`.
-
+### 3. Optional API mode
 ```bash
 make api
 ```
 
-## Binance Square Posting
+---
 
-A required Square posting flow is included.
-It now supports:
-- Binance Square draft/publish via `src/square_cli.py`
-- scheduled posting via `src/square_diary.py`
-- direct autoposting with env-based credentials
-- a verified 7-slot Asia/Phnom_Penh cron schedule
-- rotating morning-diary / education / market / builder / ecosystem / motivation / night-diary content slots
+## Mock mode vs live mode
 
-```bash
-python3 src/square_cli.py token BNB
-python3 src/square_diary.py ecosystem --dry-run
-```
+Bibipilot supports both mock and partially live development paths.
 
-Endpoints:
-- `/health`
-- `/brief/token?symbol=BNB`
-- `/brief/signal?token=DOGE`
-- `/brief/wallet?address=0x1234567890ab`
-- `/brief/watchtoday`
+### Mock mode
+Useful for:
+- local development
+- testing formatters
+- stable demos without live dependencies
 
-Responses include:
-- `command`
-- `entity`
-- `mode`
-- `rendered`
-- optional `warning`
+### Live mode
+Useful for:
+- bridge/runtime testing
+- live payload extraction
+- Binance Square publishing flows
 
-## Project Status
+Current live bridge coverage is strongest for:
+- `token`
+- `signal`
+- `audit`
+- `watchtoday`
 
-This repo is currently a **strong runnable scaffold**.
+Wallet and meme quality still depend on thinner live context and are still evolving.
 
-What is already here:
-- command architecture for `/token`, `/brief`, `/price`, `/risk`, `/signal`, `/wallet`, `/watchtoday`, and `watch today`
-- normalized data contracts
-- mock/live service split
-- heuristics and formatter logic
-- tests and repo automation
-- submission and launch docs
+---
 
-What still depends on runtime integration:
-- real OpenClaw live command wiring
-- real Binance Skills Hub tool invocation
-- live payload collection from runtime outputs
+## Binance Square publishing
 
-What is now available for local live-mode development:
-- file-based live payload loading via `BINANCE_SKILLS_BASE_URL=file:///absolute/path/to/payloads`
-- HTTP adapter loading via `BINANCE_SKILLS_BASE_URL=https://...`
-- runtime bridge template flows that use raw payloads when provided
-- improved end-to-end `/token BNB` live matching in both bridge and extractor layers
-- working live Binance Square publishing from chat and CLI
-- scheduled Binance Square autoposting with a verified quality-focused 7-post/day cron engine in `src/square_diary.py`
-- `make bridge-live` for starting the local bridge with `.env` loaded
-- compact `/price`, `/brief`, and `/risk` flows with stable market quotes using CoinGecko-first live sourcing and fallback behavior
+Bibipilot already includes:
+- live Binance Square posting
+- draft/publish support
+- scheduled 7-post/day engine
+- Asia/Phnom_Penh cron schedule
 
-## Architecture
+This matters because Bibipilot is not only built for internal analysis.
+It is also built to produce publishable output.
 
-### Layer 1 — OpenClaw
-- agent runtime
-- command routing
-- chat interaction
-- tool usage
+---
 
-### Layer 2 — Binance Skills Hub
-- token data
-- wallet analysis
-- market rankings
-- trading signals
-- token audit checks
+## Safety posture
 
-### Layer 3 — Python Logic
-- signal interpretation
-- wallet behavior summaries
-- risk tagging
-- response formatting
-- conviction summaries
+Bibipilot should currently be understood as:
+- read-oriented
+- research-first
+- human-supervised
+- risk-aware
 
-### Layer 4 — Interface
-- Telegram first
-- web UI later if needed
+It should **not** be described as a finished autonomous trading system.
 
-## MVP Commands
+If you work on this repo:
+- never commit secrets
+- keep `.env` private
+- keep risk visible in outputs
+- prefer lower-confidence wording when live context is incomplete
 
-- `/token <symbol>`
-- `/wallet <address>`
-- `/watchtoday`
-- `/signal <token>`
+Also review:
+- `SECURITY.md`
+- `SECURITY-CHECKLIST.md`
 
-## What Makes It Different
+---
 
-Bibipilot is not just another crypto assistant.
+## Best docs to start with
 
-It is a **signal-and-risk copilot**.
+- `docs/INDEX.md`
+- `docs/judge-cheat-sheet.md`
+- `docs/live-proof-appendix.md`
+- `docs/submission.md`
+- `docs/demo-script.md`
+- `docs/skill-command-matrix.md`
+- `docs/output-evolution-plan.md`
+- `docs/install.md`
+- `docs/quick-reference.md`
 
-Its goal is not to maximize noise. Its goal is to improve conviction.
+---
 
-## Key Docs
+## Current proof points
 
-- `docs/submission.md` — full contest submission draft
-- `docs/submission-short.md` — short submission version
-- `docs/demo-script.md` — demo flow
-- `docs/token-live-design.md` — first real live integration target
-- `docs/live-command-mapping.md` — live command architecture
-- `docs/normalized-data-contracts.md` — normalized context shapes
-- `docs/live-integration-checklist.md` — final engineering checklist
-- `docs/github-metadata.md` — repo naming and metadata
-- `docs/release-checklist.md` — launch checklist
-- `docs/maintainer-summary.md` — shortest return-to-project summary
-- `docs/commands-overview.md` — command intent at a glance
-- `docs/heuristics-overview.md` — current heuristic layer summary
-- `docs/developer-flow.md` — practical day-to-day workflow
-- `docs/INDEX.md` — docs directory index
-- `docs/faq.md` — short project FAQ
-- `docs/local-dev.md` — local development quick guide
-- `docs/review-checklist.md` — change review checklist
-- `docs/release-prep.md` — quick release-prep path
-- `docs/final-hand-off.md` — best resume/handoff notes
-- `SECURITY-CHECKLIST.md` — project security checklist
-- `docs/security-principles.md` — core security approach
+Bibipilot already demonstrates:
+- real command surface
+- live Binance Square posting
+- scheduled posting engine
+- partially live bridge/runtime behavior
+- audit-aware product logic
+- command-specific UX
 
-## Judge-Friendly Pitch
+That is enough to present it as a product with substance, not just a concept.
 
-Bibipilot helps users understand not just what is moving, but whether it is actually worth attention.
+---
+
+## Contributing
+
+Contributions that improve these areas are especially useful:
+- live integration wiring
+- normalized payload extraction
+- output quality
+- heuristic quality
+- docs clarity
+- maintainability
+
+See `CONTRIBUTING.md` for details.
+
+---
+
+## License
+
+MIT

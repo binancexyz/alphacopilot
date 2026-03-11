@@ -10,6 +10,7 @@
 - `judge-cheat-sheet.md`
 - `judge-qa-prep.md`
 - `live-proof-appendix.md`
+- `public-alpha-release-checklist.md`
 - `maintainer-summary.md`
 
 ## Integration
