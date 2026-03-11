@@ -28,6 +28,12 @@ If signal, audit, or market context is missing:
 - "Audit context was unavailable in this pass; risk may be understated."
 - "Market ranking data could not be retrieved, so this summary may miss broader context."
 
+## Runtime visibility
+In live mode, prefer visible runtime state over silent ambiguity:
+- `/health` should distinguish configured live mode from reachable live mode
+- degraded live state should surface a short runtime warning instead of hiding behind generic low-confidence wording
+- user-facing responses should make it clear when runtime quality, not market judgment, is the main issue
+
 ## Mock mode behavior
 In mock mode:
 - always return a complete scaffold brief

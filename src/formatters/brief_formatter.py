@@ -167,6 +167,7 @@ def _format_token_card(brief: AnalysisBrief) -> str:
         meta = f"{brief.signal_quality} | Conviction: {brief.conviction}"
     parts.append("")
     parts.append(f"**📊 Read**\n{meta}")
+    parts.extend(_runtime_banner(brief))
     if brief.why_it_matters:
         parts.append("")
         parts.append(f"**🧠 Why**\n{brief.why_it_matters}")
@@ -202,6 +203,7 @@ def _format_signal_card(brief: AnalysisBrief) -> str:
         meta = f"{brief.signal_quality} | Conviction: {brief.conviction}"
     parts.append("")
     parts.append(f"**📊 Strength**\n{meta}")
+    parts.extend(_runtime_banner(brief))
     if brief.why_it_matters:
         parts.append("")
         parts.append(f"**🧠 Why**\n{brief.why_it_matters}")
@@ -230,6 +232,7 @@ def _format_wallet_card(brief: AnalysisBrief) -> str:
         verdict_emoji = "✅" if follow_tag.note == "Track" else "⚠️" if follow_tag.note == "Unknown" else "❌"
         parts.extend(["", f"{verdict_emoji} Follow: {follow_tag.note}"])
     parts.extend(["", f"**⚡ Read**\n{brief.quick_verdict}"])
+    parts.extend(_runtime_banner(brief))
     if brief.why_it_matters:
         parts.append("")
         parts.append(f"**🧠 Why**\n{brief.why_it_matters}")
@@ -244,8 +247,17 @@ def _format_wallet_card(brief: AnalysisBrief) -> str:
     return "\n".join(parts).strip() + "\n"
 
 
+def _runtime_banner(brief: AnalysisBrief) -> list[str]:
+    if brief.runtime_state == "live_degraded" and brief.runtime_warning:
+        return ["", f"**🛠️ Runtime**\n{brief.runtime_warning}"]
+    if brief.runtime_state == "mock":
+        return ["", "**🛠️ Runtime**\nRunning in mock mode."]
+    return []
+
+
 def _format_watchtoday_card(brief: AnalysisBrief) -> str:
     parts = [_entity_line(brief.entity), "", f"**⚡ Today**\n{brief.quick_verdict}"]
+    parts.extend(_runtime_banner(brief))
     if brief.sections:
         for section in brief.sections[:6]:
             if section.content:

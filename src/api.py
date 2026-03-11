@@ -12,6 +12,7 @@ from src.analyzers.wallet_analysis import analyze_wallet
 from src.config import settings
 from src.formatters.brief_formatter import format_brief
 from src.services.live_service import LiveMarketDataService
+from src.services.runtime_report import build_runtime_meta
 from src.utils.parsing import normalize_token_input, normalize_wallet_input
 from src.utils.validation import looks_like_wallet_address
 
@@ -24,6 +25,8 @@ class BriefResponse(BaseModel):
     mode: str
     rendered: str
     warning: str | None = None
+    runtime_state: str | None = None
+    runtime: dict | None = None
 
 
 @app.get("/health")
@@ -43,12 +46,15 @@ def health() -> dict:
 def brief_token(symbol: str = Query(..., min_length=1, description="Token symbol, e.g. BNB")) -> BriefResponse:
     normalized = normalize_token_input(symbol)
     brief = analyze_token(normalized)
+    runtime = build_runtime_meta("token", normalized)
     return BriefResponse(
         command="token",
         entity=normalized,
         mode=settings.app_mode,
         rendered=format_brief(brief),
-        warning=_mode_warning(),
+        warning=runtime.get("warning") or _mode_warning(),
+        runtime_state=runtime.get("state"),
+        runtime=runtime,
     )
 
 
@@ -56,12 +62,15 @@ def brief_token(symbol: str = Query(..., min_length=1, description="Token symbol
 def brief_signal(token: str = Query(..., min_length=1, description="Token symbol, e.g. DOGE")) -> BriefResponse:
     normalized = normalize_token_input(token)
     brief = analyze_signal(normalized)
+    runtime = build_runtime_meta("signal", normalized)
     return BriefResponse(
         command="signal",
         entity=normalized,
         mode=settings.app_mode,
         rendered=format_brief(brief),
-        warning=_mode_warning(),
+        warning=runtime.get("warning") or _mode_warning(),
+        runtime_state=runtime.get("state"),
+        runtime=runtime,
     )
 
 
@@ -69,12 +78,15 @@ def brief_signal(token: str = Query(..., min_length=1, description="Token symbol
 def brief_audit(symbol: str = Query(..., min_length=1, description="Token symbol, e.g. BNB")) -> BriefResponse:
     normalized = normalize_token_input(symbol)
     brief = analyze_audit(normalized)
+    runtime = build_runtime_meta("audit", normalized)
     return BriefResponse(
         command="audit",
         entity=normalized,
         mode=settings.app_mode,
         rendered=format_brief(brief),
-        warning=_mode_warning(),
+        warning=runtime.get("warning") or _mode_warning(),
+        runtime_state=runtime.get("state"),
+        runtime=runtime,
     )
 
 
@@ -82,12 +94,15 @@ def brief_audit(symbol: str = Query(..., min_length=1, description="Token symbol
 def brief_meme(symbol: str = Query(..., min_length=1, description="Token symbol, e.g. DOGE")) -> BriefResponse:
     normalized = normalize_token_input(symbol)
     brief = analyze_meme(normalized)
+    runtime = build_runtime_meta("meme", normalized)
     return BriefResponse(
         command="meme",
         entity=normalized,
         mode=settings.app_mode,
         rendered=format_brief(brief),
-        warning=_mode_warning(),
+        warning=runtime.get("warning") or _mode_warning(),
+        runtime_state=runtime.get("state"),
+        runtime=runtime,
     )
 
 
@@ -97,24 +112,30 @@ def brief_wallet(address: str = Query(..., min_length=12, description="Wallet ad
         raise HTTPException(status_code=400, detail="Wallet address must start with 0x and look valid.")
     normalized = normalize_wallet_input(address)
     brief = analyze_wallet(normalized)
+    runtime = build_runtime_meta("wallet", normalized)
     return BriefResponse(
         command="wallet",
         entity=normalized,
         mode=settings.app_mode,
         rendered=format_brief(brief),
-        warning=_mode_warning(),
+        warning=runtime.get("warning") or _mode_warning(),
+        runtime_state=runtime.get("state"),
+        runtime=runtime,
     )
 
 
 @app.get("/brief/watchtoday", response_model=BriefResponse)
 def brief_watchtoday() -> BriefResponse:
     brief = watch_today()
+    runtime = build_runtime_meta("watchtoday", "market")
     return BriefResponse(
         command="watchtoday",
         entity="market",
         mode=settings.app_mode,
         rendered=format_brief(brief),
-        warning=_mode_warning(),
+        warning=runtime.get("warning") or _mode_warning(),
+        runtime_state=runtime.get("state"),
+        runtime=runtime,
     )
 
 

@@ -56,6 +56,7 @@ This completes the repo-side live adapter layer for:
 - loading live payloads
 - extracting normalized context
 - building final briefs through the same analyzer path
+- exposing runtime health/bridge diagnostics through `/health`
 
 ## What still remains outside this repo
 - actual OpenClaw runtime command parsing

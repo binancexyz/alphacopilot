@@ -27,6 +27,7 @@ def test_token_endpoint():
     assert payload["command"] == "token"
     assert payload["entity"] == "BNB"
     assert payload["mode"] in {"mock", "live"}
+    assert payload["runtime_state"] in {"mock", "live_ok", "live_degraded", None}
     assert "Token: BNB" in payload["rendered"]
 
 
@@ -36,6 +37,7 @@ def test_watchtoday_endpoint():
     payload = response.json()
     assert payload["command"] == "watchtoday"
     assert payload["mode"] in {"mock", "live"}
+    assert payload["runtime_state"] in {"mock", "live_ok", "live_degraded", None}
     assert "Market Watch" in payload["rendered"]
 
 

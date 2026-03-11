@@ -31,3 +31,5 @@ class AnalysisBrief:
     beginner_note: Optional[str] = None
     audit_gate: Optional[str] = None
     blocked_reason: Optional[str] = None
+    runtime_state: Optional[str] = None
+    runtime_warning: Optional[str] = None
