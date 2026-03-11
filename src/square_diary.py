@@ -414,6 +414,11 @@ def recent_commit_headline() -> str:
     return log.strip() if log.strip() else "quiet backend progress"
 
 
+def recent_commit_headlines(limit: int = 8) -> list[str]:
+    log = run_git("log", f"-{limit}", "--pretty=%s")
+    return [line.strip() for line in log.splitlines() if line.strip()]
+
+
 def working_tree_summary() -> str:
     status = run_git("status", "--short")
     if not status:
@@ -443,17 +448,62 @@ def pick_fresh(options: list[str], seen: list[str]) -> str:
     return random.choice(pool)
 
 
+def infer_topics_from_commits(config: dict) -> list[str]:
+    topics = [str(x).strip() for x in config.get("topics", []) if str(x).strip()]
+    if not topics:
+        return []
+    commits = recent_commit_headlines(10)
+    if not commits:
+        return []
+    scored: dict[str, int] = {}
+    aliases = {
+        "BNB Chain MCP": ["bnb chain mcp", "mcp"],
+        "Binance Skills": ["binance skills", "skills"],
+        "AI agents": ["ai agents", "agent", "agents"],
+        "crypto market structure": ["market", "signal", "signals", "price", "watchtoday"],
+        "builder workflow": ["build", "builder", "workflow", "release", "docs", "packaging", "square", "post", "voice", "diary"],
+        "signal and risk": ["signal", "risk", "audit", "wallet"],
+        "OpenClaw product design": ["openclaw", "product design"],
+        "bnbchain-skills": ["bnbchain-skills"],
+        "8004scan": ["8004scan"],
+        "agent infrastructure": ["agent infrastructure", "runtime", "bridge", "api"],
+    }
+    for index, commit in enumerate(commits):
+        weight = max(1, 6 - index)
+        lower = commit.lower()
+        for topic in topics:
+            keys = aliases.get(topic, [topic.lower()])
+            matches = sum(1 for key in keys if key in lower)
+            if matches:
+                scored[topic] = scored.get(topic, 0) + matches * weight
+    ranked = sorted(scored.items(), key=lambda item: (-item[1], item[0]))
+    return [topic for topic, _ in ranked]
+
+
 def pick_topic(config: dict, state: dict[str, Any], slot: str) -> str:
     topics = [str(x).strip() for x in config.get("topics", []) if str(x).strip()]
     if not topics:
         return "BNB Chain MCP"
+
+    recent_topics = state.get("recent_topics", [])
+    inferred = infer_topics_from_commits(config)
+    if inferred:
+        fresh_inferred = [topic for topic in inferred if topic not in recent_topics]
+        if fresh_inferred:
+            topic = fresh_inferred[0]
+            remember(state, "recent_topics", topic)
+            return topic
+        topic = inferred[0]
+        remember(state, "recent_topics", topic)
+        return topic
+
     if slot == "ecosystem":
         preferred = [topic for topic in topics if topic in ECOSYSTEM_FACTS]
         if preferred:
-            topic = pick_fresh(preferred, state.get("recent_topics", []))
+            topic = pick_fresh(preferred, recent_topics)
             remember(state, "recent_topics", topic)
             return topic
-    topic = pick_fresh(topics, state.get("recent_topics", []))
+    topic = pick_fresh(topics, recent_topics)
     remember(state, "recent_topics", topic)
     return topic
 
@@ -522,26 +572,55 @@ def seo_tail(config: dict, topic: str) -> str:
     return tags
 
 
+def contextual_market_line(config: dict, topic: str) -> str:
+    focus = [str(x).upper() for x in config.get("market_focus", []) if str(x).strip()]
+    if not focus:
+        return ""
+    templates = [
+        f"I\'m still closing the day watching {', '.join(focus[:3])}, but only if the follow-through stays honest.",
+        f"Into the close, I care more about structure in {', '.join(focus[:3])} than about noise.",
+        f"The market side of tonight still comes back to {', '.join(focus[:3])}: confirmation first, excitement second.",
+    ]
+    if "market" in topic.lower() or "signal" in topic.lower() or random.random() < 0.45:
+        return random.choice(templates)
+    return ""
+
+
+def contextual_builder_line(topic: str, commit_line: str) -> str:
+    lower = commit_line.lower()
+    if "docs" in lower or "release" in lower or "packaging" in lower:
+        return "A lot of useful work today was not flashy — it was about making the product easier to trust and easier to explain."
+    if "runtime" in lower or "bridge" in lower or "api" in lower:
+        return "The important work today was runtime quality: fewer brittle edges, clearer behavior, better honesty when the system is under pressure."
+    if "wallet" in lower or "signal" in lower or "watchtoday" in lower or "audit" in lower:
+        return "The strongest product work today was judgment work — making the output clearer, stricter, and less willing to fake conviction."
+    if "square" in lower or "post" in lower or "diary" in lower:
+        return "The content side matters too: fewer posts, better standards, and a stronger reason to publish at all."
+    return f"The thread running through today was still {topic}: making it more usable, more honest, and less noisy."
+
+
 def build_night_diary_post(config: dict, state: dict[str, Any], topic: str, series: str, hook: str, hook_type: str) -> tuple[str, dict[str, str]]:
     body = pick_body("night-diary", topic)
     reflection = random.choice(NIGHT_REFLECTIONS)
     closer = random.choice(NIGHT_CLOSERS)
     commit_line = recent_commit_headline()
     work_signal = working_tree_signal()
-    focus = focus_line(config, "Closing watchlist:")
+    builder_line = contextual_builder_line(topic, commit_line)
+    market_line = contextual_market_line(config, topic)
     custom = custom_line(config, state)
 
     bits = [
         f"{series}: {hook}",
         *body,
         f"Today\'s clearest builder signal was {commit_line}.",
+        builder_line,
         work_signal,
         reflection,
     ]
 
-    if focus:
-        bits.append(focus)
-    if custom and random.random() < 0.5:
+    if market_line:
+        bits.append(market_line)
+    if custom and random.random() < 0.35:
         bits.append(custom)
     bits.append(closer)
     bits.append(random.choice(SEO_ENDINGS))
