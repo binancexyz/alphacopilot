@@ -24,6 +24,7 @@ Do **not** use it as:
 
 ```bash
 python3 src/main.py careers
+python3 src/main.py careers --cache-only
 ```
 
 Or run the helper directly:
@@ -40,8 +41,9 @@ python3 src/binance_careers.py --cache-only
 The careers helper will:
 1. try to fetch the Binance Careers page
 2. attempt to extract structured job rows from embedded page data
-3. save a local cache to `tmp/binance_careers_cache.json`
-4. fall back to cache if live refresh fails
+3. build a lightweight summary of team / location / role trends
+4. save a local cache to `tmp/binance_careers_cache.json`
+5. fall back to cache if live refresh fails
 
 This matters because the careers page may sometimes block bot-style requests.
 

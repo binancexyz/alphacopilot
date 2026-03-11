@@ -14,6 +14,7 @@ from zoneinfo import ZoneInfo
 if __package__ is None or __package__ == "":
     sys.path.append(str(Path(__file__).resolve().parents[1]))
 
+from src.services.careers_tracker import refresh_or_load as refresh_careers_snapshot, short_market_note as careers_market_note
 from src.services.square_posts import masked_square_key, publish_square_post
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -471,6 +472,8 @@ def pick_body(slot: str, topic: str) -> list[str]:
     if slot == "ecosystem":
         chosen.append(ecosystem_fact(topic))
         chosen.append(f"Right now the topic I keep coming back to is {topic}.")
+        if random.random() < 0.35:
+            chosen.append(careers_market_note(refresh_careers_snapshot()))
     elif slot == "education":
         chosen.append(f"That is exactly why topics like {topic} deserve clearer workflows, not just more content.")
     elif slot == "builder":

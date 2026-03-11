@@ -31,6 +31,7 @@ class CareersSnapshot:
     url: str
     jobs: list[CareerJob]
     warning: str | None = None
+    summary: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -38,6 +39,7 @@ class CareersSnapshot:
             "fetched_at": self.fetched_at,
             "url": self.url,
             "warning": self.warning,
+            "summary": self.summary or build_summary(self.jobs),
             "jobs": [asdict(job) for job in self.jobs],
         }
 
@@ -134,7 +136,14 @@ def _extract_generic_jobs(html: str) -> list[CareerJob]:
 
 
 def snapshot_from_jobs(jobs: list[CareerJob], url: str = DEFAULT_CAREERS_URL, source: str = "live", warning: str | None = None) -> CareersSnapshot:
-    return CareersSnapshot(source=source, fetched_at=datetime.now(UTC).isoformat(), url=url, jobs=jobs, warning=warning)
+    return CareersSnapshot(
+        source=source,
+        fetched_at=datetime.now(UTC).isoformat(),
+        url=url,
+        jobs=jobs,
+        warning=warning,
+        summary=build_summary(jobs),
+    )
 
 
 def save_snapshot(snapshot: CareersSnapshot, path: Path = CACHE_PATH) -> None:
@@ -153,6 +162,7 @@ def load_snapshot(path: Path = CACHE_PATH) -> CareersSnapshot | None:
         url=str(payload.get("url", DEFAULT_CAREERS_URL)),
         jobs=jobs,
         warning=payload.get("warning"),
+        summary=payload.get("summary") or build_summary(jobs),
     )
 
 
@@ -171,6 +181,8 @@ def summarize_snapshot(snapshot: CareersSnapshot, limit: int = 6) -> str:
     if snapshot.warning:
         status_line += f" | warning: {snapshot.warning}"
 
+    summary = snapshot.summary or build_summary(snapshot.jobs)
+
     if not snapshot.jobs:
         return "\n".join([
             header,
@@ -180,16 +192,15 @@ def summarize_snapshot(snapshot: CareersSnapshot, limit: int = 6) -> str:
             f"URL: {snapshot.url}",
         ])
 
-    team_counts = Counter(job.team for job in snapshot.jobs if job.team and job.team != "Unknown")
-    location_counts = Counter(job.location for job in snapshot.jobs if job.location and job.location != "Unknown")
-
     lines = [header, status_line, f"Openings captured: {len(snapshot.jobs)}"]
-    if team_counts:
-        top_teams = ", ".join(f"{team} ({count})" for team, count in team_counts.most_common(4))
-        lines.append(f"Top teams: {top_teams}")
-    if location_counts:
-        top_locations = ", ".join(f"{location} ({count})" for location, count in location_counts.most_common(4))
-        lines.append(f"Top locations: {top_locations}")
+    top_teams = summary.get("top_teams") or []
+    if top_teams:
+        lines.append("Top teams: " + ", ".join(f"{item['name']} ({item['count']})" for item in top_teams[:4]))
+    top_locations = summary.get("top_locations") or []
+    if top_locations:
+        lines.append("Top locations: " + ", ".join(f"{item['name']} ({item['count']})" for item in top_locations[:4]))
+    if summary.get("top_role_keywords"):
+        lines.append("Role trend: " + ", ".join(f"{item['name']} ({item['count']})" for item in summary["top_role_keywords"][:4]))
 
     lines.append("Interesting openings:")
     for job in snapshot.jobs[:limit]:
@@ -215,6 +226,55 @@ def refresh_or_load(url: str = DEFAULT_CAREERS_URL, path: Path = CACHE_PATH) -> 
             cached.warning = f"Live refresh failed; using cache. Reason: {exc}"
             return cached
         return snapshot_from_jobs([], url=url, source="unavailable", warning=f"Live refresh failed and no cache exists. Reason: {exc}")
+
+
+def short_market_note(snapshot: CareersSnapshot) -> str:
+    summary = snapshot.summary or build_summary(snapshot.jobs)
+    if not snapshot.jobs:
+        return "Binance careers data is currently unavailable, so keep careers as optional context only."
+
+    top_team = (summary.get("top_teams") or [{}])[0]
+    top_location = (summary.get("top_locations") or [{}])[0]
+    top_keyword = (summary.get("top_role_keywords") or [{}])[0]
+
+    pieces = ["Binance hiring pulse"]
+    if top_team.get("name"):
+        pieces.append(f"team focus looks strongest in {top_team['name']}")
+    if top_keyword.get("name"):
+        pieces.append(f"role trend leans toward {top_keyword['name']}")
+    if top_location.get("name"):
+        pieces.append(f"location concentration includes {top_location['name']}")
+    return "; ".join(pieces) + ". Treat this as ecosystem context, not direct market signal."
+
+
+ROLE_KEYWORDS = {
+    "engineer": ("engineering", "backend", "frontend", "full stack", "devops", "sre", "qa", "security engineer", "data engineer", "mobile"),
+    "product": ("product", "product manager", "program manager"),
+    "security": ("security", "fraud", "risk", "compliance"),
+    "data": ("data", "analyst", "analytics", "science", "scientist"),
+    "growth": ("marketing", "growth", "community", "bd", "business development", "partnership"),
+    "operations": ("operations", "support", "customer service", "strategy", "finance", "legal", "hr", "recruit"),
+}
+
+
+def build_summary(jobs: list[CareerJob]) -> dict[str, Any]:
+    team_counts = Counter(job.team for job in jobs if job.team and job.team != "Unknown")
+    location_counts = Counter(job.location for job in jobs if job.location and job.location != "Unknown")
+    role_counts = Counter(_role_bucket(job.title) for job in jobs if _role_bucket(job.title))
+    return {
+        "openings": len(jobs),
+        "top_teams": [{"name": name, "count": count} for name, count in team_counts.most_common(6)],
+        "top_locations": [{"name": name, "count": count} for name, count in location_counts.most_common(6)],
+        "top_role_keywords": [{"name": name, "count": count} for name, count in role_counts.most_common(6)],
+    }
+
+
+def _role_bucket(title: str) -> str:
+    lowered = title.lower()
+    for bucket, hints in ROLE_KEYWORDS.items():
+        if any(hint in lowered for hint in hints):
+            return bucket
+    return "general"
 
 
 def _extract_json_blobs(html: str) -> list[Any]:

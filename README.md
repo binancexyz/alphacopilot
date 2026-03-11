@@ -122,6 +122,7 @@ python3 src/main.py wallet 0x1234567890ab
 python3 src/main.py watchtoday
 python3 src/main.py meme DOGE
 python3 src/main.py careers
+python3 src/main.py careers --cache-only
 ```
 
 ### 3. Optional API mode
