@@ -94,6 +94,24 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
     if top_concentration_pct >= 60:
         risks.append("Wallet is highly concentrated in one token or theme.")
 
+    style_bits: list[str] = []
+    if notable_exposures:
+        style_bits.append(f"Narrative bias: {', '.join(notable_exposures[:2])}")
+    if top_concentration_pct >= 75:
+        style_bits.append("Risk posture: concentrated")
+    elif len(items) >= 5:
+        style_bits.append("Risk posture: diversified")
+    else:
+        style_bits.append("Risk posture: mixed")
+    style_read = " | ".join(style_bits)
+
+    if portfolio_value >= 100_000 and top_concentration_pct < 70 and len(items) >= 5:
+        follow_verdict = "Track"
+    elif portfolio_value > 0:
+        follow_verdict = "Unknown"
+    else:
+        follow_verdict = "Don't follow"
+
     return {
         "address": address,
         "portfolio_value": portfolio_value,
@@ -103,6 +121,8 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
         "change_24h": change_24h,
         "notable_exposures": notable_exposures[:5],
         "major_risks": risks,
+        "follow_verdict": follow_verdict,
+        "style_read": style_read,
     }
 
 

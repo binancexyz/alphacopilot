@@ -39,6 +39,8 @@ class WalletContext:
     change_24h: float = 0.0
     notable_exposures: list[str] = field(default_factory=list)
     major_risks: list[str] = field(default_factory=list)
+    follow_verdict: str = "Unknown"
+    style_read: str = ""
 
 
 @dataclass

@@ -37,6 +37,8 @@ class MockMarketDataService:
                 "Low diversification can amplify drawdowns.",
                 "Wallet size alone does not prove smart-money quality.",
             ],
+            "follow_verdict": "Track",
+            "style_read": "Narrative bias: meme, AI | Risk posture: mixed",
         }
 
     def get_watch_today_context(self) -> NormalizedDict:

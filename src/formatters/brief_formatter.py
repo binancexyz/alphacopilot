@@ -222,7 +222,12 @@ def _format_signal_card(brief: AnalysisBrief) -> str:
 
 
 def _format_wallet_card(brief: AnalysisBrief) -> str:
-    parts = [_entity_line(brief.entity), "", f"**⚡ Read**\n{brief.quick_verdict}"]
+    parts = [_entity_line(brief.entity)]
+    follow_tag = next((tag for tag in brief.risk_tags if tag.name == "Follow Verdict"), None)
+    if follow_tag and follow_tag.note:
+        verdict_emoji = "✅" if follow_tag.note == "Track" else "⚠️" if follow_tag.note == "Unknown" else "❌"
+        parts.extend(["", f"{verdict_emoji} Follow: {follow_tag.note}"])
+    parts.extend(["", f"**⚡ Read**\n{brief.quick_verdict}"])
     if brief.why_it_matters:
         parts.append("")
         parts.append(f"**🧠 Why**\n{brief.why_it_matters}")

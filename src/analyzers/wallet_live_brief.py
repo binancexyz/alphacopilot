@@ -20,7 +20,10 @@ def _wallet_why_it_matters(ctx: WalletContext) -> str:
     elif ctx.holdings_count > 0:
         pieces.append(f"This wallet shows {ctx.holdings_count} holding(s), which is enough to inspect for concentration and rotation patterns.")
 
-    pieces.append(_format_holding_summary(ctx))
+    if ctx.style_read:
+        pieces.append(ctx.style_read)
+    else:
+        pieces.append(_format_holding_summary(ctx))
     return " ".join(pieces[:2]).strip()
 
 
@@ -57,11 +60,16 @@ def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
 
     if ctx.notable_exposures:
         risk_tags.append(RiskTag(name="Narrative Risk", level="Medium", note=", ".join(ctx.notable_exposures)))
+    risk_tags.append(RiskTag(name="Follow Verdict", level="Low" if ctx.follow_verdict == "Track" else "Medium" if ctx.follow_verdict == "Unknown" else "High", note=ctx.follow_verdict))
 
-    if ctx.top_concentration_pct >= 75:
+    if ctx.follow_verdict == "Track":
+        quick_verdict = "This wallet is worth tracking because the size, spread, and visible exposures are strong enough to study seriously without looking blindly copy-tradable."
+    elif ctx.follow_verdict == "Don't follow":
+        quick_verdict = "This wallet does not have enough visible structure to justify following right now."
+    elif ctx.top_concentration_pct >= 75:
         quick_verdict = "This wallet is informative but heavily concentrated, which means copying it blindly would be much riskier than simply studying its behavior."
     elif ctx.top_concentration_pct >= 50:
-        quick_verdict = "This wallet is worth tracking because it has visible size and recognizable exposures, but concentration still limits how clean the signal is."
+        quick_verdict = "This wallet is worth monitoring, but concentration still limits how clean the signal is."
     elif quality == "Medium":
         quick_verdict = "This wallet looks reasonably useful for pattern-reading because the positioning is visible without being excessively concentrated."
     else:
