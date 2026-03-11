@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 
+from src.analyzers.audit_analysis import analyze_audit
 from src.analyzers.market_watch import watch_today
 from src.analyzers.signal_check import analyze_signal
 from src.analyzers.token_analysis import analyze_token
@@ -47,6 +48,19 @@ def brief_signal(token: str = Query(..., min_length=1, description="Token symbol
     brief = analyze_signal(normalized)
     return BriefResponse(
         command="signal",
+        entity=normalized,
+        mode=settings.app_mode,
+        rendered=format_brief(brief),
+        warning=_mode_warning(),
+    )
+
+
+@app.get("/brief/audit", response_model=BriefResponse)
+def brief_audit(symbol: str = Query(..., min_length=1, description="Token symbol, e.g. BNB")) -> BriefResponse:
+    normalized = normalize_token_input(symbol)
+    brief = analyze_audit(normalized)
+    return BriefResponse(
+        command="audit",
         entity=normalized,
         mode=settings.app_mode,
         rendered=format_brief(brief),

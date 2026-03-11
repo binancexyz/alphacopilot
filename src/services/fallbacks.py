@@ -7,5 +7,6 @@ def missing_context_warning(command: str) -> str:
         "signal": "Signal context is incomplete right now, so confirmation should be treated cautiously.",
         "wallet": "Wallet context is incomplete right now, so behavior interpretation may be understated.",
         "watchtoday": "Today's market brief is based on partial context, so prioritization may be less reliable than usual.",
+        "audit": "Audit context is incomplete right now, so security conclusions should stay cautious.",
     }
     return messages.get(command, "Context is incomplete right now, so treat this output as lower-confidence.")

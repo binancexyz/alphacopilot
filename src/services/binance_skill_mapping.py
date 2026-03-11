@@ -36,3 +36,8 @@ SIGNAL_SKILLS = [
     "query-token-info",
     "query-token-audit",
 ]
+
+AUDIT_SKILLS = [
+    "query-token-info",
+    "query-token-audit",
+]

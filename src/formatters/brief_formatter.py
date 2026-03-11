@@ -8,6 +8,7 @@ ENTITY_EMOJI = {
     "Brief:": "🧩",
     "Price:": "💵",
     "Risk:": "🛡️",
+    "Audit:": "🔐",
     "Signal:": "📡",
     "Wallet:": "👛",
     "Market Watch": "🌐",
@@ -133,6 +134,24 @@ def _format_risk_card(brief: AnalysisBrief) -> str:
     return "\n".join(parts).strip() + "\n"
 
 
+def _format_audit_card(brief: AnalysisBrief) -> str:
+    name, symbol, risk_level, audit_summary, top_flag, second_flag, _liquidity, gate_status, verdict = (brief.quick_verdict.split("|", 8) + ["", "", "Medium", "", "", "", "0", "warn", ""])[:9]
+    gate = brief.audit_gate or gate_status.upper()
+    gate_emoji = "🔴" if gate == "BLOCK" else "🟠" if gate == "WARN" else "🟢"
+    level_emoji = {"High": "🔴", "Medium": "🟠", "Low": "🟢"}.get(risk_level, "🟠")
+    parts = [f"🔐 {name} ({symbol})", f"Audit Gate: {gate} {gate_emoji}", f"Risk Level: {risk_level} {level_emoji}", ""]
+    if verdict:
+        parts.append(f"⚡ {verdict}")
+    if top_flag:
+        parts.append(f"⚠️ Primary Flag: {top_flag}")
+    if second_flag:
+        parts.append(f"⚠️ Next Flag: {second_flag}")
+    if audit_summary:
+        parts.append(f"🔍 Summary: {audit_summary}")
+    parts.append("⚠️ This audit result is for reference only and does not constitute investment advice. Always conduct your own research.")
+    return "\n".join(parts).strip() + "\n"
+
+
 def _format_token_card(brief: AnalysisBrief) -> str:
     parts = [_entity_line(brief.entity)]
     if brief.audit_gate:
@@ -246,6 +265,8 @@ def format_brief(brief: AnalysisBrief) -> str:
         return _format_compact_brief_card(brief)
     if brief.entity.startswith("Risk:"):
         return _format_risk_card(brief)
+    if brief.entity.startswith("Audit:"):
+        return _format_audit_card(brief)
     if brief.entity.startswith("Token:"):
         return _format_token_card(brief)
     if brief.entity.startswith("Signal:"):

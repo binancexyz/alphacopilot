@@ -170,6 +170,40 @@ def extract_signal_context(raw: dict[str, Any], token: str) -> dict[str, Any]:
     }
 
 
+def extract_audit_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
+    token_info = raw.get("query-token-info", {})
+    audit = raw.get("query-token-audit", {})
+    audit_payload = audit.get("data", audit)
+    metadata = token_info.get("metadata", {})
+    search_item = _best_token_match(token_info.get("search"), symbol, metadata) or metadata or token_info
+    display_symbol = str(search_item.get("symbol") or metadata.get("symbol") or symbol)
+    display_name = str(search_item.get("name") or metadata.get("name") or display_symbol)
+    audit_flags, audit_risks = _extract_audit_flags_and_risks(audit_payload)
+    audit_gate, blocked_reason = _audit_gate_state(audit_payload, audit_flags)
+    extra = audit_payload.get("extraInfo") or {}
+    buy_tax = _to_float(extra.get("buyTax"))
+    sell_tax = _to_float(extra.get("sellTax"))
+    risk_level = str(audit_payload.get("riskLevelEnum") or ("HIGH" if audit_gate == "BLOCK" else "MEDIUM" if audit_gate == "WARN" else "LOW")).title()
+    summary_bits: list[str] = []
+    if audit_payload.get("hasResult") and audit_payload.get("isSupported"):
+        summary_bits.append(f"Risk level {audit_payload.get('riskLevel', 0)} ({risk_level.upper()})")
+    if buy_tax > 0 or sell_tax > 0:
+        summary_bits.append(f"Buy tax {buy_tax:.2f}% | Sell tax {sell_tax:.2f}%")
+    if not summary_bits:
+        summary_bits.append(blocked_reason or "Audit output is limited right now.")
+
+    return {
+        "symbol": display_symbol,
+        "display_name": display_name,
+        "audit_gate": audit_gate,
+        "blocked_reason": blocked_reason,
+        "audit_flags": audit_flags,
+        "major_risks": _merge_risks(audit_risks),
+        "risk_level": risk_level,
+        "audit_summary": "; ".join(summary_bits),
+    }
+
+
 def _extract_audit_flags_and_risks(audit: dict[str, Any]) -> tuple[list[str], list[str]]:
     if not audit:
         return [], []
