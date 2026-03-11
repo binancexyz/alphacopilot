@@ -68,6 +68,20 @@ def runtime(
             ),
         )
 
+    if settings.bridge_live_enabled and command_key == "watchtoday":
+        raw = _fetch_live_watchtoday_bundle()
+        return BridgeResponse(
+            command=command_key,
+            entity=entity,
+            raw=raw,
+            meta=BridgeMeta(
+                generatedAt=datetime.now(UTC).isoformat(),
+                skills=skills,
+                status="partial-live",
+                notes=["Live watchtoday bridge is enabled.", "Current implementation favors unified rank + smart-money signal context first."],
+            ),
+        )
+
     return BridgeResponse(
         command=command_key,
         entity=entity,
@@ -120,13 +134,7 @@ def _fetch_live_token_bundle(entity: str) -> dict[str, Any]:
         dynamic_resp.raise_for_status()
         dynamic_json = dynamic_resp.json()
 
-        signal_resp = client.post(
-            f"{base}/bapi/defi/v1/public/wallet-direct/buw/wallet/web/signal/smart-money",
-            json={"smartSignalType": "", "page": 1, "pageSize": 100, "chainId": chain_id},
-            headers={**common_headers, "Content-Type": "application/json"},
-        )
-        signal_resp.raise_for_status()
-        signal_json = signal_resp.json()
+        signal_json = _fetch_live_signal_board(client, base, chain_id, common_headers)
         signal_items = signal_json.get("data") or []
         signal_matches = _matching_signal_items(signal_items, symbol, contract)
 
@@ -143,14 +151,7 @@ def _fetch_live_token_bundle(entity: str) -> dict[str, Any]:
         audit_resp.raise_for_status()
         audit_json = audit_resp.json()
 
-        # First live path: use unified rank defaults as general context.
-        market_rank_resp = client.post(
-            f"{base}/bapi/defi/v1/public/wallet-direct/buw/wallet/market/token/pulse/unified/rank/list",
-            json={"rankType": 10, "chainId": chain_id, "period": 50, "sortBy": 70, "orderAsc": False, "page": 1, "size": 20},
-            headers={"Content-Type": "application/json", **common_headers},
-        )
-        market_rank_resp.raise_for_status()
-        market_rank_json = market_rank_resp.json()
+        market_rank_json = _fetch_live_unified_rank(client, base, chain_id, common_headers)
 
     return {
         "query-token-info": {
@@ -162,6 +163,43 @@ def _fetch_live_token_bundle(entity: str) -> dict[str, Any]:
         "trading-signal": {"data": signal_matches},
         "query-token-audit": audit_json,
     }
+
+
+def _fetch_live_watchtoday_bundle() -> dict[str, Any]:
+    httpx = _require_httpx()
+    base = "https://web3.binance.com"
+    chain_id = settings.bridge_default_chain_id
+    common_headers = {"Accept-Encoding": "identity", "User-Agent": "binance-web3/1.0 (Skill)"}
+
+    with httpx.Client(timeout=20.0, follow_redirects=True) as client:
+        market_rank_json = _fetch_live_unified_rank(client, base, chain_id, common_headers)
+        signal_json = _fetch_live_signal_board(client, base, chain_id, common_headers)
+
+    return {
+        "crypto-market-rank": market_rank_json,
+        "trading-signal": signal_json,
+        "meme-rush": {},
+    }
+
+
+def _fetch_live_unified_rank(client, base: str, chain_id: str, common_headers: dict[str, str]) -> dict[str, Any]:
+    market_rank_resp = client.post(
+        f"{base}/bapi/defi/v1/public/wallet-direct/buw/wallet/market/token/pulse/unified/rank/list",
+        json={"rankType": 10, "chainId": chain_id, "period": 50, "sortBy": 70, "orderAsc": False, "page": 1, "size": 20},
+        headers={"Content-Type": "application/json", **common_headers},
+    )
+    market_rank_resp.raise_for_status()
+    return market_rank_resp.json()
+
+
+def _fetch_live_signal_board(client, base: str, chain_id: str, common_headers: dict[str, str]) -> dict[str, Any]:
+    signal_resp = client.post(
+        f"{base}/bapi/defi/v1/public/wallet-direct/buw/wallet/web/signal/smart-money",
+        json={"smartSignalType": "", "page": 1, "pageSize": 100, "chainId": chain_id},
+        headers={**common_headers, "Content-Type": "application/json"},
+    )
+    signal_resp.raise_for_status()
+    return signal_resp.json()
 
 
 def _require_httpx():
