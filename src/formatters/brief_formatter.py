@@ -133,6 +133,83 @@ def _format_risk_card(brief: AnalysisBrief) -> str:
     return "\n".join(parts).strip() + "\n"
 
 
+def _format_token_card(brief: AnalysisBrief) -> str:
+    parts = [_entity_line(brief.entity), "", f"**⚡ Setup**\n{brief.quick_verdict}"]
+    meta = brief.signal_quality
+    if brief.conviction:
+        meta = f"{brief.signal_quality} | Conviction: {brief.conviction}"
+    parts.append("")
+    parts.append(f"**📊 Read**\n{meta}")
+    if brief.top_risks:
+        parts.append("")
+        parts.append("**⚠️ Risks**")
+        parts.extend([f"- {item}" for item in brief.top_risks[:2]])
+    if brief.what_to_watch_next:
+        parts.append("")
+        parts.append("**👀 Watch**")
+        parts.extend([f"- {item}" for item in brief.what_to_watch_next[:2]])
+    if brief.risk_tags:
+        parts.append("")
+        parts.append("**🏷️ Tags**")
+        for tag in brief.risk_tags[:2]:
+            suffix = f" — {tag.note}" if tag.note else ""
+            parts.append(f"- {tag.name}: {tag.level}{suffix}")
+    return "\n".join(parts).strip() + "\n"
+
+
+def _format_signal_card(brief: AnalysisBrief) -> str:
+    parts = [_entity_line(brief.entity), "", f"**⚡ Signal**\n{brief.quick_verdict}"]
+    meta = brief.signal_quality
+    if brief.conviction:
+        meta = f"{brief.signal_quality} | Conviction: {brief.conviction}"
+    parts.append("")
+    parts.append(f"**📊 Strength**\n{meta}")
+    if brief.why_it_matters:
+        parts.append("")
+        parts.append(f"**🧠 Why**\n{brief.why_it_matters}")
+    if brief.what_to_watch_next:
+        parts.append("")
+        parts.append("**👀 Watch**")
+        parts.extend([f"- {item}" for item in brief.what_to_watch_next[:2]])
+    if brief.top_risks:
+        parts.append("")
+        parts.append("**⚠️ Risks**")
+        parts.extend([f"- {item}" for item in brief.top_risks[:2]])
+    return "\n".join(parts).strip() + "\n"
+
+
+def _format_wallet_card(brief: AnalysisBrief) -> str:
+    parts = [_entity_line(brief.entity), "", f"**⚡ Read**\n{brief.quick_verdict}"]
+    if brief.why_it_matters:
+        parts.append("")
+        parts.append(f"**🧠 Why**\n{brief.why_it_matters}")
+    if brief.top_risks:
+        parts.append("")
+        parts.append("**⚠️ Risks**")
+        parts.extend([f"- {item}" for item in brief.top_risks[:2]])
+    if brief.what_to_watch_next:
+        parts.append("")
+        parts.append("**👀 Watch**")
+        parts.extend([f"- {item}" for item in brief.what_to_watch_next[:2]])
+    return "\n".join(parts).strip() + "\n"
+
+
+def _format_watchtoday_card(brief: AnalysisBrief) -> str:
+    parts = [_entity_line(brief.entity), "", f"**⚡ Today**\n{brief.quick_verdict}"]
+    if brief.why_it_matters:
+        parts.append("")
+        parts.append(f"**🧠 Priority**\n{brief.why_it_matters}")
+    if brief.what_to_watch_next:
+        parts.append("")
+        parts.append("**👀 Focus**")
+        parts.extend([f"- {item}" for item in brief.what_to_watch_next[:3]])
+    if brief.top_risks:
+        parts.append("")
+        parts.append("**⚠️ Risks**")
+        parts.extend([f"- {item}" for item in brief.top_risks[:2]])
+    return "\n".join(parts).strip() + "\n"
+
+
 def format_brief(brief: AnalysisBrief) -> str:
     if brief.entity.startswith("Price:"):
         return _format_price_card(brief)
@@ -140,41 +217,14 @@ def format_brief(brief: AnalysisBrief) -> str:
         return _format_compact_brief_card(brief)
     if brief.entity.startswith("Risk:"):
         return _format_risk_card(brief)
+    if brief.entity.startswith("Token:"):
+        return _format_token_card(brief)
+    if brief.entity.startswith("Signal:"):
+        return _format_signal_card(brief)
+    if brief.entity.startswith("Wallet:"):
+        return _format_wallet_card(brief)
+    if brief.entity == "Market Watch":
+        return _format_watchtoday_card(brief)
 
-    parts: list[str] = []
-    parts.append(_entity_line(brief.entity))
-    parts.append("")
-    parts.append("**⚡ Verdict**")
-    parts.append(brief.quick_verdict)
-
-    if brief.signal_quality:
-        quality_line = brief.signal_quality
-        if brief.conviction:
-            quality_line = f"{brief.signal_quality} | Conviction: {brief.conviction}"
-        parts.append("")
-        parts.append("**📊 Quality**")
-        parts.append(quality_line)
-
-    if brief.top_risks:
-        parts.append("")
-        parts.append("**⚠️ Risks**")
-        parts.extend([f"- {item}" for item in brief.top_risks[:2]])
-
-    if brief.why_it_matters:
-        parts.append("")
-        parts.append("**🧠 Why**")
-        parts.append(brief.why_it_matters)
-
-    if brief.what_to_watch_next:
-        parts.append("")
-        parts.append("**👀 Watch**")
-        parts.extend([f"- {item}" for item in brief.what_to_watch_next[:3]])
-
-    if brief.risk_tags:
-        parts.append("")
-        parts.append("**🏷️ Tags**")
-        for tag in brief.risk_tags[:3]:
-            suffix = f" — {tag.note}" if tag.note else ""
-            parts.append(f"- {tag.name}: {tag.level}{suffix}")
-
+    parts = [_entity_line(brief.entity), "", brief.quick_verdict]
     return "\n".join(parts).strip() + "\n"
