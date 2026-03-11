@@ -54,7 +54,7 @@ def runtime(
     if command_key == "wallet" and not entity:
         raise HTTPException(status_code=400, detail="command=wallet requires entity")
 
-    if settings.bridge_live_enabled and command_key in {"token", "audit"}:
+    if settings.bridge_live_enabled and command_key in {"token", "signal", "audit"}:
         raw = _fetch_live_token_bundle(entity)
         return BridgeResponse(
             command=command_key,
@@ -64,7 +64,7 @@ def runtime(
                 generatedAt=datetime.now(UTC).isoformat(),
                 skills=skills,
                 status="partial-live",
-                notes=["Live token/audit bridge is enabled.", "Other commands remain scaffolded until implemented."],
+                notes=["Live token/signal/audit bridge is enabled.", "Wallet remains scaffolded until implemented."],
             ),
         )
 

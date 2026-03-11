@@ -23,6 +23,8 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     signal_freshness = _signal_freshness(signal_age_hours)
     audit_gate, blocked_reason = _audit_gate_state(audit_payload, audit_flags)
 
+    resolved_signal_status = signal.get("status") or signal.get("direction") or ("watch" if _first_item(signal.get("data")) else "unknown")
+
     return {
         "symbol": resolved_symbol,
         "display_name": search_item.get("name") or metadata.get("name") or search_item.get("symbol") or symbol,
@@ -30,7 +32,7 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         "liquidity": _pick_number(dynamic, "liquidity") or _pick_number(search_item, "liquidity"),
         "holders": _pick_int(dynamic, "holders", "kycHolderCount") or _pick_int(search_item, "holders"),
         "market_rank_context": _build_market_rank_context(market_rank, resolved_symbol),
-        "signal_status": signal.get("status") or signal.get("direction") or "unknown",
+        "signal_status": resolved_signal_status,
         "signal_trigger_context": _build_signal_context(signal),
         "audit_flags": audit_flags,
         "major_risks": _merge_risks(signal_risks, audit_risks, market_risks),
@@ -147,6 +149,8 @@ def extract_signal_context(raw: dict[str, Any], token: str) -> dict[str, Any]:
 
     direction = str(first_signal.get("direction", "")).lower()
     status = first_signal.get("status") or ("bullish" if direction == "buy" else "bearish" if direction == "sell" else "unknown")
+    if first_signal == signal and not signal.get("data"):
+        status = "unmatched"
     supporting_context = _build_signal_context(signal)
     signal_age_hours = _signal_age_hours(first_signal)
     signal_freshness = _signal_freshness(signal_age_hours)
@@ -307,7 +311,13 @@ def _build_market_rank_context(market_rank: dict[str, Any], symbol: str | None =
 
 
 def _build_signal_context(signal: dict[str, Any]) -> str:
-    first = _first_item(signal.get("data")) or signal
+    first = _first_item(signal.get("data"))
+    if not first:
+        summary = str(signal.get("summary") or "").strip()
+        if summary:
+            return summary
+        return "No matched smart-money signal is visible for this token in the current live board."
+
     ticker = first.get("ticker", "This token")
     direction = str(first.get("direction", "")).lower()
     platform = first.get("launchPlatform") or ""
