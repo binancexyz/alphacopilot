@@ -1,5 +1,8 @@
 # Examples
 
+Recommended first file:
+- `current-output-examples.md` — fresh CLI examples for demo/screenshots
+
 This folder contains example outputs for the four core commands.
 
 ## Files

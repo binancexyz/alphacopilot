@@ -218,10 +218,13 @@ Also review:
 - `docs/live-proof-appendix.md`
 - `docs/submission.md`
 - `docs/demo-script.md`
+- `docs/demo-operator-sheet.md`
+- `docs/binance-spot-integration.md`
 - `docs/skill-command-matrix.md`
 - `docs/output-evolution-plan.md`
 - `docs/install.md`
 - `docs/quick-reference.md`
+- `examples/current-output-examples.md`
 
 ---
 

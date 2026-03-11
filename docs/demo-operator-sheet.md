@@ -9,12 +9,13 @@ Run the best short live demo with clear narration and safe fallback lines.
 
 ### 1. `/price BNB`
 **What to say:**
-"I’ll start with grounding. This is the compact market truth layer."
+"I’ll start with grounding. This is the compact market truth layer. It now uses Binance Spot read-only data when available, so the first thing you see is more exchange-native than before."
 
 **What it proves:**
 - clean market card
 - fast output
 - product-like UX
+- Binance-native exchange grounding
 
 **Fallback if thin:**
 "Even at minimum, this shows the product starts from a compact market truth instead of a wall of text."
@@ -23,12 +24,13 @@ Run the best short live demo with clear narration and safe fallback lines.
 
 ### 2. `/brief BTC`
 **What to say:**
-"This is the fast synthesis layer. It compresses context instead of dumping fields."
+"This is the fast synthesis layer. It compresses context instead of dumping fields, and it can now separate exchange price context from actual signal quality."
 
 **What it proves:**
 - minimalism
 - synthesis quality
 - chat-native design
+- sharper product judgment
 
 **Fallback if thin:**
 "The point here is speed and compression, not depth."
@@ -65,12 +67,13 @@ Run the best short live demo with clear narration and safe fallback lines.
 
 ### 5. `/wallet <address>`
 **What to say:**
-"Wallet tools often stop at balances. Bibipilot tries to answer whether the wallet is even worth following."
+"Wallet tools often stop at balances. Bibipilot tries to answer whether the wallet is even worth following, and now does a better job explaining concentration, activity, and why a wallet is useful for behavior study."
 
 **What it proves:**
 - interpretation layer
 - follow verdicts
 - opinionated design
+- behavior-aware wallet judgment
 
 **Fallback if sparse:**
 "The live wallet path is still thinner than token/signal, but the judgment shape is already in place."
@@ -79,12 +82,13 @@ Run the best short live demo with clear narration and safe fallback lines.
 
 ### 6. `/watchtoday`
 **What to say:**
-"This is where Bibipilot becomes a daily market board instead of a single-asset tool."
+"This is where Bibipilot becomes a daily market board instead of a single-asset tool. The Exchange Board lane gives it a Binance Spot anchor, while lane coverage makes partial boards honest instead of vague."
 
 **What it proves:**
 - market prioritization
 - structured lanes
 - live rank/signal integration
+- exchange-native board anchoring
 
 **Fallback if some lanes are sparse:**
 "The lane structure is already real, and richer live coverage improves what fills those lanes over time."
