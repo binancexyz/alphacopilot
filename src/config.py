@@ -20,6 +20,8 @@ class Settings:
     coinmarketcap_api_key: str = os.getenv("COINMARKETCAP_API_KEY", "")
     bridge_live_enabled: bool = os.getenv("BRIDGE_LIVE_ENABLED", "false").lower() == "true"
     bridge_default_chain_id: str = os.getenv("BRIDGE_DEFAULT_CHAIN_ID", "56")
+    bridge_http_timeout_seconds: float = float(os.getenv("BRIDGE_HTTP_TIMEOUT_SECONDS", "20"))
+    bridge_http_retries: int = int(os.getenv("BRIDGE_HTTP_RETRIES", "2"))
 
 
 settings = Settings()

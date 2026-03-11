@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from time import sleep
 from typing import Any
 
+from src.config import settings
 from src.services.fallbacks import missing_context_warning
 from src.services.live_extractors import (
     extract_audit_context,
@@ -34,34 +36,52 @@ class LiveMarketDataService:
         self.api_secret = api_secret
 
     def get_token_context(self, symbol: str) -> NormalizedDict:
-        raw = self._load_payload("token", symbol)
-        context = extract_token_context(raw, symbol)
-        return self._apply_fallbacks("token", context)
+        try:
+            raw = self._load_payload("token", symbol)
+            context = extract_token_context(raw, symbol)
+            return self._apply_fallbacks("token", context)
+        except Exception as exc:
+            return self._apply_fallbacks("token", self._bridge_unavailable_context("token", symbol, str(exc)))
 
     def get_wallet_context(self, address: str) -> NormalizedDict:
-        raw = self._load_payload("wallet", address)
-        context = extract_wallet_context(raw, address)
-        return self._apply_fallbacks("wallet", context)
+        try:
+            raw = self._load_payload("wallet", address)
+            context = extract_wallet_context(raw, address)
+            return self._apply_fallbacks("wallet", context)
+        except Exception as exc:
+            return self._apply_fallbacks("wallet", self._bridge_unavailable_context("wallet", address, str(exc)))
 
     def get_watch_today_context(self) -> NormalizedDict:
-        raw = self._load_payload("watchtoday")
-        context = extract_watch_today_context(raw)
-        return self._apply_fallbacks("watchtoday", context)
+        try:
+            raw = self._load_payload("watchtoday")
+            context = extract_watch_today_context(raw)
+            return self._apply_fallbacks("watchtoday", context)
+        except Exception as exc:
+            return self._apply_fallbacks("watchtoday", self._bridge_unavailable_context("watchtoday", "", str(exc)))
 
     def get_signal_context(self, token: str) -> NormalizedDict:
-        raw = self._load_payload("signal", token)
-        context = extract_signal_context(raw, token)
-        return self._apply_fallbacks("signal", context)
+        try:
+            raw = self._load_payload("signal", token)
+            context = extract_signal_context(raw, token)
+            return self._apply_fallbacks("signal", context)
+        except Exception as exc:
+            return self._apply_fallbacks("signal", self._bridge_unavailable_context("signal", token, str(exc)))
 
     def get_audit_context(self, symbol: str) -> NormalizedDict:
-        raw = self._load_payload("audit", symbol)
-        context = extract_audit_context(raw, symbol)
-        return self._apply_fallbacks("audit", context)
+        try:
+            raw = self._load_payload("audit", symbol)
+            context = extract_audit_context(raw, symbol)
+            return self._apply_fallbacks("audit", context)
+        except Exception as exc:
+            return self._apply_fallbacks("audit", self._bridge_unavailable_context("audit", symbol, str(exc)))
 
     def get_meme_context(self, symbol: str) -> NormalizedDict:
-        raw = self._load_payload("meme", symbol)
-        context = extract_meme_context(raw, symbol)
-        return self._apply_fallbacks("meme", context)
+        try:
+            raw = self._load_payload("meme", symbol)
+            context = extract_meme_context(raw, symbol)
+            return self._apply_fallbacks("meme", context)
+        except Exception as exc:
+            return self._apply_fallbacks("meme", self._bridge_unavailable_context("meme", symbol, str(exc)))
 
     def _load_payload(self, command: str, entity: str = "") -> dict[str, Any]:
         if not self.base_url:
@@ -107,10 +127,20 @@ class LiveMarketDataService:
             headers["X-API-Secret"] = self.api_secret
 
         endpoint = self.base_url.rstrip("/")
-        with httpx.Client(timeout=20.0, follow_redirects=True) as client:
-            response = client.get(endpoint, params=params, headers=headers)
-            response.raise_for_status()
-            payload = response.json()
+        last_exc: Exception | None = None
+        for attempt in range(max(1, settings.bridge_http_retries)):
+            try:
+                with httpx.Client(timeout=settings.bridge_http_timeout_seconds, follow_redirects=True) as client:
+                    response = client.get(endpoint, params=params, headers=headers)
+                    response.raise_for_status()
+                    payload = response.json()
+                break
+            except Exception as exc:
+                last_exc = exc
+                if attempt < max(1, settings.bridge_http_retries) - 1:
+                    sleep(0.4 * (attempt + 1))
+                else:
+                    raise RuntimeError(f"Live bridge request failed for command={command!r} entity={entity!r} at {endpoint}: {exc}") from exc
 
         if not isinstance(payload, dict):
             raise RuntimeError(f"Live adapter returned non-object JSON for {command!r}: {type(payload).__name__}")
@@ -157,3 +187,17 @@ class LiveMarketDataService:
             risks.append(missing_context_warning(command))
         context["major_risks"] = risks
         return context
+
+    def _bridge_unavailable_context(self, command: str, entity: str, detail: str) -> dict[str, Any]:
+        warning = f"Live bridge unavailable; using degraded {command} context."
+        if command == "token":
+            return {"symbol": entity or "UNKNOWN", "display_name": entity or "UNKNOWN", "major_risks": [warning, detail]}
+        if command == "signal":
+            return {"token": entity or "UNKNOWN", "signal_status": "unknown", "supporting_context": "Live signal bridge is currently unavailable.", "major_risks": [warning, detail]}
+        if command == "audit":
+            return {"symbol": entity or "UNKNOWN", "display_name": entity or "UNKNOWN", "audit_gate": "WARN", "blocked_reason": "Live audit bridge is unavailable.", "risk_level": "Medium", "audit_summary": "Live audit payload unavailable.", "major_risks": [warning, detail]}
+        if command == "wallet":
+            return {"address": entity, "follow_verdict": "Unknown", "style_read": "Live wallet bridge is unavailable.", "major_risks": [warning, detail]}
+        if command == "meme":
+            return {"symbol": entity or "UNKNOWN", "display_name": entity or "UNKNOWN", "audit_gate": "WARN", "lifecycle_stage": "unknown", "major_risks": [warning, detail]}
+        return {"market_takeaway": "Live market board is temporarily unavailable.", "major_risks": [warning, detail]}
