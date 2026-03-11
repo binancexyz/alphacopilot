@@ -8,6 +8,7 @@
 - `demo-script.md`
 - `challenge-package.md`
 - `judge-cheat-sheet.md`
+- `judge-qa-prep.md`
 - `live-proof-appendix.md`
 - `maintainer-summary.md`
 
