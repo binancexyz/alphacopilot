@@ -11,6 +11,7 @@ from src.analyzers.token_analysis import analyze_token
 from src.analyzers.wallet_analysis import analyze_wallet
 from src.config import settings
 from src.formatters.brief_formatter import format_brief
+from src.services.live_service import LiveMarketDataService
 from src.utils.parsing import normalize_token_input, normalize_wallet_input
 from src.utils.validation import looks_like_wallet_address
 
@@ -26,8 +27,16 @@ class BriefResponse(BaseModel):
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok", "mode": settings.app_mode}
+def health() -> dict:
+    payload: dict = {"status": "ok", "mode": settings.app_mode}
+    if settings.app_mode == "live":
+        live = LiveMarketDataService(
+            base_url=settings.binance_skills_base_url,
+            api_key=settings.binance_api_key,
+            api_secret=settings.binance_api_secret,
+        )
+        payload["runtime"] = live.healthcheck()
+    return payload
 
 
 @app.get("/brief/token", response_model=BriefResponse)

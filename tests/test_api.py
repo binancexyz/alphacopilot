@@ -12,6 +12,14 @@ def test_health():
     assert "mode" in response.json()
 
 
+def test_health_payload_shape():
+    response = client.get("/health")
+    payload = response.json()
+    assert isinstance(payload, dict)
+    assert "status" in payload
+    assert "mode" in payload
+
+
 def test_token_endpoint():
     response = client.get("/brief/token", params={"symbol": "BNB"})
     assert response.status_code == 200

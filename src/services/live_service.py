@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from time import sleep
+from time import sleep, time
 from typing import Any
 
 from src.config import settings
@@ -34,6 +34,13 @@ class LiveMarketDataService:
         self.base_url = (base_url or "").strip()
         self.api_key = api_key
         self.api_secret = api_secret
+        self._last_runtime_event: dict[str, Any] = {
+            "status": "idle",
+            "command": "",
+            "entity": "",
+            "detail": "No live requests attempted yet.",
+            "timestamp": 0.0,
+        }
 
     def get_token_context(self, symbol: str) -> NormalizedDict:
         try:
@@ -85,15 +92,20 @@ class LiveMarketDataService:
 
     def _load_payload(self, command: str, entity: str = "") -> dict[str, Any]:
         if not self.base_url:
+            self._record_runtime_event("error", command, entity, "BINANCE_SKILLS_BASE_URL is not configured in live mode.")
             raise RuntimeError(
                 "APP_MODE=live requires BINANCE_SKILLS_BASE_URL. "
                 "Use an HTTP adapter URL or file:///path/to/payload-dir."
             )
 
         if self.base_url.startswith("file://"):
-            return self._load_from_directory(command, entity)
+            payload = self._load_from_directory(command, entity)
+            self._record_runtime_event("ok", command, entity, "Loaded live payload from file bridge.")
+            return payload
 
-        return self._load_from_http(command, entity)
+        payload = self._load_from_http(command, entity)
+        self._record_runtime_event("ok", command, entity, "Loaded live payload from HTTP bridge.")
+        return payload
 
     def _load_from_directory(self, command: str, entity: str = "") -> dict[str, Any]:
         base_path = Path(self.base_url.removeprefix("file://")).expanduser()
@@ -286,6 +298,42 @@ class LiveMarketDataService:
         if len(cleaned) > 180:
             cleaned = cleaned[:177].rstrip() + "..."
         return f"Runtime detail: {cleaned}"
+
+    def _record_runtime_event(self, status: str, command: str, entity: str, detail: str) -> None:
+        self._last_runtime_event = {
+            "status": status,
+            "command": command,
+            "entity": entity,
+            "detail": self._sanitize_runtime_detail(detail) if status != "ok" else detail,
+            "timestamp": time(),
+        }
+
+    def runtime_status(self) -> dict[str, Any]:
+        mode = "file" if self.base_url.startswith("file://") else "http" if self.base_url else "unconfigured"
+        return {
+            "bridge_mode": mode,
+            "base_url": self.base_url or "",
+            "last_event": dict(self._last_runtime_event),
+        }
+
+    def healthcheck(self) -> dict[str, Any]:
+        status = self.runtime_status()
+        if not settings.bridge_healthcheck_enabled:
+            status["healthcheck"] = "disabled"
+            return status
+        if not self.base_url:
+            status["healthcheck"] = "unconfigured"
+            return status
+        try:
+            self._load_payload("watchtoday")
+            status = self.runtime_status()
+            status["healthcheck"] = "ok"
+            return status
+        except Exception as exc:
+            self._record_runtime_event("error", "watchtoday", "", str(exc))
+            status = self.runtime_status()
+            status["healthcheck"] = "error"
+            return status
 
     def _unique_risks(self, risks: list[Any]) -> list[str]:
         out: list[str] = []

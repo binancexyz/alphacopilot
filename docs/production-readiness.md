@@ -56,6 +56,7 @@ make api
 - add rate limiting if exposed publicly
 - add auth in front of the API if internet-facing
 - validate no secrets are committed before release
+- monitor `/health` in live mode so runtime state is not confused with product quality
 
 ### Product validation
 - run against real payloads from upstream
