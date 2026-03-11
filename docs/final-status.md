@@ -14,7 +14,11 @@
 - upgraded live extractor paths
 - `/token BNB` live matching fix across bridge and extractor layers
 - live Binance Square draft/publish flow
-- scheduled Binance Square autoposting with a quality-focused 7-post/day content engine
+- scheduled Binance Square autoposting with a verified quality-focused 7-post/day Asia/Phnom_Penh cron engine
+- compact `/brief`, `/price`, and `/risk` command layer
+- stable CoinGecko-first market quote path for `/price` and `/brief`
+- hidden native BNB audit quirk suppression for cleaner risk output
+- `make bridge-live` helper for local bridge startup
 - tests and checks
 - GitHub repo pushed
 

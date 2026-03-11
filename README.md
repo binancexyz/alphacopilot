@@ -133,9 +133,10 @@ make api
 A required Square posting flow is included.
 It now supports:
 - Binance Square draft/publish via `src/square_cli.py`
-- scheduled high-frequency posting via `src/square_diary.py`
+- scheduled posting via `src/square_diary.py`
 - direct autoposting with env-based credentials
-- rotating diary / education / market / builder / ecosystem / motivation content slots
+- a verified 7-slot Asia/Phnom_Penh cron schedule
+- rotating morning-diary / education / market / builder / ecosystem / motivation / night-diary content slots
 
 ```bash
 python3 src/square_cli.py token BNB
@@ -179,7 +180,9 @@ What is now available for local live-mode development:
 - runtime bridge template flows that use raw payloads when provided
 - improved end-to-end `/token BNB` live matching in both bridge and extractor layers
 - working live Binance Square publishing from chat and CLI
-- scheduled Binance Square autoposting with a quality-focused 7-post/day content engine in `src/square_diary.py`
+- scheduled Binance Square autoposting with a verified quality-focused 7-post/day cron engine in `src/square_diary.py`
+- `make bridge-live` for starting the local bridge with `.env` loaded
+- compact `/price`, `/brief`, and `/risk` flows with stable market quotes using CoinGecko-first live sourcing and fallback behavior
 
 ## Architecture
 
