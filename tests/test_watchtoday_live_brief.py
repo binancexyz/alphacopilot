@@ -20,6 +20,8 @@ def test_build_watchtoday_brief_includes_lane_coverage_when_partial():
     ctx = WatchTodayContext(
         top_narratives=["AI"],
         strongest_signals=["BNB strength"],
+        trending_now=["BNB +2.4% | liq $1.2B"],
+        social_hype=["AI — narrative attention visible"],
         exchange_board=["BNB +2.4% | BNBUSDT | strong"],
         market_takeaway="Opportunity exists, but selectivity matters.",
     )

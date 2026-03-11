@@ -156,13 +156,24 @@ def extract_watch_today_context(raw: dict[str, Any]) -> dict[str, Any]:
     smart_money_flow = _extract_smart_money_flow(market_rank, signal)
     social_hype = _extract_social_hype(market_rank)
     meme_watch = _extract_meme_watch(meme_rush)
-    top_picks = _extract_top_picks(trending_now, strongest_signals, top_narratives)
+    exchange_board = _extract_watchtoday_exchange_board(market_rank)
+
+    if not strongest_signals and exchange_board:
+        strongest_signals = [f"{exchange_board[0]} — exchange-led momentum read"]
+    if not trending_now and exchange_board:
+        trending_now = exchange_board[:2]
     if not smart_money_flow and strongest_signals:
         smart_money_flow = strongest_signals[:3]
-    if not social_hype and trending_now:
-        social_hype = trending_now[:2]
+    if not social_hype:
+        if trending_now:
+            social_hype = trending_now[:2]
+        elif top_narratives:
+            social_hype = [f"{item} — narrative attention visible" for item in top_narratives[:2]]
+    if not meme_watch and top_narratives:
+        meme_watch = [f"{item} — narrative/meme crossover watch" for item in top_narratives[:2] if any(x in item.lower() for x in ["meme", "dog", "frog", "community", "ai"])]
+    top_picks = _extract_top_picks(trending_now, strongest_signals, top_narratives, exchange_board)
     if not top_picks:
-        top_picks = _extract_top_picks(trending_now, strongest_signals, top_narratives)
+        top_picks = _extract_top_picks(trending_now, strongest_signals, top_narratives, exchange_board)
 
     return {
         "top_narratives": top_narratives,
@@ -175,7 +186,7 @@ def extract_watch_today_context(raw: dict[str, Any]) -> dict[str, Any]:
         "social_hype": social_hype,
         "meme_watch": meme_watch,
         "top_picks": top_picks,
-        "exchange_board": _extract_watchtoday_exchange_board(market_rank),
+        "exchange_board": exchange_board,
     }
 
 
@@ -629,6 +640,13 @@ def _extract_strongest_signals(signal: dict[str, Any]) -> list[str]:
     return _unique(out)
 
 
+def _extract_symbol_and_liquidity(item: dict[str, Any]) -> tuple[str, float]:
+    symbol = str(item.get("symbol") or item.get("baseAsset") or item.get("name") or "Token")
+    liquidity = _pick_number(item, "liquidity", "liquidityUsd", "quoteVolume", "volume")
+    return symbol, liquidity
+
+
+
 def _extract_trending_now(market_rank: dict[str, Any]) -> list[str]:
     direct = [str(x) for x in market_rank.get("trending_now", []) or []]
     if direct:
@@ -637,9 +655,8 @@ def _extract_trending_now(market_rank: dict[str, Any]) -> list[str]:
     out: list[str] = []
     tokens = market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []
     for item in tokens[:3]:
-        symbol = item.get("symbol") or item.get("baseAsset") or "Token"
+        symbol, liquidity = _extract_symbol_and_liquidity(item)
         search_count = _to_int(item.get("searchCount24h"))
-        liquidity = _pick_number(item, "liquidity")
         if search_count > 0:
             out.append(f"{symbol} — {search_count} searches | Liq {_human_money_short(liquidity)}")
         else:
@@ -722,7 +739,7 @@ def _extract_meme_watch(meme_rush: dict[str, Any]) -> list[str]:
 
 
 
-def _extract_top_picks(trending_now: list[str], strongest_signals: list[str], top_narratives: list[str]) -> list[str]:
+def _extract_top_picks(trending_now: list[str], strongest_signals: list[str], top_narratives: list[str], exchange_board: list[str] | None = None) -> list[str]:
     picks: list[str] = []
     if strongest_signals:
         picks.append(f"{strongest_signals[0]} — best visible setup")
@@ -730,6 +747,8 @@ def _extract_top_picks(trending_now: list[str], strongest_signals: list[str], to
         picks.append(f"{trending_now[0]} — strongest broad attention")
     if top_narratives:
         picks.append(f"{top_narratives[0]} — narrative worth ranking, not chasing")
+    if exchange_board:
+        picks.append(f"{exchange_board[0]} — exchange board anchor")
     return _unique(picks)[:3]
 
 
