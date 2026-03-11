@@ -23,6 +23,12 @@ class Settings:
     bridge_http_timeout_seconds: float = float(os.getenv("BRIDGE_HTTP_TIMEOUT_SECONDS", "20"))
     bridge_http_retries: int = int(os.getenv("BRIDGE_HTTP_RETRIES", "2"))
     bridge_healthcheck_enabled: bool = os.getenv("BRIDGE_HEALTHCHECK_ENABLED", "true").lower() == "true"
+    api_auth_enabled: bool = os.getenv("API_AUTH_ENABLED", "false").lower() == "true"
+    api_auth_key: str = os.getenv("API_AUTH_KEY", "")
+    api_auth_header: str = os.getenv("API_AUTH_HEADER", "X-API-Key")
+    api_rate_limit_enabled: bool = os.getenv("API_RATE_LIMIT_ENABLED", "true").lower() == "true"
+    api_rate_limit_requests: int = int(os.getenv("API_RATE_LIMIT_REQUESTS", "60"))
+    api_rate_limit_window_seconds: int = int(os.getenv("API_RATE_LIMIT_WINDOW_SECONDS", "60"))
 
 
 settings = Settings()

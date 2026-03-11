@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from pydantic import BaseModel
 
 from src.analyzers.audit_analysis import analyze_audit
@@ -11,6 +11,7 @@ from src.analyzers.token_analysis import analyze_token
 from src.analyzers.wallet_analysis import analyze_wallet
 from src.config import settings
 from src.formatters.brief_formatter import format_brief
+from src.services.api_guard import enforce_api_guard, guard_status
 from src.services.runtime_report import build_runtime_meta, live_service
 from src.utils.parsing import normalize_token_input, normalize_wallet_input
 from src.utils.validation import looks_like_wallet_address
@@ -29,15 +30,15 @@ class BriefResponse(BaseModel):
 
 
 @app.get("/health")
-def health() -> dict:
-    payload: dict = {"status": "ok", "mode": settings.app_mode}
+def health(request: Request, _: None = Depends(enforce_api_guard)) -> dict:
+    payload: dict = {"status": "ok", "mode": settings.app_mode, "guard": guard_status()}
     if settings.app_mode == "live":
         payload["runtime"] = live_service().healthcheck()
     return payload
 
 
 @app.get("/runtime/report")
-def runtime_report() -> dict:
+def runtime_report(request: Request, _: None = Depends(enforce_api_guard)) -> dict:
     if settings.app_mode != "live":
         return {
             "status": "ok",
@@ -54,7 +55,7 @@ def runtime_report() -> dict:
 
 
 @app.get("/brief/token", response_model=BriefResponse)
-def brief_token(symbol: str = Query(..., min_length=1, description="Token symbol, e.g. BNB")) -> BriefResponse:
+def brief_token(request: Request, _: None = Depends(enforce_api_guard), symbol: str = Query(..., min_length=1, description="Token symbol, e.g. BNB")) -> BriefResponse:
     normalized = normalize_token_input(symbol)
     brief = analyze_token(normalized)
     health = live_service().healthcheck() if settings.app_mode == "live" else None
@@ -71,7 +72,7 @@ def brief_token(symbol: str = Query(..., min_length=1, description="Token symbol
 
 
 @app.get("/brief/signal", response_model=BriefResponse)
-def brief_signal(token: str = Query(..., min_length=1, description="Token symbol, e.g. DOGE")) -> BriefResponse:
+def brief_signal(request: Request, _: None = Depends(enforce_api_guard), token: str = Query(..., min_length=1, description="Token symbol, e.g. DOGE")) -> BriefResponse:
     normalized = normalize_token_input(token)
     brief = analyze_signal(normalized)
     health = live_service().healthcheck() if settings.app_mode == "live" else None
@@ -88,7 +89,7 @@ def brief_signal(token: str = Query(..., min_length=1, description="Token symbol
 
 
 @app.get("/brief/audit", response_model=BriefResponse)
-def brief_audit(symbol: str = Query(..., min_length=1, description="Token symbol, e.g. BNB")) -> BriefResponse:
+def brief_audit(request: Request, _: None = Depends(enforce_api_guard), symbol: str = Query(..., min_length=1, description="Token symbol, e.g. BNB")) -> BriefResponse:
     normalized = normalize_token_input(symbol)
     brief = analyze_audit(normalized)
     health = live_service().healthcheck() if settings.app_mode == "live" else None
@@ -105,7 +106,7 @@ def brief_audit(symbol: str = Query(..., min_length=1, description="Token symbol
 
 
 @app.get("/brief/meme", response_model=BriefResponse)
-def brief_meme(symbol: str = Query(..., min_length=1, description="Token symbol, e.g. DOGE")) -> BriefResponse:
+def brief_meme(request: Request, _: None = Depends(enforce_api_guard), symbol: str = Query(..., min_length=1, description="Token symbol, e.g. DOGE")) -> BriefResponse:
     normalized = normalize_token_input(symbol)
     brief = analyze_meme(normalized)
     health = live_service().healthcheck() if settings.app_mode == "live" else None
@@ -122,7 +123,7 @@ def brief_meme(symbol: str = Query(..., min_length=1, description="Token symbol,
 
 
 @app.get("/brief/wallet", response_model=BriefResponse)
-def brief_wallet(address: str = Query(..., min_length=12, description="Wallet address starting with 0x")) -> BriefResponse:
+def brief_wallet(request: Request, _: None = Depends(enforce_api_guard), address: str = Query(..., min_length=12, description="Wallet address starting with 0x")) -> BriefResponse:
     if not looks_like_wallet_address(address):
         raise HTTPException(status_code=400, detail="Wallet address must start with 0x and look valid.")
     normalized = normalize_wallet_input(address)
@@ -141,7 +142,7 @@ def brief_wallet(address: str = Query(..., min_length=12, description="Wallet ad
 
 
 @app.get("/brief/watchtoday", response_model=BriefResponse)
-def brief_watchtoday() -> BriefResponse:
+def brief_watchtoday(request: Request, _: None = Depends(enforce_api_guard)) -> BriefResponse:
     brief = watch_today()
     health = live_service().healthcheck() if settings.app_mode == "live" else None
     runtime = build_runtime_meta("watchtoday", "market", health=health)

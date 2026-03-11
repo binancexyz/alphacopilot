@@ -28,6 +28,7 @@ pip install -r requirements.txt
 
 ## Recommended hardening
 - keep secrets in environment variables or a secret manager
-- do not expose the API publicly without auth/rate limiting
+- enable `API_AUTH_ENABLED=true` and set `API_AUTH_KEY` before public exposure
+- keep `API_RATE_LIMIT_ENABLED=true` unless the API is fully private behind another limiter
 - log requests and upstream failures
 - verify live-mode connectivity before demos or launch

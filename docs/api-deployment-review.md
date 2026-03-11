@@ -8,10 +8,8 @@
 - fallback language lowers confidence instead of faking certainty
 
 ## Remaining weak spots
-- API has no auth yet
-- API has no rate limiting yet
+- API auth/rate limiting are still lightweight scaffolding, not full deployment-grade controls
 - no structured request logging yet
-- no health check for upstream live dependency availability yet
 - no container healthcheck instruction yet
 
 ## Recommended next production ops steps
