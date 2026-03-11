@@ -4,9 +4,9 @@
 
 **Short name:** Bibipilot
 **Tagline:** Less noise. Better conviction.
-**Version:** 0.1.0
-**API version:** 0.2.1
-**Bridge version:** 0.2.0
+**Package version:** 0.1.0 (pyproject.toml)
+**API version:** 0.2.1 (src/api.py — versioned independently as the REST surface evolves faster)
+**Bridge version:** 0.2.0 (src/bridge_api.py — versioned independently for OpenClaw integration)
 
 ---
 

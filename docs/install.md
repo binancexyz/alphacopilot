@@ -1,7 +1,7 @@
 # Install / Run
 
 ## Requirements
-- Python 3.10+ (3.12 recommended, used in Docker)
+- Python 3.10+ required (all features work on 3.10; 3.12 is used in Docker for best performance)
 - For local venv setup on Ubuntu/Debian: `python3-venv`
 
 ## Quick start
