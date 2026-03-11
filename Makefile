@@ -1,6 +1,6 @@
 PYTHON=python3
 
-.PHONY: token wallet watchtoday signal check test runtime-demo api bridge-api square-draft square-publish diary-morning education-post market-post builder-post ecosystem-post motivation-post diary-night install-diary-cron
+.PHONY: token wallet watchtoday signal check test runtime-demo api bridge-api bridge-live square-draft square-publish diary-morning education-post market-post builder-post ecosystem-post motivation-post diary-night install-diary-cron
 
 token:
 	$(PYTHON) src/main.py token BNB
@@ -22,6 +22,9 @@ api:
 
 bridge-api:
 	uvicorn src.bridge_api:app --host 0.0.0.0 --port 8010
+
+bridge-live:
+	bash -lc 'set -a && source .env && set +a && .venv/bin/python -m uvicorn src.bridge_api:app --host 127.0.0.1 --port 8010'
 
 square-draft:
 	$(PYTHON) src/square_cli.py token BNB

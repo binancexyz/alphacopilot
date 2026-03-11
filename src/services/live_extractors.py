@@ -149,6 +149,7 @@ def _extract_audit_flags_and_risks(audit: dict[str, Any]) -> tuple[list[str], li
     flags: list[str] = []
     risks: list[str] = []
     level = _to_int(audit.get("riskLevel"))
+    suppress_unverified_only = bool(audit.get("isHidden")) and level == 0 and not (audit.get("extraInfo") or {}).get("isVerified", False)
     if level >= 4:
         flags.append(f"Risk level {level} ({audit.get('riskLevelEnum', 'HIGH')})")
     elif level >= 2:
@@ -168,6 +169,8 @@ def _extract_audit_flags_and_risks(audit: dict[str, Any]) -> tuple[list[str], li
             if detail.get("isHit"):
                 title = detail.get("title") or "Risk detected"
                 desc = detail.get("description") or ""
+                if suppress_unverified_only and title == "Contract Code Not Verified":
+                    continue
                 flags.append(title)
                 risks.append(f"{category}: {title}. {desc}".strip())
     return _unique(flags), _unique(risks)
