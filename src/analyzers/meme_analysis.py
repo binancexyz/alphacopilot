@@ -22,12 +22,16 @@ def analyze_meme(symbol: str) -> AnalysisBrief:
         verdict = f"{ctx.display_name} is blocked as a meme setup because the audit layer is too dangerous to ignore."
         quality = "Blocked"
         conviction = "Low"
-    elif ctx.smart_money_count > 0 and ctx.signal_freshness == "FRESH":
+    elif ctx.lifecycle_stage == "active" and ctx.smart_money_count > 0 and ctx.signal_freshness == "FRESH":
         verdict = f"{ctx.display_name} has a live meme-style setup with visible smart-money activity, but it still needs fast discipline because meme timing degrades quickly."
         quality = "Medium"
         conviction = "Medium"
-    else:
+    elif ctx.lifecycle_stage in {"attention", "active"}:
         verdict = f"{ctx.display_name} has meme-style attention, but the current setup still looks too conditional to trust aggressively."
+        quality = "Low"
+        conviction = "Low"
+    else:
+        verdict = f"{ctx.display_name} does not currently read as a strong meme candidate from the available live context."
         quality = "Low"
         conviction = "Low"
 
@@ -35,6 +39,8 @@ def analyze_meme(symbol: str) -> AnalysisBrief:
     if ctx.launch_platform:
         why_bits.append(f"Launch platform: {ctx.launch_platform}.")
     why_bits.append(f"Lifecycle: {ctx.lifecycle_stage}.")
+    if ctx.market_rank_context:
+        why_bits.append(ctx.market_rank_context)
     if ctx.smart_money_count > 0:
         why_bits.append(f"{ctx.smart_money_count} smart-money wallets are visible.")
     if ctx.signal_freshness != "UNKNOWN":
@@ -49,6 +55,8 @@ def analyze_meme(symbol: str) -> AnalysisBrief:
             risks.append("Most tracked smart money may already be exiting, which makes this meme setup look late.")
         elif ctx.exit_rate >= 40:
             risks.append("Exit rate is already mixed, so continuation quality may be weaker than the hype suggests.")
+        elif ctx.lifecycle_stage not in {"attention", "active", "finalizing"}:
+            risks.append("Current live context is too weak to treat this as a strong meme candidate.")
         else:
             risks.append("Meme attention can reverse quickly even when early interest looks strong.")
 
@@ -60,6 +68,8 @@ def analyze_meme(symbol: str) -> AnalysisBrief:
             watch.append(f"whether bonding progress completes cleanly from {ctx.bonded_progress:.0f}% instead of turning chaotic")
         elif ctx.bonded_progress > 0:
             watch.append(f"whether bonding progress builds from {ctx.bonded_progress:.0f}% into a cleaner launch state")
+        elif ctx.lifecycle_stage == "attention":
+            watch.append("whether attention develops into a cleaner active meme setup instead of fading as a loose narrative")
         if ctx.exit_rate >= 70:
             watch.append("whether exit pressure cools down, because the current setup already looks late")
         else:

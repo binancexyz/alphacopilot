@@ -230,31 +230,54 @@ def extract_audit_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
 
 def extract_meme_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     token = extract_token_context(raw, symbol)
+    token_info = raw.get("query-token-info", {})
+    market_rank = raw.get("crypto-market-rank", {})
     signal = raw.get("trading-signal", {})
     first_signal = _first_item(signal.get("data")) or {}
-    launch_platform = str(first_signal.get("launchPlatform") or "")
+    metadata = token_info.get("metadata", {}) or {}
+    search_item = _best_token_match(token_info.get("search"), symbol, metadata) or metadata or {}
+    launch_platform = str(first_signal.get("launchPlatform") or search_item.get("launchPlatform") or metadata.get("launchPlatform") or "")
     is_alpha = bool(first_signal.get("isAlpha"))
     status = str(first_signal.get("status") or "").lower()
     exit_rate = _pick_number(first_signal, "exitRate", "exit_rate")
     progress = _pick_number(first_signal, "progress")
 
+    tag_values = []
+    for source in (search_item.get("tokenTag") or {}, metadata.get("tokenTag") or {}):
+        if isinstance(source, dict):
+            tag_values.extend([str(k).lower() for k in source.keys()])
+    market_context = str(token.get("market_rank_context", "")).lower()
+    symbol_upper = str(token.get("symbol", symbol)).upper()
+    display_name = str(token.get("display_name", symbol))
+
+    meme_like = any(x in market_context for x in ["meme", "community"]) or any(x in " ".join(tag_values) for x in ["meme", "community", "dog", "frog"])
+    known_meme_symbols = {"DOGE", "SHIB", "PEPE", "BONK", "FLOKI", "WIF"}
+    if symbol_upper in known_meme_symbols:
+        meme_like = True
+
     lifecycle = "unknown"
-    if status in {"valid", "watch", "bullish", "triggered"}:
-        lifecycle = "new"
     if progress >= 90:
         lifecycle = "finalizing"
-    if status in {"timeout", "exitrate", "exitRate".lower()} or exit_rate >= 70:
-        lifecycle = "migrated"
+    elif status in {"timeout", "exitrate", "exited"} or exit_rate >= 70:
+        lifecycle = "late"
+    elif status in {"valid", "watch", "bullish", "triggered"} or token.get("smart_money_count", 0) > 0:
+        lifecycle = "active"
+    elif meme_like:
+        lifecycle = "attention"
+
+    risks = list(token.get("major_risks", []))
+    if not meme_like:
+        risks.insert(0, "This asset does not currently read as a clear meme candidate from the available live context.")
 
     return {
         "symbol": token.get("symbol", symbol),
-        "display_name": token.get("display_name", symbol),
+        "display_name": display_name,
         "price": token.get("price", 0.0),
         "liquidity": token.get("liquidity", 0.0),
         "market_rank_context": token.get("market_rank_context", ""),
         "signal_status": token.get("signal_status", "unknown"),
         "audit_flags": token.get("audit_flags", []),
-        "major_risks": token.get("major_risks", []),
+        "major_risks": risks,
         "smart_money_count": token.get("smart_money_count", 0),
         "exit_rate": token.get("exit_rate", 0.0),
         "signal_age_hours": token.get("signal_age_hours", 0.0),
