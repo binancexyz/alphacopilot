@@ -7,6 +7,8 @@
 - `prd.md`
 - `demo-script.md`
 - `challenge-package.md`
+- `judge-cheat-sheet.md`
+- `live-proof-appendix.md`
 - `maintainer-summary.md`
 
 ## Integration
