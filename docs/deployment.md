@@ -30,5 +30,6 @@ pip install -r requirements.txt
 - keep secrets in environment variables or a secret manager
 - enable `API_AUTH_ENABLED=true` and set `API_AUTH_KEY` before public exposure
 - keep `API_RATE_LIMIT_ENABLED=true` unless the API is fully private behind another limiter
-- log requests and upstream failures
+- keep `API_REQUEST_LOGGING_ENABLED=true` so request paths and statuses are visible in logs
 - verify live-mode connectivity before demos or launch
+- check `/health` for `config_warnings` before blaming the product layer for deployment mistakes

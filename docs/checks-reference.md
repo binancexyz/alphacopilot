@@ -20,5 +20,13 @@ scripts/demo_capture.sh
 scripts/check_all.sh
 ```
 
+## API runtime sanity checks
+```bash
+curl -H 'X-API-Key: ...' http://localhost:8000/health
+curl -H 'X-API-Key: ...' http://localhost:8000/runtime/report
+```
+
+If auth is disabled, you can omit the header.
+
 ## Why this matters
 These commands make it easy to verify the scaffold still works before pushing changes.

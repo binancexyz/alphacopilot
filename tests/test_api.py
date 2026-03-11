@@ -18,6 +18,7 @@ def test_health_payload_shape():
     assert isinstance(payload, dict)
     assert "status" in payload
     assert "mode" in payload
+    assert "config_warnings" in payload
 
 
 def test_runtime_report_endpoint():

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from pydantic import BaseModel
+from time import perf_counter
+import logging
 
 from src.analyzers.audit_analysis import analyze_audit
 from src.analyzers.market_watch import watch_today
@@ -9,7 +11,7 @@ from src.analyzers.meme_analysis import analyze_meme
 from src.analyzers.signal_check import analyze_signal
 from src.analyzers.token_analysis import analyze_token
 from src.analyzers.wallet_analysis import analyze_wallet
-from src.config import settings
+from src.config import config_warnings, settings
 from src.formatters.brief_formatter import format_brief
 from src.services.api_guard import enforce_api_guard, guard_status
 from src.services.runtime_report import build_runtime_meta, live_service
@@ -17,6 +19,34 @@ from src.utils.parsing import normalize_token_input, normalize_wallet_input
 from src.utils.validation import looks_like_wallet_address
 
 app = FastAPI(title="Bibipilot API", version="0.2.1")
+logger = logging.getLogger("bibipilot.api")
+
+
+@app.on_event("startup")
+def startup_checks() -> None:
+    for warning in config_warnings():
+        logger.warning("startup_config_warning warning=%s", warning)
+
+
+@app.middleware("http")
+async def request_logging_middleware(request: Request, call_next):
+    if not settings.api_request_logging_enabled:
+        return await call_next(request)
+    started = perf_counter()
+    response = None
+    try:
+        response = await call_next(request)
+        return response
+    finally:
+        duration_ms = (perf_counter() - started) * 1000
+        logger.info(
+            "request method=%s path=%s status=%s duration_ms=%.1f client=%s",
+            request.method,
+            request.url.path,
+            getattr(response, "status_code", "error"),
+            duration_ms,
+            getattr(request.client, "host", "unknown"),
+        )
 
 
 class BriefResponse(BaseModel):
@@ -31,7 +61,7 @@ class BriefResponse(BaseModel):
 
 @app.get("/health")
 def health(request: Request, _: None = Depends(enforce_api_guard)) -> dict:
-    payload: dict = {"status": "ok", "mode": settings.app_mode, "guard": guard_status()}
+    payload: dict = {"status": "ok", "mode": settings.app_mode, "guard": guard_status(), "config_warnings": config_warnings()}
     if settings.app_mode == "live":
         payload["runtime"] = live_service().healthcheck()
     return payload

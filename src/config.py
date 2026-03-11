@@ -29,6 +29,18 @@ class Settings:
     api_rate_limit_enabled: bool = os.getenv("API_RATE_LIMIT_ENABLED", "true").lower() == "true"
     api_rate_limit_requests: int = int(os.getenv("API_RATE_LIMIT_REQUESTS", "60"))
     api_rate_limit_window_seconds: int = int(os.getenv("API_RATE_LIMIT_WINDOW_SECONDS", "60"))
+    api_request_logging_enabled: bool = os.getenv("API_REQUEST_LOGGING_ENABLED", "true").lower() == "true"
 
 
 settings = Settings()
+
+
+def config_warnings() -> list[str]:
+    warnings: list[str] = []
+    if settings.app_mode == "live" and not settings.binance_skills_base_url:
+        warnings.append("APP_MODE=live but BINANCE_SKILLS_BASE_URL is not configured.")
+    if settings.api_auth_enabled and not settings.api_auth_key:
+        warnings.append("API_AUTH_ENABLED=true but API_AUTH_KEY is empty.")
+    if settings.api_rate_limit_enabled and settings.api_rate_limit_requests <= 0:
+        warnings.append("API rate limiting is enabled but API_RATE_LIMIT_REQUESTS is not positive.")
+    return warnings
