@@ -23,7 +23,7 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     signal_freshness = _signal_freshness(signal_age_hours)
     audit_gate, blocked_reason = _audit_gate_state(audit_payload, audit_flags)
 
-    resolved_signal_status = signal.get("status") or signal.get("direction") or ("watch" if _first_item(signal.get("data")) else "unknown")
+    resolved_signal_status = signal.get("status") or signal.get("direction") or ("watch" if _first_item(signal.get("data")) else "unmatched")
 
     return {
         "symbol": resolved_symbol,

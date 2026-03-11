@@ -84,6 +84,8 @@ def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
         quick_verdict = f"{ctx.token} is blocked for bullish signal treatment because the audit layer is too dangerous to ignore."
         quality = "Blocked"
         conviction = "Low"
+    elif ctx.signal_status == "unmatched":
+        quick_verdict = f"{ctx.token} does not currently have a matched live smart-money signal on the board, so this should be treated as a watchlist check rather than a true setup call."
     elif quality == "High":
         quick_verdict = f"{ctx.token} has a stronger signal than most watchlist noise, but it still needs follow-through to justify real conviction."
     elif quality == "Medium":

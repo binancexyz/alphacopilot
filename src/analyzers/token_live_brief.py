@@ -76,6 +76,8 @@ def build_token_brief(ctx: TokenContext) -> AnalysisBrief:
         quick_verdict = f"{ctx.display_name} is blocked for bullish follow-through right now because the audit picture is too dangerous to treat as a clean setup."
         quality = "Blocked"
         conviction = "Low"
+    elif ctx.signal_status == "unmatched":
+        quick_verdict = f"{ctx.display_name} has enough market structure to monitor, but there is no matched live smart-money signal on the current board yet."
     elif quality == "High" and conviction == "High":
         quick_verdict = f"{ctx.display_name} has a relatively clean token setup right now: signal quality is strong, basic liquidity context exists, and the risk stack is still manageable."
     elif quality == "High":
@@ -91,6 +93,8 @@ def build_token_brief(ctx: TokenContext) -> AnalysisBrief:
     if not top_risks:
         if ctx.audit_flags:
             top_risks.append("Contract-level flags still weigh on the setup.")
+        if ctx.signal_status == "unmatched":
+            top_risks.append("There is no matched live smart-money signal on the current board, so conviction should stay capped.")
         if ctx.exit_rate >= 70:
             top_risks.append("Most tracked smart money may already be exiting, which makes the setup look late.")
         elif ctx.exit_rate >= 40:

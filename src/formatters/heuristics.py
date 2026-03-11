@@ -11,8 +11,16 @@ def token_signal_quality(ctx: TokenContext) -> str:
         score += 1
     if ctx.signal_status in {"watch", "bullish", "triggered"}:
         score += 1
+    if ctx.signal_status == "unmatched":
+        score -= 1
     if not ctx.audit_flags:
         score += 1
+    if ctx.signal_freshness == "FRESH":
+        score += 1
+    elif ctx.signal_freshness == "STALE":
+        score -= 1
+    if ctx.exit_rate >= 70:
+        score -= 1
 
     if score >= 4:
         return "High"
@@ -32,6 +40,8 @@ def token_conviction(ctx: TokenContext) -> str:
 
 
 def signal_quality_from_signal(ctx: SignalContext) -> str:
+    if ctx.signal_status == "unmatched":
+        return "Low"
     if ctx.signal_status in {"triggered", "bullish"} and not ctx.audit_flags:
         return "High"
     if ctx.signal_status in {"watch", "triggered", "bullish"}:
