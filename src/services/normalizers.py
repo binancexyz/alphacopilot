@@ -55,6 +55,7 @@ def normalize_watch_today_context(payload: dict) -> WatchTodayContext:
         social_hype=[str(x) for x in payload.get("social_hype", [])],
         meme_watch=[str(x) for x in payload.get("meme_watch", [])],
         top_picks=[str(x) for x in payload.get("top_picks", [])],
+        exchange_board=[str(x) for x in payload.get("exchange_board", [])],
     )
 
 

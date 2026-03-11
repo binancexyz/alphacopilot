@@ -20,11 +20,13 @@ def test_build_watchtoday_brief_includes_lane_coverage_when_partial():
     ctx = WatchTodayContext(
         top_narratives=["AI"],
         strongest_signals=["BNB strength"],
+        exchange_board=["BNB +2.4% | BNBUSDT | strong"],
         market_takeaway="Opportunity exists, but selectivity matters.",
     )
     brief = build_watchtoday_brief(ctx)
     titles = [section.title for section in brief.sections]
     assert "🧩 Lane Coverage" in titles
+    assert "🏦 Exchange Board" in titles
     lane_section = next(section for section in brief.sections if section.title == "🧩 Lane Coverage")
     assert "Sparse:" in lane_section.content
     assert "selective rather than complete" in brief.quick_verdict or brief.conviction == "Low"

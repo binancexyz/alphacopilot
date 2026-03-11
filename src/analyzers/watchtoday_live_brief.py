@@ -13,6 +13,7 @@ LANE_LABELS = {
     "top_narratives": "Narrative",
     "top_picks": "Top Picks",
     "strongest_signals": "Signal Core",
+    "exchange_board": "Exchange Board",
 }
 
 
@@ -25,6 +26,7 @@ def _watch_lane_summary(ctx: WatchTodayContext) -> tuple[list[str], list[str]]:
         "top_narratives": bool(ctx.top_narratives),
         "top_picks": bool(ctx.top_picks),
         "strongest_signals": bool(ctx.strongest_signals),
+        "exchange_board": bool(ctx.exchange_board),
     }
     populated = [LANE_LABELS[key] for key, present in lanes.items() if present]
     sparse = [LANE_LABELS[key] for key, present in lanes.items() if not present]
@@ -47,13 +49,14 @@ def _watch_evidence_level(ctx: WatchTodayContext) -> tuple[str, str]:
 def _watch_why_it_matters(ctx: WatchTodayContext) -> str:
     strongest = ", ".join(ctx.strongest_signals[:2]) if ctx.strongest_signals else "no clean signal leaders yet"
     narratives = ", ".join(ctx.top_narratives[:2]) if ctx.top_narratives else "no durable narrative leaders yet"
+    exchange = ", ".join(ctx.exchange_board[:2]) if ctx.exchange_board else "no exchange board anchors yet"
     populated, sparse = _watch_lane_summary(ctx)
     lane_note = ""
     if sparse and populated:
         lane_note = f" Populated lanes: {', '.join(populated[:3])}. Sparse lanes: {', '.join(sparse[:2])}."
     elif sparse and not populated:
         lane_note = f" Most lanes are still sparse: {', '.join(sparse[:3])}."
-    return f"Top signal lanes: {strongest}. Narrative heat: {narratives}. The edge today is ranking clean setups ahead of crowded or concentrated names.{lane_note}"
+    return f"Top signal lanes: {strongest}. Narrative heat: {narratives}. Exchange board: {exchange}. The edge today is ranking clean setups ahead of crowded or concentrated names.{lane_note}"
 
 
 
@@ -85,6 +88,8 @@ def _watch_sections(ctx: WatchTodayContext) -> list[BriefSection]:
         sections.append(BriefSection(title="🔥 Trending Now", content="\n".join(f"- {item}" for item in ctx.trending_now[:3])))
     if ctx.smart_money_flow:
         sections.append(BriefSection(title="🧠 Smart Money Flow", content="\n".join(f"- {item}" for item in ctx.smart_money_flow[:3])))
+    if ctx.exchange_board:
+        sections.append(BriefSection(title="🏦 Exchange Board", content="\n".join(f"- {item}" for item in ctx.exchange_board[:3])))
     if ctx.social_hype:
         sections.append(BriefSection(title="📣 Social Hype", content="\n".join(f"- {item}" for item in ctx.social_hype[:2])))
     if ctx.meme_watch:

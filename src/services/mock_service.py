@@ -51,6 +51,11 @@ class MockMarketDataService:
                 "Trending sectors may already be overheated.",
                 "Signal quality can vary across the same narrative.",
             ],
+            "exchange_board": [
+                "BNB +2.4% | Binance Spot leader board anchor",
+                "BTC +1.1% | broad risk tone stable",
+                "SOL -0.6% | momentum softer than BNB",
+            ],
         }
 
     def get_signal_context(self, token: str) -> NormalizedDict:

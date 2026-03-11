@@ -55,6 +55,7 @@ class WatchTodayContext:
     social_hype: list[str] = field(default_factory=list)
     meme_watch: list[str] = field(default_factory=list)
     top_picks: list[str] = field(default_factory=list)
+    exchange_board: list[str] = field(default_factory=list)
 
 
 @dataclass
