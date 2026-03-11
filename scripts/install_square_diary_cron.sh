@@ -26,7 +26,7 @@ EXISTING="$(crontab -l 2>/dev/null | grep -v 'src/square_diary.py' | grep -v '^C
     slot="${item##*|}"
     hour="${time%%:*}"
     minute="${time##*:}"
-    printf '%s %s * * * cd %s && . .venv/bin/activate && set -a && . .env && set +a && python src/square_diary.py %s --publish >> %s/square-%s.log 2>&1\n' "$minute" "$hour" "$ROOT" "$slot" "$LOG_DIR" "$slot"
+    printf '%s %s * * * cd %s && set -a && . ./.env && set +a && .venv/bin/python src/square_diary.py %s --publish >> %s/square-%s.log 2>&1\n' "$minute" "$hour" "$ROOT" "$slot" "$LOG_DIR" "$slot"
   done
 } | crontab -
 
