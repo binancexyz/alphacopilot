@@ -13,6 +13,12 @@ from src.services.factory import get_market_data_service
 from src.services.normalizers import normalize_token_context
 
 
+BINANCE_SPOT_BASE_URL = "https://api.binance.com"
+BINANCE_SPOT_MARKET_DATA_URL = "https://data-api.binance.vision"
+BINANCE_EXCHANGE_INFO_URL = "/api/v3/exchangeInfo"
+BINANCE_TICKER_24HR_URL = "/api/v3/ticker/24hr"
+BINANCE_BOOK_TICKER_URL = "/api/v3/ticker/bookTicker"
+BINANCE_AVG_PRICE_URL = "/api/v3/avgPrice"
 CMC_QUOTES_URL = "https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest"
 COINGECKO_SEARCH_URL = "https://api.coingecko.com/api/v3/search"
 COINGECKO_MARKETS_URL = "https://api.coingecko.com/api/v3/coins/markets"
@@ -62,6 +68,83 @@ def _cache_quote(symbol: str, quote: dict[str, Any]) -> None:
         "quote": quote,
     }
     _save_quote_cache(cache)
+
+
+def _fetch_binance_spot_quote(symbol: str) -> dict[str, Any] | None:
+    base = symbol.upper()
+    candidate_pairs = [f"{base}USDT", f"{base}BUSD", f"{base}USDC"]
+
+    with httpx.Client(timeout=20.0, follow_redirects=True) as client:
+        chosen_symbol = None
+        exchange_symbols: dict[str, Any] = {}
+        for root in (BINANCE_SPOT_MARKET_DATA_URL, BINANCE_SPOT_BASE_URL):
+            try:
+                resp = client.get(root.rstrip("/") + BINANCE_EXCHANGE_INFO_URL, params={"symbols": json.dumps(candidate_pairs)})
+                resp.raise_for_status()
+                payload = resp.json() or {}
+                for item in payload.get("symbols", []) or []:
+                    sym = str(item.get("symbol") or "")
+                    exchange_symbols[sym] = item
+                chosen_symbol = next((pair for pair in candidate_pairs if pair in exchange_symbols and exchange_symbols[pair].get("status") == "TRADING"), None)
+                if chosen_symbol:
+                    break
+            except Exception:
+                continue
+
+        if not chosen_symbol:
+            return None
+
+        ticker = None
+        book = None
+        avg = None
+        for root in (BINANCE_SPOT_MARKET_DATA_URL, BINANCE_SPOT_BASE_URL):
+            try:
+                ticker_resp = client.get(root.rstrip("/") + BINANCE_TICKER_24HR_URL, params={"symbol": chosen_symbol})
+                ticker_resp.raise_for_status()
+                ticker = ticker_resp.json() or {}
+                book_resp = client.get(root.rstrip("/") + BINANCE_BOOK_TICKER_URL, params={"symbol": chosen_symbol})
+                book_resp.raise_for_status()
+                book = book_resp.json() or {}
+                avg_resp = client.get(root.rstrip("/") + BINANCE_AVG_PRICE_URL, params={"symbol": chosen_symbol})
+                avg_resp.raise_for_status()
+                avg = avg_resp.json() or {}
+                break
+            except Exception:
+                continue
+
+    if not ticker:
+        return None
+
+    weighted_price = float(ticker.get("weightedAvgPrice") or 0)
+    avg_price = float((avg or {}).get("price") or 0)
+    bid_price = float((book or {}).get("bidPrice") or 0)
+    ask_price = float((book or {}).get("askPrice") or 0)
+    spread_pct = 0.0
+    if bid_price > 0 and ask_price > 0 and ask_price >= bid_price:
+        midpoint = (bid_price + ask_price) / 2
+        if midpoint > 0:
+            spread_pct = ((ask_price - bid_price) / midpoint) * 100
+
+    return {
+        "name": base,
+        "symbol": base,
+        "slug": chosen_symbol.lower(),
+        "rank": 0,
+        "price": float(ticker.get("lastPrice") or 0),
+        "market_cap": 0.0,
+        "volume_24h": float(ticker.get("quoteVolume") or 0),
+        "percent_change_24h": float(ticker.get("priceChangePercent") or 0),
+        "high_24h": float(ticker.get("highPrice") or 0),
+        "low_24h": float(ticker.get("lowPrice") or 0),
+        "link": f"https://www.binance.com/en/trade/{base}_USDT" if chosen_symbol.endswith("USDT") else "",
+        "source": "Binance Spot",
+        "exchange_symbol": chosen_symbol,
+        "weighted_avg_price": weighted_price,
+        "avg_price": avg_price,
+        "bid_price": bid_price,
+        "ask_price": ask_price,
+        "spread_pct": spread_pct,
+    }
 
 
 def _fetch_coingecko_quote(symbol: str) -> dict[str, Any] | None:
@@ -155,6 +238,13 @@ def _fetch_cmc_quote(symbol: str) -> dict[str, Any] | None:
 
 def _fetch_market_quote(symbol: str) -> tuple[dict[str, Any] | None, str]:
     try:
+        binance = _fetch_binance_spot_quote(symbol)
+        if binance:
+            _cache_quote(symbol, binance)
+            return binance, str(binance.get("source") or "Binance Spot")
+    except Exception:
+        pass
+    try:
         gecko = _fetch_coingecko_quote(symbol)
         if gecko:
             _cache_quote(symbol, gecko)
@@ -178,11 +268,22 @@ def analyze_price(symbol: str) -> AnalysisBrief:
 
     if quote:
         arrow = "📈" if quote["percent_change_24h"] > 0 else "📉" if quote["percent_change_24h"] < 0 else "➖"
+        top_risks: list[str] = []
+        if source == "Binance Spot":
+            spread_pct = float(quote.get("spread_pct") or 0)
+            if spread_pct >= 0.5:
+                top_risks.append(f"Order-book spread is relatively wide at {spread_pct:.2f}%, so execution quality may be less clean.")
+            elif spread_pct > 0:
+                top_risks.append(f"Using Binance Spot market data ({quote.get('exchange_symbol') or quote['symbol']}); spread currently reads around {spread_pct:.2f}%.")
+            else:
+                top_risks.append(f"Using Binance Spot market data ({quote.get('exchange_symbol') or quote['symbol']}).")
+        elif source != "CoinGecko":
+            top_risks.append(f"Primary Binance Spot/CoinGecko quote unavailable; using {source} market data.")
         return AnalysisBrief(
             entity=f"Price: {quote['symbol']}",
             quick_verdict=f"{quote['name']}|{quote['symbol']}|{quote['link']}|{quote['rank']}",
-            signal_quality="High",
-            top_risks=[] if source == "CoinGecko" else [f"Primary CoinGecko quote unavailable; using {source} market data."],
+            signal_quality="High" if source == "Binance Spot" else "Medium",
+            top_risks=top_risks,
             why_it_matters=(
                 f"{quote['price']}|{quote['percent_change_24h']}|{quote['high_24h']}|{quote['low_24h']}|"
                 f"{quote['market_cap']}|{quote['volume_24h']}|{arrow}"
