@@ -1,7 +1,7 @@
 # Repo Description
 
 ## GitHub short description
-Bibipilot: OpenClaw + Binance Skills Hub research copilot for token, wallet, signal, and risk analysis.
+Bibipilot: Binance-native research copilot for token, signal, wallet, audit, and market-board judgment.
 
 ## Longer description
-Bibipilot is a signal-and-risk research assistant built for the Binance + OpenClaw builder direction. It helps users evaluate tokens, wallets, and market signals with cleaner conviction instead of raw crypto noise.
+Bibipilot is a Binance-native research copilot built around a research -> judgment -> publishing workflow. It helps users evaluate tokens, wallets, signals, audits, and the daily market board with cleaner conviction instead of raw crypto noise, and now uses Binance Spot read-only data as an exchange-native grounding layer for key commands.

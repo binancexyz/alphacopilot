@@ -1,19 +1,37 @@
 # Public Release Message
 
-Launching **Bibipilot** — the short name for **Bibipilot**.
+Launching **Bibipilot**.
 
-It’s an OpenClaw + Binance Skills Hub research copilot focused on:
-- token analysis
-- wallet behavior
-- signal quality
-- risk interpretation
+It’s a **public-alpha Binance-native research copilot** built around:
+- research
+- judgment
+- publishing
+
+Current command surface includes:
+- `/price`
+- `/brief`
+- `/risk`
+- `/audit`
+- `/token`
+- `/signal`
+- `/wallet`
+- `/watchtoday`
+- `/meme`
+- `careers`
 
 Core idea:
 **Less noise. Better conviction.**
 
-The repo already includes:
-- a runnable Python scaffold
-- upgraded command paths for `/token`, `/signal`, `/wallet`, and `/watchtoday`
-- normalized context contracts
-- live integration blueprint
-- tests and checks
+What is real today:
+- runnable Python CLI + API surface
+- stronger evidence honesty across the main commands
+- Binance Spot read-only grounding for `price`, `brief`, and `watchtoday`
+- supporting Binance Spot confirmation for `token` and `signal`
+- improved wallet behavior judgment
+- Binance Square publishing + scheduled posting engine
+- live runtime health diagnostics via `/health`
+
+What is still partial:
+- live bridge coverage is strongest for `token`, `signal`, `audit`, and `watchtoday`
+- wallet and meme live depth still need richer runtime context
+- this should be treated as a credible public alpha, not a finished autonomous trading system

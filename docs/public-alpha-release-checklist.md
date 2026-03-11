@@ -15,10 +15,11 @@ This checklist is for making Bibipilot safe and clear as an open-source public a
 
 ### Public clarity
 - [x] Rewrite README so it reflects the current product and command surface
+- [x] Clearly label the repo as **public alpha**
+- [x] Make mock mode vs live mode behavior explicit
+- [x] Make current live coverage vs partial coverage explicit
 - [ ] Confirm README examples all still work
-- [ ] Clearly label the repo as **public alpha**
-- [ ] Make mock mode vs live mode behavior explicit
-- [ ] Make current live coverage vs partial coverage explicit
+- [ ] Add one short “What works especially well today” section if README still feels too dense
 
 ### Public docs spine
 Keep a clean first path for strangers:
@@ -47,8 +48,8 @@ Keep a clean first path for strangers:
 ### Public polish
 - [ ] Add one or two screenshots to the README
 - [ ] Add a short architecture graphic later if helpful
-- [ ] Add a short "What works today" section if README still feels too dense
-- [ ] Add a short "What is still partial" section if needed
+- [x] Add a short "What works today" section if README still feels too dense
+- [x] Add a short "What is still partial" section if needed
 
 ### Release confidence
 - [ ] Run tests/checks one final time before opening the repo broadly

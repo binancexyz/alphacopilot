@@ -132,6 +132,21 @@ make api
 
 ---
 
+## What works especially well today
+
+- trust / evidence honesty is stronger across the core commands
+- Binance Spot read-only grounding now strengthens `price`, `brief`, and `watchtoday`
+- `token` and `signal` can use Binance Spot as supporting exchange-native confirmation
+- `wallet` is more behavior-aware and less likely to overread one snapshot
+- live mode now exposes runtime health diagnostics through `/health`
+
+## What is still partial
+
+- live bridge coverage is strongest for `token`, `signal`, `audit`, and `watchtoday`
+- `wallet` and `meme` still depend on thinner live runtime context than the rest
+- Binance Careers is intentionally an adjacent ecosystem-intelligence lane, not core trading logic
+- this is a public alpha research copilot, not a finished autonomous trading system
+
 ## Mock mode vs live mode
 
 Bibipilot supports both mock and partially live development paths.
