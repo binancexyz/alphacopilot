@@ -322,6 +322,20 @@ SEO_ENDINGS = [
     "#CryptoEducation #BNBChain #Builders",
 ]
 
+NIGHT_REFLECTIONS = [
+    "The standard I care about is simple: say something true, useful, and worth rereading tomorrow.",
+    "The good kind of progress is the kind that leaves the product clearer and the judgment sharper.",
+    "I am trying to keep the work honest: less noise, fewer forced takes, better signal.",
+    "The more I work on this, the more I think quality is mostly careful selection.",
+]
+
+NIGHT_CLOSERS = [
+    "That is the kind of progress I want more of.",
+    "That feels like a better way to build.",
+    "That is enough signal for one day.",
+    "That is a healthier pace than chasing constant output.",
+]
+
 BANNED_FRAGMENTS = {
     "very strong direction",
     "actually worth using",
@@ -395,12 +409,27 @@ def recent_commit_summary() -> str:
     return f"Recent build progress: {commits[0]}; {commits[1]}."
 
 
+def recent_commit_headline() -> str:
+    log = run_git("log", "-1", "--pretty=%s")
+    return log.strip() if log.strip() else "quiet backend progress"
+
+
 def working_tree_summary() -> str:
     status = run_git("status", "--short")
     if not status:
         return "Working tree is clean right now, which is a nice feeling."
     lines = [line for line in status.splitlines() if line.strip()]
     return f"Current dev state: {len(lines)} local change(s) still in motion."
+
+
+def working_tree_signal() -> str:
+    status = run_git("status", "--short")
+    if not status:
+        return "The repo is clean tonight, which usually means the thinking got sharper."
+    lines = [line for line in status.splitlines() if line.strip()]
+    if len(lines) <= 3:
+        return "Only a few local changes are still open, which feels manageable."
+    return f"There are still {len(lines)} local changes in motion, so the work is not fully settled yet."
 
 
 def focus_line(config: dict, prefix: str = "Watching") -> str:
@@ -486,10 +515,47 @@ def pick_cta(slot: str, state: dict[str, Any]) -> str:
 
 
 def seo_tail(config: dict, topic: str) -> str:
-    keywords = [str(x).strip() for x in config.get("seo_keywords", []) if str(x).strip()]
     tags = random.choice(SEO_ENDINGS)
-    lead = random.choice(keywords) if keywords else topic
-    return f"{lead}, {topic}. {tags}"
+    topic = topic.strip()
+    if topic and random.random() < 0.6:
+        return f"{topic}. {tags}"
+    return tags
+
+
+def build_night_diary_post(config: dict, state: dict[str, Any], topic: str, series: str, hook: str, hook_type: str) -> tuple[str, dict[str, str]]:
+    body = pick_body("night-diary", topic)
+    reflection = random.choice(NIGHT_REFLECTIONS)
+    closer = random.choice(NIGHT_CLOSERS)
+    commit_line = recent_commit_headline()
+    work_signal = working_tree_signal()
+    focus = focus_line(config, "Closing watchlist:")
+    custom = custom_line(config, state)
+
+    bits = [
+        f"{series}: {hook}",
+        *body,
+        f"Today\'s clearest builder signal was {commit_line}.",
+        work_signal,
+        reflection,
+    ]
+
+    if focus:
+        bits.append(focus)
+    if custom and random.random() < 0.5:
+        bits.append(custom)
+    bits.append(closer)
+    bits.append(random.choice(SEO_ENDINGS))
+
+    text = " ".join(bit.strip() for bit in bits if bit and bit.strip())
+    text = text[:999].rstrip()
+    meta = {
+        "slot": "night-diary",
+        "topic": topic,
+        "series": series,
+        "hook_type": hook_type,
+        "voice": VOICE_GUIDE.get("night-diary", "clear"),
+    }
+    return text, meta
 
 
 COMMON_SIMILARITY_WORDS = {
@@ -554,15 +620,7 @@ def build_post(slot: str, config: dict, state: dict[str, Any]) -> tuple[str, dic
             ]
         )
     elif slot == "night-diary":
-        bits.extend(
-            [
-                *pick_body(slot, topic),
-                recent_commit_summary(),
-                working_tree_summary(),
-                focus_line(config, "Closing watchlist:"),
-                custom_line(config, state),
-            ]
-        )
+        return build_night_diary_post(config, state, topic, series, hook, hook_type)
     elif slot == "market":
         bits.extend([*pick_body(slot, topic), focus_line(config), custom_line(config, state), pick_cta(slot, state)])
     elif slot == "builder":
