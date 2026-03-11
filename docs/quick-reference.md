@@ -5,6 +5,7 @@
 - `/signal <token>`
 - `/wallet <address>`
 - `/watchtoday`
+- `careers`
 
 ## Product promise
 **Less noise. Better conviction.**

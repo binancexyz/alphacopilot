@@ -17,6 +17,7 @@ from src.analyzers.signal_check import analyze_signal
 from src.analyzers.token_analysis import analyze_token
 from src.analyzers.wallet_analysis import analyze_wallet
 from src.formatters.brief_formatter import format_brief
+from src.services.careers_tracker import refresh_or_load, summarize_snapshot
 from src.utils.parsing import normalize_token_input, normalize_wallet_input
 
 
@@ -52,6 +53,8 @@ def main() -> None:
     watch_parser.add_argument("scope", nargs="?", default="today")
 
     subparsers.add_parser("watchtoday")
+    careers_parser = subparsers.add_parser("careers")
+    careers_parser.add_argument("--limit", type=int, default=6)
 
     args = parser.parse_args()
 
@@ -76,6 +79,9 @@ def main() -> None:
         if scope not in {"today", "todays"}:
             raise SystemExit("watch currently supports only: watch today")
         brief = watch_today()
+    elif args.command == "careers":
+        print(summarize_snapshot(refresh_or_load(), limit=max(args.limit, 1)))
+        return
     else:
         brief = watch_today()
 

@@ -49,8 +49,9 @@ Bibipilot currently supports:
 - `/wallet` — wallet interpretation with follow verdict
 - `/watchtoday` — daily market board with live lanes
 - `/meme` — first-pass meme scan
+- `careers` — Binance hiring pulse for ecosystem/company-priority context
 
-It also supports Binance Square publishing and a scheduled content engine.
+It also supports Binance Square publishing, a scheduled content engine, and a lightweight Binance Careers pulse for ecosystem intelligence.
 
 ---
 
@@ -120,6 +121,7 @@ python3 src/main.py signal BNB
 python3 src/main.py wallet 0x1234567890ab
 python3 src/main.py watchtoday
 python3 src/main.py meme DOGE
+python3 src/main.py careers
 ```
 
 ### 3. Optional API mode
@@ -152,6 +154,8 @@ Current live bridge coverage is strongest for:
 - `watchtoday`
 
 Wallet and meme quality still depend on thinner live context and are still evolving.
+
+The careers pulse is deliberately separate from token/signal logic. Treat it as ecosystem intelligence and company-priority context, not as a direct trading signal.
 
 ---
 

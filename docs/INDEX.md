@@ -51,6 +51,7 @@
 - `install.md`
 - `developer-flow.md`
 - `quick-reference.md`
+- `binance-careers.md`
 - `build-checklist.md`
 - `first-session-checklist.md`
 - `runtime-demo.md`
