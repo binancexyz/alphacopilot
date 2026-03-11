@@ -18,6 +18,10 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     audit_flags, audit_risks = _extract_audit_flags_and_risks(audit_payload)
     market_risks = _extract_market_rank_risks(market_rank, resolved_symbol)
     signal_risks = _extract_signal_risks(signal)
+    first_signal = _first_item(signal.get("data")) or signal
+    signal_age_hours = _signal_age_hours(first_signal)
+    signal_freshness = _signal_freshness(signal_age_hours)
+    audit_gate, blocked_reason = _audit_gate_state(audit_payload, audit_flags)
 
     return {
         "symbol": resolved_symbol,
@@ -30,6 +34,12 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         "signal_trigger_context": _build_signal_context(signal),
         "audit_flags": audit_flags,
         "major_risks": _merge_risks(signal_risks, audit_risks, market_risks),
+        "smart_money_count": _pick_int(first_signal, "smartMoneyCount"),
+        "exit_rate": _pick_number(first_signal, "exitRate", "exit_rate"),
+        "signal_age_hours": signal_age_hours,
+        "signal_freshness": signal_freshness,
+        "audit_gate": audit_gate,
+        "blocked_reason": blocked_reason,
     }
 
 
@@ -122,6 +132,9 @@ def extract_signal_context(raw: dict[str, Any], token: str) -> dict[str, Any]:
     direction = str(first_signal.get("direction", "")).lower()
     status = first_signal.get("status") or ("bullish" if direction == "buy" else "bearish" if direction == "sell" else "unknown")
     supporting_context = _build_signal_context(signal)
+    signal_age_hours = _signal_age_hours(first_signal)
+    signal_freshness = _signal_freshness(signal_age_hours)
+    audit_gate, blocked_reason = _audit_gate_state(audit_payload, audit_flags)
 
     return {
         "token": first_signal.get("ticker") or token,
@@ -133,6 +146,11 @@ def extract_signal_context(raw: dict[str, Any], token: str) -> dict[str, Any]:
         "audit_flags": audit_flags,
         "supporting_context": supporting_context,
         "major_risks": _merge_risks(_extract_signal_risks(signal), audit_risks),
+        "smart_money_count": _pick_int(first_signal, "smartMoneyCount"),
+        "signal_age_hours": signal_age_hours,
+        "signal_freshness": signal_freshness,
+        "audit_gate": audit_gate,
+        "blocked_reason": blocked_reason,
     }
 
 
@@ -200,10 +218,17 @@ def _extract_signal_risks(signal: dict[str, Any]) -> list[str]:
     first = _first_item(signal.get("data")) or signal
     exit_rate = _pick_number(first, "exitRate", "exit_rate")
     status = str(first.get("status", ""))
+    age_hours = _signal_age_hours(first)
     if status == "timeout":
         risks.append("Signal timed out and may no longer be actionable.")
     if exit_rate >= 70:
         risks.append("Smart money exit rate is high, which may indicate the move is aging.")
+    elif exit_rate >= 40:
+        risks.append("Smart money exit rate is already mixed, so follow-through may be less clean.")
+    if age_hours >= 8:
+        risks.append("Signal is stale enough that timing quality may already be degraded.")
+    elif age_hours >= 2:
+        risks.append("Signal is aging and needs fresher confirmation.")
     return _unique(risks)
 
 
@@ -238,12 +263,15 @@ def _build_signal_context(signal: dict[str, Any]) -> str:
     platform = first.get("launchPlatform") or ""
     count = _to_int(first.get("smartMoneyCount"))
     status = first.get("status") or "unknown"
+    freshness = _signal_freshness(_signal_age_hours(first))
     parts = [f"{ticker} has a {direction or 'smart-money'} signal"]
     if count:
         parts.append(f"from {count} smart-money addresses")
     if platform:
         parts.append(f"on {platform}")
     parts.append(f"with status {status}")
+    if freshness != "UNKNOWN":
+        parts.append(f"and {freshness.lower()} timing")
     return " ".join(parts).strip() + "."
 
 
@@ -277,6 +305,50 @@ def _extract_topic_summary(meme_rush: dict[str, Any]) -> str:
             return f"{name} is a leading topic with visible net inflow of {inflow}."
         return f"{name} is a leading topic in current topic-rush context."
     return ""
+
+
+def _signal_age_hours(signal_item: dict[str, Any]) -> float:
+    raw = signal_item.get("timeFrame") or signal_item.get("timeframe") or signal_item.get("signalAgeMs") or signal_item.get("ageMs")
+    try:
+        ms = float(raw or 0)
+    except (TypeError, ValueError):
+        return 0.0
+    if ms <= 0:
+        return 0.0
+    return ms / 3_600_000
+
+
+
+def _signal_freshness(age_hours: float) -> str:
+    if age_hours <= 0:
+        return "UNKNOWN"
+    if age_hours < 2:
+        return "FRESH"
+    if age_hours < 8:
+        return "AGING"
+    return "STALE"
+
+
+
+def _audit_gate_state(audit: dict[str, Any], audit_flags: list[str]) -> tuple[str, str]:
+    if not audit or not audit.get("hasResult") or not audit.get("isSupported"):
+        return "WARN", "Audit coverage is partial or unavailable."
+
+    level = _to_int(audit.get("riskLevel"))
+    risk_enum = str(audit.get("riskLevelEnum") or "").upper()
+    extra = audit.get("extraInfo") or {}
+    combined = " ".join(str(x) for x in audit_flags).lower()
+
+    blocked_terms = ["honeypot", "scam", "malicious", "phishing"]
+    if level >= 5 or any(term in combined for term in blocked_terms):
+        return "BLOCK", "Critical audit flags detected."
+    if level >= 4 or risk_enum == "HIGH":
+        return "BLOCK", f"Audit risk is high ({risk_enum or level})."
+    if _to_float(extra.get("buyTax")) > 10 or _to_float(extra.get("sellTax")) > 10:
+        return "WARN", "Token taxes are elevated above 10%."
+    if audit_flags:
+        return "WARN", "Audit returned structural caution flags."
+    return "ALLOW", ""
 
 
 def _extract_strongest_signals(signal: dict[str, Any]) -> list[str]:

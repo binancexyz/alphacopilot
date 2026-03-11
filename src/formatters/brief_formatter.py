@@ -134,12 +134,22 @@ def _format_risk_card(brief: AnalysisBrief) -> str:
 
 
 def _format_token_card(brief: AnalysisBrief) -> str:
-    parts = [_entity_line(brief.entity), "", f"**⚡ Setup**\n{brief.quick_verdict}"]
+    parts = [_entity_line(brief.entity)]
+    if brief.audit_gate:
+        gate_emoji = "🔴" if brief.audit_gate == "BLOCK" else "🟠" if brief.audit_gate == "WARN" else "🟢"
+        gate_line = f"{gate_emoji} Audit Gate: {brief.audit_gate}"
+        if brief.blocked_reason:
+            gate_line += f" — {brief.blocked_reason}"
+        parts.extend(["", gate_line])
+    parts.extend(["", f"**⚡ Setup**\n{brief.quick_verdict}"])
     meta = brief.signal_quality
     if brief.conviction:
         meta = f"{brief.signal_quality} | Conviction: {brief.conviction}"
     parts.append("")
     parts.append(f"**📊 Read**\n{meta}")
+    if brief.why_it_matters:
+        parts.append("")
+        parts.append(f"**🧠 Why**\n{brief.why_it_matters}")
     if brief.top_risks:
         parts.append("")
         parts.append("**⚠️ Risks**")
@@ -151,14 +161,21 @@ def _format_token_card(brief: AnalysisBrief) -> str:
     if brief.risk_tags:
         parts.append("")
         parts.append("**🏷️ Tags**")
-        for tag in brief.risk_tags[:2]:
+        for tag in brief.risk_tags[:3]:
             suffix = f" — {tag.note}" if tag.note else ""
             parts.append(f"- {tag.name}: {tag.level}{suffix}")
     return "\n".join(parts).strip() + "\n"
 
 
 def _format_signal_card(brief: AnalysisBrief) -> str:
-    parts = [_entity_line(brief.entity), "", f"**⚡ Signal**\n{brief.quick_verdict}"]
+    parts = [_entity_line(brief.entity)]
+    if brief.audit_gate:
+        gate_emoji = "🔴" if brief.audit_gate == "BLOCK" else "🟠" if brief.audit_gate == "WARN" else "🟢"
+        gate_line = f"{gate_emoji} Audit Gate: {brief.audit_gate}"
+        if brief.blocked_reason:
+            gate_line += f" — {brief.blocked_reason}"
+        parts.extend(["", gate_line])
+    parts.extend(["", f"**⚡ Signal**\n{brief.quick_verdict}"])
     meta = brief.signal_quality
     if brief.conviction:
         meta = f"{brief.signal_quality} | Conviction: {brief.conviction}"
@@ -175,6 +192,12 @@ def _format_signal_card(brief: AnalysisBrief) -> str:
         parts.append("")
         parts.append("**⚠️ Risks**")
         parts.extend([f"- {item}" for item in brief.top_risks[:2]])
+    if brief.risk_tags:
+        parts.append("")
+        parts.append("**🏷️ Tags**")
+        for tag in brief.risk_tags[:3]:
+            suffix = f" — {tag.note}" if tag.note else ""
+            parts.append(f"- {tag.name}: {tag.level}{suffix}")
     return "\n".join(parts).strip() + "\n"
 
 

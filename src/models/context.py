@@ -15,6 +15,12 @@ class TokenContext:
     signal_trigger_context: str = ""
     audit_flags: list[str] = field(default_factory=list)
     major_risks: list[str] = field(default_factory=list)
+    smart_money_count: int = 0
+    exit_rate: float = 0.0
+    signal_age_hours: float = 0.0
+    signal_freshness: str = "UNKNOWN"
+    audit_gate: str = "ALLOW"
+    blocked_reason: str = ""
 
 
 @dataclass
@@ -55,3 +61,8 @@ class SignalContext:
     audit_flags: list[str] = field(default_factory=list)
     supporting_context: str = ""
     major_risks: list[str] = field(default_factory=list)
+    smart_money_count: int = 0
+    signal_age_hours: float = 0.0
+    signal_freshness: str = "UNKNOWN"
+    audit_gate: str = "ALLOW"
+    blocked_reason: str = ""

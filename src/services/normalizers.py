@@ -15,6 +15,12 @@ def normalize_token_context(payload: dict) -> TokenContext:
         signal_trigger_context=str(payload.get("signal_trigger_context", "")),
         audit_flags=[str(x) for x in payload.get("audit_flags", [])],
         major_risks=[str(x) for x in payload.get("major_risks", [])],
+        smart_money_count=_to_int(payload.get("smart_money_count")),
+        exit_rate=_to_float(payload.get("exit_rate")),
+        signal_age_hours=_to_float(payload.get("signal_age_hours")),
+        signal_freshness=str(payload.get("signal_freshness", "UNKNOWN")),
+        audit_gate=str(payload.get("audit_gate", "ALLOW")),
+        blocked_reason=str(payload.get("blocked_reason", "")),
     )
 
 
@@ -56,6 +62,11 @@ def normalize_signal_context(payload: dict) -> SignalContext:
         audit_flags=[str(x) for x in payload.get("audit_flags", [])],
         supporting_context=str(payload.get("supporting_context", "")),
         major_risks=[str(x) for x in payload.get("major_risks", [])],
+        smart_money_count=_to_int(payload.get("smart_money_count")),
+        signal_age_hours=_to_float(payload.get("signal_age_hours")),
+        signal_freshness=str(payload.get("signal_freshness", "UNKNOWN")),
+        audit_gate=str(payload.get("audit_gate", "ALLOW")),
+        blocked_reason=str(payload.get("blocked_reason", "")),
     )
 
 

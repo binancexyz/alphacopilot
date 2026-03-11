@@ -28,3 +28,5 @@ class AnalysisBrief:
     risk_tags: list[RiskTag] = field(default_factory=list)
     conviction: Optional[str] = None
     beginner_note: Optional[str] = None
+    audit_gate: Optional[str] = None
+    blocked_reason: Optional[str] = None
