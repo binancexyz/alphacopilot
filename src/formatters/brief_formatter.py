@@ -144,42 +144,37 @@ def format_brief(brief: AnalysisBrief) -> str:
     parts: list[str] = []
     parts.append(_entity_line(brief.entity))
     parts.append("")
-    parts.append("**⚡ Quick Verdict**")
+    parts.append("**⚡ Verdict**")
     parts.append(brief.quick_verdict)
-    parts.append("")
-    parts.append("**📊 Signal Quality**")
-    parts.append(brief.signal_quality)
-    parts.append("")
-    parts.append("**⚠️ Top Risks**")
+
+    if brief.signal_quality:
+        quality_line = brief.signal_quality
+        if brief.conviction:
+            quality_line = f"{brief.signal_quality} | Conviction: {brief.conviction}"
+        parts.append("")
+        parts.append("**📊 Quality**")
+        parts.append(quality_line)
+
     if brief.top_risks:
-        parts.extend([f"- {item}" for item in brief.top_risks])
-    else:
-        parts.append("- No major risks identified yet; still requires normal caution.")
-    parts.append("")
-    parts.append("**🧠 Why It Matters**")
-    parts.append(brief.why_it_matters)
-    parts.append("")
-    parts.append("**👀 What To Watch Next**")
+        parts.append("")
+        parts.append("**⚠️ Risks**")
+        parts.extend([f"- {item}" for item in brief.top_risks[:2]])
+
+    if brief.why_it_matters:
+        parts.append("")
+        parts.append("**🧠 Why**")
+        parts.append(brief.why_it_matters)
+
     if brief.what_to_watch_next:
-        parts.extend([f"- {item}" for item in brief.what_to_watch_next])
-    else:
-        parts.append("- Watch for confirmation, liquidity, and follow-through.")
+        parts.append("")
+        parts.append("**👀 Watch**")
+        parts.extend([f"- {item}" for item in brief.what_to_watch_next[:3]])
 
     if brief.risk_tags:
         parts.append("")
-        parts.append("**🏷️ Risk Tags**")
-        for tag in brief.risk_tags:
+        parts.append("**🏷️ Tags**")
+        for tag in brief.risk_tags[:3]:
             suffix = f" — {tag.note}" if tag.note else ""
             parts.append(f"- {tag.name}: {tag.level}{suffix}")
-
-    if brief.conviction:
-        parts.append("")
-        parts.append("**🎯 Conviction**")
-        parts.append(brief.conviction)
-
-    if brief.beginner_note:
-        parts.append("")
-        parts.append("**🌱 Beginner Note**")
-        parts.append(brief.beginner_note)
 
     return "\n".join(parts).strip() + "\n"
