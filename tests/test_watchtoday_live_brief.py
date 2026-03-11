@@ -14,3 +14,17 @@ def test_build_watchtoday_brief():
     assert brief.entity == "Market Watch"
     assert brief.conviction is not None
     assert any(tag.name == "Evidence Quality" for tag in brief.risk_tags)
+
+
+def test_build_watchtoday_brief_includes_lane_coverage_when_partial():
+    ctx = WatchTodayContext(
+        top_narratives=["AI"],
+        strongest_signals=["BNB strength"],
+        market_takeaway="Opportunity exists, but selectivity matters.",
+    )
+    brief = build_watchtoday_brief(ctx)
+    titles = [section.title for section in brief.sections]
+    assert "🧩 Lane Coverage" in titles
+    lane_section = next(section for section in brief.sections if section.title == "🧩 Lane Coverage")
+    assert "Sparse:" in lane_section.content
+    assert "selective rather than complete" in brief.quick_verdict or brief.conviction == "Low"

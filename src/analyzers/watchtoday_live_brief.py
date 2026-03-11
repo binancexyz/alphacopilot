@@ -5,34 +5,55 @@ from src.models.context import WatchTodayContext
 from src.models.schemas import AnalysisBrief, BriefSection, RiskTag
 
 
+LANE_LABELS = {
+    "trending_now": "Trending Now",
+    "smart_money_flow": "Smart Money Flow",
+    "social_hype": "Social Hype",
+    "meme_watch": "Meme Watch",
+    "top_narratives": "Narrative",
+    "top_picks": "Top Picks",
+    "strongest_signals": "Signal Core",
+}
+
+
+def _watch_lane_summary(ctx: WatchTodayContext) -> tuple[list[str], list[str]]:
+    lanes = {
+        "trending_now": bool(ctx.trending_now),
+        "smart_money_flow": bool(ctx.smart_money_flow),
+        "social_hype": bool(ctx.social_hype),
+        "meme_watch": bool(ctx.meme_watch),
+        "top_narratives": bool(ctx.top_narratives),
+        "top_picks": bool(ctx.top_picks),
+        "strongest_signals": bool(ctx.strongest_signals),
+    }
+    populated = [LANE_LABELS[key] for key, present in lanes.items() if present]
+    sparse = [LANE_LABELS[key] for key, present in lanes.items() if not present]
+    return populated, sparse
+
+
 def _watch_evidence_level(ctx: WatchTodayContext) -> tuple[str, str]:
-    score = 0
-    if ctx.trending_now:
-        score += 1
-    if ctx.smart_money_flow:
-        score += 1
-    if ctx.social_hype:
-        score += 1
-    if ctx.meme_watch:
-        score += 1
-    if ctx.top_narratives:
-        score += 1
-    if ctx.top_picks:
-        score += 1
-    if ctx.strongest_signals:
-        score += 1
+    populated, sparse = _watch_lane_summary(ctx)
+    score = len(populated)
 
     if score >= 5:
-        return "High", "The daily board has enough populated lanes to support a more useful market read."
+        return "High", f"The daily board has strong lane coverage ({', '.join(populated[:4])})."
     if score >= 3:
-        return "Medium", "The daily board is usable, but some lanes are still sparse or uneven."
-    return "Low", "The daily board is provisional because too many market lanes are still sparse or missing."
+        sparse_note = f" Sparse lanes: {', '.join(sparse[:3])}." if sparse else ""
+        return "Medium", f"The daily board is usable, but some lanes are still sparse or uneven.{sparse_note}"
+    sparse_note = f" Sparse lanes: {', '.join(sparse[:4])}." if sparse else ""
+    return "Low", f"The daily board is provisional because too many market lanes are still sparse or missing.{sparse_note}"
 
 
 def _watch_why_it_matters(ctx: WatchTodayContext) -> str:
     strongest = ", ".join(ctx.strongest_signals[:2]) if ctx.strongest_signals else "no clean signal leaders yet"
     narratives = ", ".join(ctx.top_narratives[:2]) if ctx.top_narratives else "no durable narrative leaders yet"
-    return f"Top signal lanes: {strongest}. Narrative heat: {narratives}. The edge today is ranking clean setups ahead of crowded or concentrated names."
+    populated, sparse = _watch_lane_summary(ctx)
+    lane_note = ""
+    if sparse and populated:
+        lane_note = f" Populated lanes: {', '.join(populated[:3])}. Sparse lanes: {', '.join(sparse[:2])}."
+    elif sparse and not populated:
+        lane_note = f" Most lanes are still sparse: {', '.join(sparse[:3])}."
+    return f"Top signal lanes: {strongest}. Narrative heat: {narratives}. The edge today is ranking clean setups ahead of crowded or concentrated names.{lane_note}"
 
 
 
@@ -72,6 +93,10 @@ def _watch_sections(ctx: WatchTodayContext) -> list[BriefSection]:
         sections.append(BriefSection(title="🌊 Narrative", content="\n".join(f"- {item}" for item in ctx.top_narratives[:3])))
     if ctx.top_picks:
         sections.append(BriefSection(title="👀 Today's Top 3", content="\n".join(f"- {item}" for item in ctx.top_picks[:3])))
+
+    populated, sparse = _watch_lane_summary(ctx)
+    if sparse:
+        sections.append(BriefSection(title="🧩 Lane Coverage", content=f"- Ready: {', '.join(populated[:4]) or 'none yet'}\n- Sparse: {', '.join(sparse[:4])}"))
     return sections
 
 
@@ -89,9 +114,13 @@ def build_watchtoday_brief(ctx: WatchTodayContext) -> AnalysisBrief:
     if ctx.top_narratives:
         risk_tags.append(RiskTag(name="Hot Narratives", level="Medium", note=", ".join(ctx.top_narratives[:3])))
 
+    populated, sparse = _watch_lane_summary(ctx)
+
     if evidence_level == "Low":
         quick_verdict = "Today’s board is still provisional because too many market lanes are sparse, so filtering matters more than confidence."
         conviction = "Low"
+    elif ctx.market_takeaway and sparse:
+        quick_verdict = f"{ctx.market_takeaway} Some lanes are still sparse, so treat the board as selective rather than complete."
     elif ctx.market_takeaway:
         quick_verdict = ctx.market_takeaway
     elif quality == "High":
@@ -105,6 +134,8 @@ def build_watchtoday_brief(ctx: WatchTodayContext) -> AnalysisBrief:
     if not top_risks:
         if evidence_level == "Low":
             top_risks.append("Too many daily market lanes are still sparse, so this board should be treated as lower-confidence.")
+        elif sparse:
+            top_risks.append(f"Some board lanes are still sparse ({', '.join(sparse[:3])}), so coverage is selective rather than complete.")
         if ctx.risk_zones:
             top_risks.append(f"Risk is clustering around {', '.join(ctx.risk_zones[:2])}, which can distort attention.")
         else:
