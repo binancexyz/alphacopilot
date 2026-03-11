@@ -18,3 +18,4 @@ def test_build_token_brief():
     assert brief.entity == "Token: BNB"
     assert brief.signal_quality in {"High", "Medium", "Low"}
     assert brief.conviction is not None
+    assert any(tag.name == "Evidence Quality" for tag in brief.risk_tags)

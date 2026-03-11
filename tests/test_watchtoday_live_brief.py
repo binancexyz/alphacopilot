@@ -13,3 +13,4 @@ def test_build_watchtoday_brief():
     brief = build_watchtoday_brief(ctx)
     assert brief.entity == "Market Watch"
     assert brief.conviction is not None
+    assert any(tag.name == "Evidence Quality" for tag in brief.risk_tags)

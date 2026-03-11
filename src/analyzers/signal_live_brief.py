@@ -10,6 +10,30 @@ _GENERIC_SIGNAL_CONTEXTS = {
 }
 
 
+def _signal_evidence_level(ctx: SignalContext) -> tuple[str, str]:
+    score = 0
+    if ctx.signal_status != "unknown":
+        score += 1
+    if ctx.signal_status == "unmatched":
+        score -= 1
+    if ctx.trigger_price > 0:
+        score += 1
+    if ctx.current_price > 0:
+        score += 1
+    if ctx.supporting_context:
+        score += 1
+    if ctx.smart_money_count > 0:
+        score += 1
+    if ctx.signal_freshness != "UNKNOWN":
+        score += 1
+
+    if score >= 5:
+        return "High", "The signal has enough live context to support a more serious setup read."
+    if score >= 3:
+        return "Medium", "The signal read is usable, but some live timing or confirmation context is still incomplete."
+    return "Low", "The signal read is provisional because confirmation context is still thin or unmatched."
+
+
 def _signal_why_it_matters(ctx: SignalContext) -> str:
     if ctx.audit_gate == "BLOCK" and ctx.blocked_reason:
         return ctx.blocked_reason
@@ -69,8 +93,9 @@ def _signal_watch_next(ctx: SignalContext) -> list[str]:
 def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
     quality = signal_quality_from_signal(ctx)
     conviction = "High" if quality == "High" and not ctx.major_risks else "Medium" if quality == "Medium" else "Low"
+    evidence_level, evidence_note = _signal_evidence_level(ctx)
 
-    risk_tags: list[RiskTag] = []
+    risk_tags: list[RiskTag] = [RiskTag(name="Evidence Quality", level=evidence_level, note=evidence_note)]
     gate_level = "High" if ctx.audit_gate == "BLOCK" else "Medium" if ctx.audit_gate == "WARN" else "Low"
     if ctx.audit_flags or ctx.audit_gate != "ALLOW":
         note = ctx.blocked_reason or ", ".join(ctx.audit_flags) or "Audit returned caution flags."
@@ -83,6 +108,9 @@ def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
     if ctx.audit_gate == "BLOCK":
         quick_verdict = f"{ctx.token} is blocked for bullish signal treatment because the audit layer is too dangerous to ignore."
         quality = "Blocked"
+        conviction = "Low"
+    elif evidence_level == "Low":
+        quick_verdict = f"{ctx.token} is still a provisional signal read because the live setup evidence is too thin or unmatched to trust aggressively."
         conviction = "Low"
     elif ctx.signal_status == "unmatched":
         quick_verdict = f"{ctx.token} does not currently have a matched live smart-money signal on the board, so this should be treated as a watchlist check rather than a true setup call."
@@ -97,6 +125,8 @@ def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
     if ctx.audit_gate == "BLOCK" and ctx.blocked_reason:
         top_risks.insert(0, ctx.blocked_reason)
     if not top_risks:
+        if evidence_level == "Low":
+            top_risks.append("Live signal confirmation is still too thin to treat this as a strong setup.")
         if ctx.exit_rate >= 70:
             top_risks.append(f"Late setup: {ctx.exit_rate:.0f}% of tracked smart money may already be out.")
         elif ctx.exit_rate >= 40:

@@ -5,6 +5,30 @@ from src.models.context import TokenContext
 from src.models.schemas import AnalysisBrief, RiskTag
 
 
+def _token_evidence_level(ctx: TokenContext) -> tuple[str, str]:
+    score = 0
+    if ctx.price > 0:
+        score += 1
+    if ctx.liquidity > 0:
+        score += 1
+    if ctx.holders > 0:
+        score += 1
+    if ctx.market_rank_context:
+        score += 1
+    if ctx.signal_status != "unknown":
+        score += 1
+    if ctx.signal_status == "unmatched":
+        score -= 1
+    if ctx.smart_money_count > 0:
+        score += 1
+
+    if score >= 5:
+        return "High", "The token has enough live structure to support a more serious read."
+    if score >= 3:
+        return "Medium", "The token read is usable, but some important live context is still missing or thin."
+    return "Low", "The token read is provisional because too much of the live context is still thin or missing."
+
+
 def _token_price_line(ctx: TokenContext) -> str:
     if ctx.price > 0:
         return f"{ctx.display_name} is currently trading around ${ctx.price:,.2f}, so the setup is easier to frame than a token with missing price context."
@@ -59,8 +83,9 @@ def _token_watch_next(ctx: TokenContext) -> list[str]:
 def build_token_brief(ctx: TokenContext) -> AnalysisBrief:
     quality = token_signal_quality(ctx)
     conviction = token_conviction(ctx)
+    evidence_level, evidence_note = _token_evidence_level(ctx)
 
-    risk_tags: list[RiskTag] = []
+    risk_tags: list[RiskTag] = [RiskTag(name="Evidence Quality", level=evidence_level, note=evidence_note)]
     gate_level = "High" if ctx.audit_gate == "BLOCK" else "Medium" if ctx.audit_gate == "WARN" else "Low"
     if ctx.audit_flags or ctx.audit_gate != "ALLOW":
         note = ctx.blocked_reason or ", ".join(ctx.audit_flags) or "Audit returned caution flags."
@@ -75,6 +100,9 @@ def build_token_brief(ctx: TokenContext) -> AnalysisBrief:
     if ctx.audit_gate == "BLOCK":
         quick_verdict = f"{ctx.display_name} is blocked for bullish follow-through right now because the audit picture is too dangerous to treat as a clean setup."
         quality = "Blocked"
+        conviction = "Low"
+    elif evidence_level == "Low":
+        quick_verdict = f"{ctx.display_name} is still a provisional read right now because too much live context is missing, thin, or unmatched."
         conviction = "Low"
     elif ctx.signal_status == "unmatched":
         quick_verdict = f"{ctx.display_name} has enough market structure to monitor, but there is no matched live smart-money signal on the current board yet."
@@ -91,6 +119,8 @@ def build_token_brief(ctx: TokenContext) -> AnalysisBrief:
     if ctx.audit_gate == "BLOCK" and ctx.blocked_reason:
         top_risks.insert(0, ctx.blocked_reason)
     if not top_risks:
+        if evidence_level == "Low":
+            top_risks.append("Too much live token context is still missing, so this read should stay provisional.")
         if ctx.audit_flags:
             top_risks.append("Contract-level flags still weigh on the setup.")
         if ctx.signal_status == "unmatched":

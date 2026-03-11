@@ -5,11 +5,35 @@ from src.services.factory import get_market_data_service
 from src.services.normalizers import normalize_meme_context
 
 
+def _meme_evidence_level(ctx) -> tuple[str, str]:
+    score = 0
+    if ctx.market_rank_context:
+        score += 1
+    if ctx.signal_status != "unknown":
+        score += 1
+    if ctx.smart_money_count > 0:
+        score += 1
+    if ctx.signal_freshness != "UNKNOWN":
+        score += 1
+    if ctx.launch_platform:
+        score += 1
+    if ctx.lifecycle_stage not in {"unknown", "inactive"}:
+        score += 1
+
+    if score >= 5:
+        return "High", "The meme read has enough live context to support a more serious lifecycle read."
+    if score >= 3:
+        return "Medium", "The meme read is usable, but some live timing or participation context is still incomplete."
+    return "Low", "The meme read is provisional because live participation and lifecycle evidence are still thin."
+
+
 def analyze_meme(symbol: str) -> AnalysisBrief:
     service = get_market_data_service()
     ctx = normalize_meme_context(service.get_meme_context(symbol))
 
-    tags: list[RiskTag] = []
+    evidence_level, evidence_note = _meme_evidence_level(ctx)
+
+    tags: list[RiskTag] = [RiskTag(name="Evidence Quality", level=evidence_level, note=evidence_note)]
     tags.append(RiskTag(name="Lifecycle", level="Medium", note=ctx.lifecycle_stage))
     if ctx.launch_platform:
         tags.append(RiskTag(name="Launch Platform", level="Low", note=ctx.launch_platform))
@@ -21,6 +45,10 @@ def analyze_meme(symbol: str) -> AnalysisBrief:
     if ctx.audit_gate == "BLOCK":
         verdict = f"{ctx.display_name} is blocked as a meme setup because the audit layer is too dangerous to ignore."
         quality = "Blocked"
+        conviction = "Low"
+    elif evidence_level == "Low":
+        verdict = f"{ctx.display_name} is still only a provisional meme read because live participation and lifecycle evidence are too thin to trust aggressively."
+        quality = "Low"
         conviction = "Low"
     elif ctx.lifecycle_stage == "active" and ctx.smart_money_count > 0 and ctx.signal_freshness == "FRESH":
         verdict = f"{ctx.display_name} has a live meme-style setup with visible smart-money activity, but it still needs fast discipline because meme timing degrades quickly."
@@ -51,6 +79,8 @@ def analyze_meme(symbol: str) -> AnalysisBrief:
     if ctx.audit_gate == "BLOCK" and ctx.blocked_reason:
         risks.insert(0, ctx.blocked_reason)
     if not risks:
+        if evidence_level == "Low":
+            risks.append("Live meme participation is still too thin to treat this as a strong setup.")
         if ctx.exit_rate >= 70:
             risks.append("Most tracked smart money may already be exiting, which makes this meme setup look late.")
         elif ctx.exit_rate >= 40:

@@ -5,6 +5,26 @@ from src.models.context import WalletContext
 from src.models.schemas import AnalysisBrief, RiskTag
 
 
+def _wallet_evidence_level(ctx: WalletContext) -> tuple[str, str]:
+    score = 0
+    if ctx.portfolio_value > 0:
+        score += 1
+    if ctx.holdings_count > 0:
+        score += 1
+    if ctx.top_holdings:
+        score += 1
+    if ctx.notable_exposures:
+        score += 1
+    if ctx.style_read:
+        score += 1
+
+    if score >= 4:
+        return "High", "The wallet has enough live structure to support a more useful behavior read."
+    if score >= 2:
+        return "Medium", "The wallet read is usable, but some exposure or behavior context is still thin."
+    return "Low", "The wallet read is provisional because the current live evidence is too thin for a strong follow judgment."
+
+
 def _format_holding_summary(ctx: WalletContext) -> str:
     if not ctx.top_holdings:
         return "Top holding detail is limited, so this wallet still needs more behavior context before strong conclusions."
@@ -51,8 +71,9 @@ def _wallet_watch_next(ctx: WalletContext) -> list[str]:
 def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
     quality = wallet_signal_quality(ctx)
     conviction = "Medium" if quality == "Medium" and len(ctx.major_risks) <= 2 else "Low"
+    evidence_level, evidence_note = _wallet_evidence_level(ctx)
 
-    risk_tags: list[RiskTag] = []
+    risk_tags: list[RiskTag] = [RiskTag(name="Evidence Quality", level=evidence_level, note=evidence_note)]
     if ctx.top_concentration_pct >= 70:
         risk_tags.append(RiskTag(name="Concentration Risk", level="High", note=f"Top concentration is {ctx.top_concentration_pct:.1f}%"))
     elif ctx.top_concentration_pct > 0:
@@ -63,9 +84,10 @@ def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
 
     thin_context = ctx.portfolio_value <= 0 and ctx.holdings_count <= 0 and not ctx.top_holdings
 
-    if thin_context:
+    if thin_context or evidence_level == "Low":
         quick_verdict = "This wallet does not currently have enough live evidence to justify a strong follow call."
         ctx.follow_verdict = "Unknown"
+        conviction = "Low"
     elif ctx.follow_verdict == "Track":
         quick_verdict = "This wallet is worth tracking because the size, spread, and visible exposures are strong enough to study seriously without looking blindly copy-tradable."
     elif ctx.follow_verdict == "Don't follow":
@@ -97,7 +119,7 @@ def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
         quick_verdict=quick_verdict,
         signal_quality=quality,
         top_risks=top_risks,
-        why_it_matters=_wallet_why_it_matters(ctx) if not thin_context else "Current live wallet evidence is limited, so this read should be treated as provisional rather than definitive.",
+        why_it_matters=_wallet_why_it_matters(ctx) if not (thin_context or evidence_level == "Low") else "Current live wallet evidence is limited, so this read should be treated as provisional rather than definitive.",
         what_to_watch_next=_wallet_watch_next(ctx),
         risk_tags=risk_tags,
         conviction=conviction,

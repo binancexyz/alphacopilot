@@ -5,6 +5,30 @@ from src.models.context import WatchTodayContext
 from src.models.schemas import AnalysisBrief, BriefSection, RiskTag
 
 
+def _watch_evidence_level(ctx: WatchTodayContext) -> tuple[str, str]:
+    score = 0
+    if ctx.trending_now:
+        score += 1
+    if ctx.smart_money_flow:
+        score += 1
+    if ctx.social_hype:
+        score += 1
+    if ctx.meme_watch:
+        score += 1
+    if ctx.top_narratives:
+        score += 1
+    if ctx.top_picks:
+        score += 1
+    if ctx.strongest_signals:
+        score += 1
+
+    if score >= 5:
+        return "High", "The daily board has enough populated lanes to support a more useful market read."
+    if score >= 3:
+        return "Medium", "The daily board is usable, but some lanes are still sparse or uneven."
+    return "Low", "The daily board is provisional because too many market lanes are still sparse or missing."
+
+
 def _watch_why_it_matters(ctx: WatchTodayContext) -> str:
     strongest = ", ".join(ctx.strongest_signals[:2]) if ctx.strongest_signals else "no clean signal leaders yet"
     narratives = ", ".join(ctx.top_narratives[:2]) if ctx.top_narratives else "no durable narrative leaders yet"
@@ -55,8 +79,9 @@ def _watch_sections(ctx: WatchTodayContext) -> list[BriefSection]:
 def build_watchtoday_brief(ctx: WatchTodayContext) -> AnalysisBrief:
     quality = watch_today_signal_quality(ctx)
     conviction = "Medium" if quality in {"High", "Medium"} else "Low"
+    evidence_level, evidence_note = _watch_evidence_level(ctx)
 
-    risk_tags: list[RiskTag] = []
+    risk_tags: list[RiskTag] = [RiskTag(name="Evidence Quality", level=evidence_level, note=evidence_note)]
     if ctx.risk_zones:
         risk_tags.append(RiskTag(name="Narrative Risk", level="High", note=", ".join(ctx.risk_zones[:3])))
     if ctx.strongest_signals:
@@ -64,7 +89,10 @@ def build_watchtoday_brief(ctx: WatchTodayContext) -> AnalysisBrief:
     if ctx.top_narratives:
         risk_tags.append(RiskTag(name="Hot Narratives", level="Medium", note=", ".join(ctx.top_narratives[:3])))
 
-    if ctx.market_takeaway:
+    if evidence_level == "Low":
+        quick_verdict = "Today’s board is still provisional because too many market lanes are sparse, so filtering matters more than confidence."
+        conviction = "Low"
+    elif ctx.market_takeaway:
         quick_verdict = ctx.market_takeaway
     elif quality == "High":
         quick_verdict = "There is real opportunity on the board today, but the edge comes from ranking clean setups ahead of noisy narratives."
@@ -75,6 +103,8 @@ def build_watchtoday_brief(ctx: WatchTodayContext) -> AnalysisBrief:
 
     top_risks = list(ctx.major_risks)
     if not top_risks:
+        if evidence_level == "Low":
+            top_risks.append("Too many daily market lanes are still sparse, so this board should be treated as lower-confidence.")
         if ctx.risk_zones:
             top_risks.append(f"Risk is clustering around {', '.join(ctx.risk_zones[:2])}, which can distort attention.")
         else:
