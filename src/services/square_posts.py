@@ -175,8 +175,13 @@ def _build_wallet_post(brief: AnalysisBrief) -> str:
 
 def _build_watchtoday_post(brief: AnalysisBrief) -> str:
     lines = ["📡 Daily Brief | Bibipilot", brief.quick_verdict]
-    for section in brief.sections[:4]:
-        title = section.title.replace("🔥 ", "").replace("🧠 ", "").replace("📣 ", "").replace("🚀 ", "").replace("🌊 ", "").replace("👀 ", "")
+    preferred_titles = ["🏦 Exchange Board", "🔥 Trending Now", "🧠 Smart Money Flow", "👀 Today's Top 3", "🌊 Narrative"]
+    ordered = sorted(
+        brief.sections,
+        key=lambda section: preferred_titles.index(section.title) if section.title in preferred_titles else len(preferred_titles),
+    )
+    for section in ordered[:4]:
+        title = section.title.replace("🔥 ", "").replace("🧠 ", "").replace("📣 ", "").replace("🚀 ", "").replace("🌊 ", "").replace("👀 ", "").replace("🏦 ", "")
         first_line = next((line.strip('- ').strip() for line in section.content.splitlines() if line.strip()), "")
         if first_line:
             lines.append(f"{title}: {first_line}")

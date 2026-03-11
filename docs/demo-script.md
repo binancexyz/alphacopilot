@@ -15,10 +15,12 @@ The product is built around a simple loop:
 ### Show
 - compact market card
 - fast price/trend/rank view
+- Binance Spot source / spread-aware note when available
 
 ### Narration
 Start with grounding.
 This shows Bibipilot can give a clean market truth immediately, not a wall of text.
+It also shows the product is becoming more Binance-native at the exchange-data layer, not just in branding.
 
 ### Judge takeaway
 This feels like a real product surface, not raw terminal output.
@@ -29,10 +31,12 @@ This feels like a real product surface, not raw terminal output.
 ### Show
 - compact synthesis
 - minimal but useful decision support
+- Binance Spot grounding when exchange price context is available
 
 ### Narration
 This is the fast compression layer.
 Bibipilot is not just collecting fields — it is compressing them into something readable in chat.
+The useful nuance here is that Bibipilot can now separate live exchange price context from actual signal quality.
 
 ### Judge takeaway
 The system can summarize without becoming vague.
@@ -59,6 +63,7 @@ The product has a real judgment layer and does not blindly hype assets.
 ### Show
 - signal interpretation
 - live truth even when no strong matched signal exists
+- Binance Spot confirmation as a supporting layer, not a replacement for judgment
 
 ### Narration
 A useful product should distinguish between:
@@ -67,6 +72,7 @@ A useful product should distinguish between:
 - and no matched evidence
 
 Bibipilot now does that more honestly.
+It can also say: the exchange pair is live, but the smart-money signal is still unmatched.
 
 ### Judge takeaway
 This is a decision system, not just a signal repeater.
@@ -90,6 +96,7 @@ The assistant interprets behavior, not just holdings.
 
 ## Demo 6 — `/watchtoday`
 ### Show
+- Exchange Board
 - Trending Now
 - Smart Money Flow
 - Social Hype
@@ -100,6 +107,7 @@ The assistant interprets behavior, not just holdings.
 ### Narration
 This is where Bibipilot becomes more than a formatter.
 It turns live rank and signal flows into a market board that helps users prioritize attention.
+The new Exchange Board lane gives the board a Binance Spot anchor without turning it into a noisy terminal.
 
 ### Judge takeaway
 Bibipilot can rank what matters today, not just list what exists.

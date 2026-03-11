@@ -66,7 +66,7 @@ It tries to answer:
 - should this be published?
 
 ### 2. It is Binance-native
-Bibipilot is built around Binance Skills for evidence and Binance Square for output.
+Bibipilot is built around Binance Skills for evidence, Binance Spot market data for exchange-native price context, and Binance Square for output.
 
 ### 3. It has a real publishing loop
 Bibipilot is not just an analysis interface.
@@ -147,6 +147,7 @@ Useful for:
 - bridge/runtime testing
 - live payload extraction
 - Binance Square publishing flows
+- Binance Spot read-only market grounding for `price`, `brief`, `watchtoday`, and supporting confirmation in `token` / `signal`
 
 Current live bridge coverage is strongest for:
 - `token`
@@ -217,6 +218,7 @@ Bibipilot already demonstrates:
 - scheduled posting engine
 - partially live bridge/runtime behavior
 - audit-aware product logic
+- Binance Spot read-only grounding across price / brief / watchtoday and supporting token / signal confirmation
 - command-specific UX
 
 That is enough to present it as a product with substance, not just a concept.
