@@ -7,7 +7,15 @@ from src.models.schemas import AnalysisBrief
 from src.services.live_service import LiveMarketDataService
 
 
-def build_runtime_meta(command: str, entity: str = "") -> dict[str, Any]:
+def live_service() -> LiveMarketDataService:
+    return LiveMarketDataService(
+        base_url=settings.binance_skills_base_url,
+        api_key=settings.binance_api_key,
+        api_secret=settings.binance_api_secret,
+    )
+
+
+def build_runtime_meta(command: str, entity: str = "", *, health: dict[str, Any] | None = None) -> dict[str, Any]:
     if settings.app_mode != "live":
         return {
             "mode": settings.app_mode,
@@ -15,12 +23,8 @@ def build_runtime_meta(command: str, entity: str = "") -> dict[str, Any]:
             "warning": "Running in mock mode; outputs are scaffold/demo quality, not live market calls.",
         }
 
-    service = LiveMarketDataService(
-        base_url=settings.binance_skills_base_url,
-        api_key=settings.binance_api_key,
-        api_secret=settings.binance_api_secret,
-    )
-    health = service.healthcheck()
+    if health is None:
+        health = live_service().healthcheck()
     last_event = health.get("last_event") or {}
     state = "live_ok" if health.get("healthcheck") == "ok" else "live_degraded"
     warning = None if state == "live_ok" else str(last_event.get("detail") or "Live runtime is degraded.")

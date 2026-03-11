@@ -11,8 +11,7 @@ from src.analyzers.token_analysis import analyze_token
 from src.analyzers.wallet_analysis import analyze_wallet
 from src.config import settings
 from src.formatters.brief_formatter import format_brief
-from src.services.live_service import LiveMarketDataService
-from src.services.runtime_report import build_runtime_meta
+from src.services.runtime_report import build_runtime_meta, live_service
 from src.utils.parsing import normalize_token_input, normalize_wallet_input
 from src.utils.validation import looks_like_wallet_address
 
@@ -33,20 +32,33 @@ class BriefResponse(BaseModel):
 def health() -> dict:
     payload: dict = {"status": "ok", "mode": settings.app_mode}
     if settings.app_mode == "live":
-        live = LiveMarketDataService(
-            base_url=settings.binance_skills_base_url,
-            api_key=settings.binance_api_key,
-            api_secret=settings.binance_api_secret,
-        )
-        payload["runtime"] = live.healthcheck()
+        payload["runtime"] = live_service().healthcheck()
     return payload
+
+
+@app.get("/runtime/report")
+def runtime_report() -> dict:
+    if settings.app_mode != "live":
+        return {
+            "status": "ok",
+            "mode": settings.app_mode,
+            "runtime": build_runtime_meta("runtime-report", ""),
+        }
+    health = live_service().healthcheck()
+    return {
+        "status": "ok",
+        "mode": settings.app_mode,
+        "runtime": build_runtime_meta("runtime-report", "", health=health),
+        "health": health,
+    }
 
 
 @app.get("/brief/token", response_model=BriefResponse)
 def brief_token(symbol: str = Query(..., min_length=1, description="Token symbol, e.g. BNB")) -> BriefResponse:
     normalized = normalize_token_input(symbol)
     brief = analyze_token(normalized)
-    runtime = build_runtime_meta("token", normalized)
+    health = live_service().healthcheck() if settings.app_mode == "live" else None
+    runtime = build_runtime_meta("token", normalized, health=health)
     return BriefResponse(
         command="token",
         entity=normalized,
@@ -62,7 +74,8 @@ def brief_token(symbol: str = Query(..., min_length=1, description="Token symbol
 def brief_signal(token: str = Query(..., min_length=1, description="Token symbol, e.g. DOGE")) -> BriefResponse:
     normalized = normalize_token_input(token)
     brief = analyze_signal(normalized)
-    runtime = build_runtime_meta("signal", normalized)
+    health = live_service().healthcheck() if settings.app_mode == "live" else None
+    runtime = build_runtime_meta("signal", normalized, health=health)
     return BriefResponse(
         command="signal",
         entity=normalized,
@@ -78,7 +91,8 @@ def brief_signal(token: str = Query(..., min_length=1, description="Token symbol
 def brief_audit(symbol: str = Query(..., min_length=1, description="Token symbol, e.g. BNB")) -> BriefResponse:
     normalized = normalize_token_input(symbol)
     brief = analyze_audit(normalized)
-    runtime = build_runtime_meta("audit", normalized)
+    health = live_service().healthcheck() if settings.app_mode == "live" else None
+    runtime = build_runtime_meta("audit", normalized, health=health)
     return BriefResponse(
         command="audit",
         entity=normalized,
@@ -94,7 +108,8 @@ def brief_audit(symbol: str = Query(..., min_length=1, description="Token symbol
 def brief_meme(symbol: str = Query(..., min_length=1, description="Token symbol, e.g. DOGE")) -> BriefResponse:
     normalized = normalize_token_input(symbol)
     brief = analyze_meme(normalized)
-    runtime = build_runtime_meta("meme", normalized)
+    health = live_service().healthcheck() if settings.app_mode == "live" else None
+    runtime = build_runtime_meta("meme", normalized, health=health)
     return BriefResponse(
         command="meme",
         entity=normalized,
@@ -112,7 +127,8 @@ def brief_wallet(address: str = Query(..., min_length=12, description="Wallet ad
         raise HTTPException(status_code=400, detail="Wallet address must start with 0x and look valid.")
     normalized = normalize_wallet_input(address)
     brief = analyze_wallet(normalized)
-    runtime = build_runtime_meta("wallet", normalized)
+    health = live_service().healthcheck() if settings.app_mode == "live" else None
+    runtime = build_runtime_meta("wallet", normalized, health=health)
     return BriefResponse(
         command="wallet",
         entity=normalized,
@@ -127,7 +143,8 @@ def brief_wallet(address: str = Query(..., min_length=12, description="Wallet ad
 @app.get("/brief/watchtoday", response_model=BriefResponse)
 def brief_watchtoday() -> BriefResponse:
     brief = watch_today()
-    runtime = build_runtime_meta("watchtoday", "market")
+    health = live_service().healthcheck() if settings.app_mode == "live" else None
+    runtime = build_runtime_meta("watchtoday", "market", health=health)
     return BriefResponse(
         command="watchtoday",
         entity="market",

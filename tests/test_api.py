@@ -20,6 +20,14 @@ def test_health_payload_shape():
     assert "mode" in payload
 
 
+def test_runtime_report_endpoint():
+    response = client.get("/runtime/report")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "ok"
+    assert "runtime" in payload
+
+
 def test_token_endpoint():
     response = client.get("/brief/token", params={"symbol": "BNB"})
     assert response.status_code == 200

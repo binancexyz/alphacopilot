@@ -20,6 +20,7 @@ make api
 
 Endpoints:
 - `GET /health`
+- `GET /runtime/report`
 - `GET /brief/token?symbol=BNB`
 - `GET /brief/signal?token=DOGE`
 - `GET /brief/wallet?address=0x1234567890ab`
@@ -56,7 +57,7 @@ make api
 - add rate limiting if exposed publicly
 - add auth in front of the API if internet-facing
 - validate no secrets are committed before release
-- monitor `/health` in live mode so runtime state is not confused with product quality
+- monitor `/health` and `/runtime/report` in live mode so runtime state is not confused with product quality
 
 ### Product validation
 - run against real payloads from upstream
