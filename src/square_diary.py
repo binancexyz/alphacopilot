@@ -336,6 +336,30 @@ NIGHT_CLOSERS = [
     "That is a healthier pace than chasing constant output.",
 ]
 
+NIGHT_MODE_OPENERS = {
+    "diary": [
+        "Night note",
+        "End-of-day note",
+        "Tonight's honest thought",
+    ],
+    "builder": [
+        "Builder wrap",
+        "Shipping note",
+        "Build log tonight",
+    ],
+    "market": [
+        "Market close thought",
+        "Tape note tonight",
+        "Into the close",
+    ],
+}
+
+NIGHT_MODE_CADENCE = {
+    "diary": ["hook", "body", "reflection", "builder_signal", "builder_line", "work_signal", "closer"],
+    "builder": ["hook", "builder_signal", "builder_line", "body", "work_signal", "reflection", "closer"],
+    "market": ["hook", "body", "market_line", "builder_signal", "builder_line", "reflection", "closer"],
+}
+
 BANNED_FRAGMENTS = {
     "very strong direction",
     "actually worth using",
@@ -572,31 +596,59 @@ def seo_tail(config: dict, topic: str) -> str:
     return tags
 
 
-def contextual_market_line(config: dict, topic: str) -> str:
+def choose_night_mode(topic: str, commit_line: str) -> str:
+    lower = f"{topic} {commit_line}".lower()
+    if any(word in lower for word in ["market", "signal", "price", "watchtoday"]):
+        return random.choice(["market", "builder"])
+    if any(word in lower for word in ["square", "post", "diary", "docs", "release", "workflow", "build", "builder", "voice"]):
+        return random.choice(["builder", "diary"])
+    return random.choice(["diary", "builder", "market"])
+
+
+def contextual_market_line(config: dict, topic: str, mode: str = "market") -> str:
     focus = [str(x).upper() for x in config.get("market_focus", []) if str(x).strip()]
     if not focus:
         return ""
-    templates = [
-        f"I\'m still closing the day watching {', '.join(focus[:3])}, but only if the follow-through stays honest.",
-        f"Into the close, I care more about structure in {', '.join(focus[:3])} than about noise.",
-        f"The market side of tonight still comes back to {', '.join(focus[:3])}: confirmation first, excitement second.",
-    ]
-    if "market" in topic.lower() or "signal" in topic.lower() or random.random() < 0.45:
-        return random.choice(templates)
+    joined = ', '.join(focus[:3])
+    templates = {
+        "market": [
+            f"I\'m still closing the day watching {joined}, but only if the follow-through stays honest.",
+            f"Into the close, I care more about structure in {joined} than about noise.",
+            f"The market side of tonight still comes back to {joined}: confirmation first, excitement second.",
+        ],
+        "builder": [
+            f"Even on the product side, I still like ending the day with a clean read on {joined}.",
+            f"The market backdrop still matters: {joined} tell me more than timelines do tonight.",
+        ],
+        "diary": [
+            f"I\'m still watching {joined}, but more for honesty than excitement.",
+            f"Some nights the clearest market note is just to keep an eye on {joined} and stay selective.",
+        ],
+    }
+    pool = templates.get(mode, templates["market"])
+    if "market" in topic.lower() or "signal" in topic.lower() or random.random() < 0.4:
+        return random.choice(pool)
     return ""
 
 
-def contextual_builder_line(topic: str, commit_line: str) -> str:
+def contextual_builder_line(topic: str, commit_line: str, mode: str = "builder") -> str:
     lower = commit_line.lower()
     if "docs" in lower or "release" in lower or "packaging" in lower:
-        return "A lot of useful work today was not flashy — it was about making the product easier to trust and easier to explain."
-    if "runtime" in lower or "bridge" in lower or "api" in lower:
-        return "The important work today was runtime quality: fewer brittle edges, clearer behavior, better honesty when the system is under pressure."
-    if "wallet" in lower or "signal" in lower or "watchtoday" in lower or "audit" in lower:
-        return "The strongest product work today was judgment work — making the output clearer, stricter, and less willing to fake conviction."
-    if "square" in lower or "post" in lower or "diary" in lower:
-        return "The content side matters too: fewer posts, better standards, and a stronger reason to publish at all."
-    return f"The thread running through today was still {topic}: making it more usable, more honest, and less noisy."
+        line = "A lot of useful work today was not flashy — it was about making the product easier to trust and easier to explain."
+    elif "runtime" in lower or "bridge" in lower or "api" in lower:
+        line = "The important work today was runtime quality: fewer brittle edges, clearer behavior, better honesty when the system is under pressure."
+    elif "wallet" in lower or "signal" in lower or "watchtoday" in lower or "audit" in lower:
+        line = "The strongest product work today was judgment work — making the output clearer, stricter, and less willing to fake conviction."
+    elif "square" in lower or "post" in lower or "diary" in lower:
+        line = "The content side matters too: fewer posts, better standards, and a stronger reason to publish at all."
+    else:
+        line = f"The thread running through today was still {topic}: making it more usable, more honest, and less noisy."
+
+    if mode == "diary":
+        return line.replace("today was", "today felt like").replace("The content side matters too", "What stood out to me")
+    if mode == "market":
+        return line.replace("The strongest product work today was", "The strongest signal on the product side was")
+    return line
 
 
 def build_night_diary_post(config: dict, state: dict[str, Any], topic: str, series: str, hook: str, hook_type: str) -> tuple[str, dict[str, str]]:
@@ -604,25 +656,36 @@ def build_night_diary_post(config: dict, state: dict[str, Any], topic: str, seri
     reflection = random.choice(NIGHT_REFLECTIONS)
     closer = random.choice(NIGHT_CLOSERS)
     commit_line = recent_commit_headline()
+    mode = choose_night_mode(topic, commit_line)
     work_signal = working_tree_signal()
-    builder_line = contextual_builder_line(topic, commit_line)
-    market_line = contextual_market_line(config, topic)
+    builder_line = contextual_builder_line(topic, commit_line, mode)
+    market_line = contextual_market_line(config, topic, mode)
     custom = custom_line(config, state)
+    opener = random.choice(NIGHT_MODE_OPENERS[mode])
 
-    bits = [
-        f"{series}: {hook}",
-        *body,
-        f"Today\'s clearest builder signal was {commit_line}.",
-        builder_line,
-        work_signal,
-        reflection,
-    ]
+    hook_text = hook.strip()
+    if mode == "diary" and hook_text.lower().startswith(("night diary:", "evening note:")):
+        hook_text = hook_text.split(":", 1)[1].strip()
 
-    if market_line:
-        bits.append(market_line)
-    if custom and random.random() < 0.35:
+    components = {
+        "hook": f"{series} — {opener}: {hook_text}",
+        "body": " ".join(body),
+        "builder_signal": f"Today\'s clearest builder signal was {commit_line}.",
+        "builder_line": builder_line,
+        "work_signal": work_signal,
+        "reflection": reflection,
+        "market_line": market_line,
+        "closer": closer,
+    }
+
+    bits: list[str] = []
+    for key in NIGHT_MODE_CADENCE[mode]:
+        value = components.get(key, "")
+        if value:
+            bits.append(value)
+
+    if custom and random.random() < 0.3:
         bits.append(custom)
-    bits.append(closer)
     bits.append(random.choice(SEO_ENDINGS))
 
     text = " ".join(bit.strip() for bit in bits if bit and bit.strip())
@@ -632,7 +695,7 @@ def build_night_diary_post(config: dict, state: dict[str, Any], topic: str, seri
         "topic": topic,
         "series": series,
         "hook_type": hook_type,
-        "voice": VOICE_GUIDE.get("night-diary", "clear"),
+        "voice": f"{VOICE_GUIDE.get('night-diary', 'clear')} | mode={mode}",
     }
     return text, meta
 
