@@ -176,28 +176,121 @@ class LiveMarketDataService:
 
     def _apply_fallbacks(self, command: str, context: dict[str, Any]) -> dict[str, Any]:
         context = dict(context)
-        risks = list(context.get("major_risks", []))
+        risks = self._unique_risks(context.get("major_risks", []))
+        runtime_state = self._runtime_state_warning(command, context)
+        if runtime_state and runtime_state not in risks:
+            risks.insert(0, runtime_state)
+
         if command == "audit":
             has_live_audit = bool(context.get("audit_summary")) and str(context.get("audit_gate", "WARN")).upper() in {"ALLOW", "WARN", "BLOCK"}
             if not risks and not has_live_audit:
                 risks.append(missing_context_warning(command))
-            context["major_risks"] = risks
+            context["major_risks"] = self._unique_risks(risks)
             return context
+
         if not risks:
             risks.append(missing_context_warning(command))
-        context["major_risks"] = risks
+        context["major_risks"] = self._unique_risks(risks)
         return context
 
-    def _bridge_unavailable_context(self, command: str, entity: str, detail: str) -> dict[str, Any]:
-        warning = f"Live bridge unavailable; using degraded {command} context."
-        if command == "token":
-            return {"symbol": entity or "UNKNOWN", "display_name": entity or "UNKNOWN", "major_risks": [warning, detail]}
-        if command == "signal":
-            return {"token": entity or "UNKNOWN", "signal_status": "unknown", "supporting_context": "Live signal bridge is currently unavailable.", "major_risks": [warning, detail]}
-        if command == "audit":
-            return {"symbol": entity or "UNKNOWN", "display_name": entity or "UNKNOWN", "audit_gate": "WARN", "blocked_reason": "Live audit bridge is unavailable.", "risk_level": "Medium", "audit_summary": "Live audit payload unavailable.", "major_risks": [warning, detail]}
+    def _runtime_state_warning(self, command: str, context: dict[str, Any]) -> str:
+        if context.get("runtime_state") == "bridge_unavailable":
+            return str(context.get("runtime_warning") or f"Live bridge is unavailable for {command}; using degraded context.")
+        if context.get("runtime_state") == "partial_live":
+            return str(context.get("runtime_warning") or f"Live {command} payload is only partially populated right now.")
+        if command == "token" and context.get("signal_status") == "unmatched":
+            return "No matched live smart-money signal is visible on the current board, so this token read stays capped."
+        if command == "signal" and context.get("signal_status") == "unmatched":
+            return "No matched live smart-money signal is visible on the current board, so this signal read is watchlist-only."
+        if command == "watchtoday":
+            populated = sum(1 for key in ("trending_now", "smart_money_flow", "social_hype", "meme_watch", "top_narratives", "top_picks") if context.get(key))
+            if populated <= 2:
+                return "Today’s live board is only lightly populated, so treat the market view as partial rather than complete."
         if command == "wallet":
-            return {"address": entity, "follow_verdict": "Unknown", "style_read": "Live wallet bridge is unavailable.", "major_risks": [warning, detail]}
+            if not context.get("top_holdings") and not context.get("holdings_count") and not context.get("portfolio_value"):
+                return "Live wallet payload is too thin for a strong behavior read right now."
         if command == "meme":
-            return {"symbol": entity or "UNKNOWN", "display_name": entity or "UNKNOWN", "audit_gate": "WARN", "lifecycle_stage": "unknown", "major_risks": [warning, detail]}
-        return {"market_takeaway": "Live market board is temporarily unavailable.", "major_risks": [warning, detail]}
+            if str(context.get("lifecycle_stage", "unknown")).lower() == "unknown" and not context.get("smart_money_count"):
+                return "Live meme context is thin right now, so lifecycle and participation reads stay provisional."
+        return ""
+
+    def _bridge_unavailable_context(self, command: str, entity: str, detail: str) -> dict[str, Any]:
+        warning = f"Live bridge is unavailable for {command}; using degraded context."
+        sanitized = self._sanitize_runtime_detail(detail)
+        if command == "token":
+            return {
+                "symbol": entity or "UNKNOWN",
+                "display_name": entity or "UNKNOWN",
+                "runtime_state": "bridge_unavailable",
+                "runtime_warning": warning,
+                "major_risks": [warning, sanitized],
+            }
+        if command == "signal":
+            return {
+                "token": entity or "UNKNOWN",
+                "signal_status": "unknown",
+                "supporting_context": "Live signal bridge is currently unavailable.",
+                "runtime_state": "bridge_unavailable",
+                "runtime_warning": warning,
+                "major_risks": [warning, sanitized],
+            }
+        if command == "audit":
+            return {
+                "symbol": entity or "UNKNOWN",
+                "display_name": entity or "UNKNOWN",
+                "audit_gate": "WARN",
+                "blocked_reason": "Live audit bridge is unavailable.",
+                "risk_level": "Medium",
+                "audit_summary": "Live audit payload unavailable.",
+                "runtime_state": "bridge_unavailable",
+                "runtime_warning": warning,
+                "major_risks": [warning, sanitized],
+            }
+        if command == "wallet":
+            return {
+                "address": entity,
+                "follow_verdict": "Unknown",
+                "style_read": "Live wallet bridge is unavailable.",
+                "runtime_state": "bridge_unavailable",
+                "runtime_warning": warning,
+                "major_risks": [warning, sanitized],
+            }
+        if command == "meme":
+            return {
+                "symbol": entity or "UNKNOWN",
+                "display_name": entity or "UNKNOWN",
+                "audit_gate": "WARN",
+                "lifecycle_stage": "unknown",
+                "runtime_state": "bridge_unavailable",
+                "runtime_warning": warning,
+                "major_risks": [warning, sanitized],
+            }
+        return {
+            "market_takeaway": "Live market board is temporarily unavailable.",
+            "runtime_state": "bridge_unavailable",
+            "runtime_warning": warning,
+            "major_risks": [warning, sanitized],
+        }
+
+    def _sanitize_runtime_detail(self, detail: str) -> str:
+        cleaned = " ".join(str(detail or "").split())
+        if not cleaned:
+            return "Runtime detail unavailable."
+        lowered = cleaned.lower()
+        if "404" in lowered or "not found" in lowered:
+            return "Upstream live payload was not found for this request."
+        if "timeout" in lowered:
+            return "Upstream live request timed out before a stable payload arrived."
+        if "connection" in lowered or "refused" in lowered:
+            return "Could not reach the upstream live bridge."
+        if len(cleaned) > 180:
+            cleaned = cleaned[:177].rstrip() + "..."
+        return f"Runtime detail: {cleaned}"
+
+    def _unique_risks(self, risks: list[Any]) -> list[str]:
+        out: list[str] = []
+        for item in risks or []:
+            text = str(item).strip()
+            if text and text not in out:
+                out.append(text)
+        return out

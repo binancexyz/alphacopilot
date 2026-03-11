@@ -87,3 +87,16 @@ def test_live_service_watchtoday_and_wallet_file_modes(tmp_path: Path):
     assert watch["top_narratives"] == ["AI", "L2"]
     assert wallet["address"] == "0xabc"
     assert wallet["top_holdings"][0]["symbol"] == "BNB"
+
+
+def test_live_service_marks_bridge_unavailable_runtime_state():
+    service = LiveMarketDataService(base_url="file:///definitely/missing/path")
+    out = service.get_signal_context("DOGE")
+    assert out["runtime_state"] == "bridge_unavailable"
+    assert "Live bridge is unavailable for signal" in out["major_risks"][0]
+
+
+def test_live_service_marks_partial_watch_board():
+    service = LiveMarketDataService(base_url="file:///definitely/missing/path")
+    out = service._apply_fallbacks("watchtoday", {"top_narratives": ["AI"], "major_risks": []})
+    assert out["major_risks"][0].startswith("Today’s live board is only lightly populated")
