@@ -51,7 +51,7 @@ Bibipilot currently supports:
 - `/meme` — first-pass meme scan
 - `careers` — Binance hiring pulse for ecosystem/company-priority context
 
-It also supports Binance Square publishing, a scheduled content engine, and a lightweight Binance Careers pulse for ecosystem intelligence.
+It also supports Binance Square publishing, a premium scheduled daily-post engine, and a lightweight Binance Careers pulse for ecosystem intelligence.
 
 ---
 
@@ -70,7 +70,7 @@ Bibipilot is built around Binance Skills for evidence, Binance Spot market data 
 
 ### 3. It has a real publishing loop
 Bibipilot is not just an analysis interface.
-It can publish live text posts to Binance Square and already includes a scheduled posting engine.
+It can publish live text posts to Binance Square and already includes a scheduled premium daily posting engine.
 
 ### 4. It is command-specific
 Each command is shaped for its own job rather than forcing everything into one generic answer template.
@@ -233,11 +233,12 @@ Also review:
 Bibipilot already demonstrates:
 - real command surface
 - live Binance Square posting
-- scheduled posting engine
+- scheduled premium 1-post/day publishing
 - partially live bridge/runtime behavior
 - audit-aware product logic
 - Binance Spot read-only grounding across price / brief / watchtoday and supporting token / signal confirmation
 - command-specific UX
+- recent API/runtime security hardening across auth, validation, SSRF/path protections, headers, and container defaults
 
 That is enough to present it as a product with substance, not just a concept.
 

@@ -66,7 +66,7 @@ Examples:
 
 ### 3. Real publishing loop
 Bibipilot does not stop at analysis.
-It publishes to Binance Square and already has a scheduled posting engine.
+It publishes to Binance Square and already has a scheduled premium daily posting engine.
 
 ### 4. Binance-native story
 Its architecture maps to Binance Skills and Binance Square, which makes it feel grounded instead of generic.

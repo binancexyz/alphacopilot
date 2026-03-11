@@ -21,7 +21,7 @@ If you come back later and want the shortest summary possible:
 - `/meme` exists as a first-pass command
 - `/token BNB` live matching has been fixed end-to-end
 - live Binance Square publishing works
-- the repo now has a cron-driven 7-post/day Square content engine with guardrails, topic rotation, CTAs, performance logging, and stronger ecosystem-aware generation
+- the repo now has a cron-driven premium 1-post/day Square content engine with stronger quality guardrails, context-aware topic selection, mode variation, performance logging, and a cleaner nightly publishing standard
 - challenge/campaign docs are updated
 - public-alpha README/release docs are updated
 - GitHub repo is already pushed

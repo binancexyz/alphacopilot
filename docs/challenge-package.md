@@ -79,7 +79,7 @@ That makes the story stronger than a generic LLM wrapper.
 Bibipilot is not only analysis.
 It also ships to Binance Square:
 - manual posting works
-- scheduled 7-post/day engine works
+- scheduled premium 1-post/day engine works
 - text-post publishing is already live
 
 That makes the product feel complete.
@@ -240,7 +240,7 @@ Recommended main line:
 ## Current proof points
 
 - live Binance Square posting works
-- scheduled 7-post/day Square engine works
+- scheduled premium 1-post/day Square engine works
 - command surface includes `/token`, `/brief`, `/price`, `/risk`, `/signal`, `/wallet`, `/watchtoday`, `/audit`, `/meme`
 - `/watchtoday` now renders live market lanes
 - `/audit` is a first-class command

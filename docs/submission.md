@@ -86,7 +86,7 @@ The command surface is clear, chat-friendly, and demoable in a few minutes.
 
 ## Live Proof Points
 - live Binance Square posting works
-- a scheduled 7-post/day Binance Square engine is active
+- a scheduled premium 1-post/day Binance Square engine is active
 - Binance Spot read-only grounding now strengthens `/price`, `/brief`, and `/watchtoday`
 - `/watchtoday` now renders live market lanes with an Exchange Board anchor
 - `/audit` is a first-class command

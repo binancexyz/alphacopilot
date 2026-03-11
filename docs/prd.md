@@ -6,7 +6,7 @@
 **Tagline:** Less noise. Better conviction.
 
 ## 1. Product Summary
-Bibipilot is a research-first AI copilot built on OpenClaw and Binance Skills Hub. It helps users move from fragmented token, wallet, meme, and smart-money data to a concise decision-support brief.
+Bibipilot is a research-first AI copilot built on OpenClaw and Binance Skills Hub. It helps users move from fragmented token, wallet, meme, and smart-money data to concise decision support and publishable Binance Square output.
 
 The product is designed to answer a simple question:
 
@@ -47,6 +47,7 @@ Bibipilot should:
 - Turn raw Binance Skills outputs into clear research briefs
 - Help users evaluate tokens, wallets, signals, and market narratives faster
 - Make Binance Square posting a core product output
+- Prefer one high-standard Binance Square post over high-volume repetitive posting
 - Keep the product safe, cautious, and human-supervised
 
 ### Secondary goals
@@ -180,10 +181,12 @@ Purpose:
 Inputs:
 - research brief
 - Square post formatting rules
+- current work / market context when available
 
 Output:
 - concise Binance Square-ready post
 - publish path via `square-post`
+- premium scheduled daily post path centered on one strong post per day rather than slot-filling volume
 
 ## 10. Detailed Skill Roles
 ### `query-token-info`
@@ -277,6 +280,8 @@ Requirements:
 - should avoid overclaiming certainty
 - should support dry-run/draft flow
 - should return published post URL on success when available
+- scheduled posting should prioritize one high-standard daily post over repetitive multi-slot volume
+- scheduled post generation should adapt tone between diary / builder / market modes when context supports it
 
 ## 13. Safety Requirements
 ### Required safety behavior
@@ -314,6 +319,7 @@ Requirements:
 - saved research reports
 - richer API/auth controls
 - optional web UI
+- deeper live market context injected into the premium daily Square post engine
 
 ## 15. Success Metrics
 ### Product quality
@@ -332,11 +338,12 @@ Requirements:
 
 ## 16. Current State
 The project is currently:
-- a strong scaffold
+- a strong public-alpha scaffold
 - well positioned
 - increasingly aligned to real Binance Skills
 - capable of mock/demo usage now
 - partially wired for live-mode repo-side behavior
+- recently hardened on the API/runtime side with safer auth comparison, stricter validation, path traversal protection, SSRF hardening, security headers, and non-root container defaults
 
 Still remaining for full live readiness:
 - real Binance Skills runtime invocation in production flow

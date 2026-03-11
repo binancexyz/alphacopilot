@@ -14,7 +14,7 @@
 - build checklist
 - API surface and deployment notes
 - Binance Square live draft/publish flow
-- scheduled Binance Square 7-post/day content engine with quality guardrails and performance logging
+- scheduled Binance Square premium 1-post/day content engine with stronger quality guardrails, context-aware generation, and performance logging
 - local setup/env helper scripts
 
 ## Latest Binance Skills update

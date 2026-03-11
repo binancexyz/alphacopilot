@@ -28,7 +28,7 @@ What is real today:
 - Binance Spot read-only grounding for `price`, `brief`, and `watchtoday`
 - supporting Binance Spot confirmation for `token` and `signal`
 - improved wallet behavior judgment
-- Binance Square publishing + scheduled posting engine
+- Binance Square publishing + premium scheduled daily posting engine
 - live runtime health diagnostics via `/health`
 
 What is still partial:

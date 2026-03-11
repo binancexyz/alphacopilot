@@ -52,7 +52,7 @@ The architecture story is simple: Binance Skills provide token, signal, audit, w
 It is already partially live, not just concept.
 
 ### Longer answer
-Live Binance Square posting works, the scheduled 7-post/day Square engine works, the command surface is real, and the bridge is partially live for token, signal, audit, and watchtoday flows.
+Live Binance Square posting works, the scheduled premium 1-post/day Square engine works, the command surface is real, and the bridge is partially live for token, signal, audit, and watchtoday flows.
 
 ---
 
@@ -155,7 +155,7 @@ Bibipilot is beyond concept stage because the command surface is real, the publi
 ## 16. What are the strongest proof points?
 
 - live Binance Square posts exist
-- scheduled posting engine exists
+- scheduled premium daily posting engine exists
 - command surface is real
 - `/audit` is first-class
 - `/watchtoday` now renders live lanes

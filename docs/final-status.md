@@ -14,7 +14,7 @@
 - upgraded live extractor paths
 - `/token BNB` live matching fix across bridge and extractor layers
 - live Binance Square draft/publish flow
-- scheduled Binance Square autoposting with a verified quality-focused 7-post/day Asia/Phnom_Penh cron engine
+- scheduled Binance Square autoposting with a verified quality-focused premium 1-post/day Asia/Phnom_Penh cron engine
 - broader slash-command layer: `/token`, `/brief`, `/price`, `/risk`, `/signal`, `/wallet`, `/watchtoday`, `watch today`, `/audit`, and `/meme`
 - compact `/brief`, `/price`, and `/risk` command layer
 - command-specific layouts for `/token`, `/signal`, `/wallet`, and `/watchtoday`
@@ -50,5 +50,5 @@
 - continue bridge/runtime stabilization for live usage
 
 ## Project state
-Bibipilot is now beyond a scaffold: it has working live publishing, a maintained cron-based Square engine, a broader slash-command layer, and a clearer runtime-first Binance Skills direction.
+Bibipilot is now beyond a scaffold: it has working live publishing, a maintained premium daily Square engine, a broader slash-command layer, and a clearer runtime-first Binance Skills direction.
 The current best path is no longer generic polishing. It is to deepen the Binance-skill-backed judgment layer so Bibipilot becomes a stronger research -> judgment -> publishing product.

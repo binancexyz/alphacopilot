@@ -39,14 +39,12 @@ It answers a simple question:
 Time zone:
 - `Asia/Phnom_Penh`
 
-Slots:
-- `07:30 | morning-diary`
-- `09:30 | education`
-- `11:30 | market`
-- `13:30 | builder`
-- `15:30 | ecosystem`
-- `18:30 | motivation`
+Slot:
 - `21:30 | night-diary`
+
+Current posting posture:
+- premium **1-post/day** mode
+- nightly post optimized for one strong reflective / builder / market-aware post instead of slot-filling volume
 
 ### What this proves
 - Bibipilot is not only manual
