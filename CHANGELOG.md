@@ -8,6 +8,20 @@
 - CTA rotation, topic rotation, series labels, and slot-specific voice profiles for Square posts
 
 ### Improved
+- comprehensive documentation overhaul across all docs to reflect actual codebase state
+- README.md rewritten with table of contents, full API docs, Docker instructions, architecture overview, and current status
+- docs/prd.md expanded to cover all 10 commands, REST API, security, tech stack, and current state
+- docs/architecture.md updated to reflect FastAPI, bridge API, security layer, and service architecture
+- docs/roadmap.md updated with progress tracking (Phase 1 complete, Phase 2 in progress)
+- docs/quick-reference.md updated with all 10 commands, API endpoints, and publishing commands
+- docs/commands-overview.md expanded with /risk, /audit, /meme, careers, and usage examples
+- docs/one-minute-overview.md rewritten with key numbers and three-step workflow
+- docs/install.md updated with Docker option, dependency table, and all CLI commands
+- docs/deployment.md updated with bridge API option, health check, and API versions
+- docs/project-goals.md updated with current status for each goal
+- docs/mvp-definition.md updated with full 10-command surface and all product surfaces
+- docs/INDEX.md reorganized with categories and links to all doc files
+- CONTRIBUTING.md updated with project structure and security posture
 - README, scripts docs, and Binance Square docs updated to match the latest live publish/autopost flow
 - Makefile targets updated for the current Square diary slot names
 - local ignore rules updated to keep generated `tmp/` artifacts out of git

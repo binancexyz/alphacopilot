@@ -1,37 +1,109 @@
 # Commands Overview
 
 ## `/price <symbol>`
-Purpose:
-- show a compact market card
-- prefer Binance Spot read-only market data when available
-- surface spread / exchange-pair context instead of just a raw quote
+**Purpose:** Show a compact market card.
+- Prefer Binance Spot read-only market data when available
+- Surface spread / exchange-pair context instead of just a raw quote
+
+**Example:** `python3 src/main.py price BNB`
+
+---
 
 ## `/brief <symbol>`
-Purpose:
-- compress token + signal + market context quickly
-- ground the answer in Binance Spot when available
-- distinguish live exchange price from actual smart-money confirmation
+**Purpose:** Compress token + signal + market context quickly.
+- Ground the answer in Binance Spot when available
+- Distinguish live exchange price from actual smart-money confirmation
+
+**Example:** `python3 src/main.py brief BTC`
+
+---
 
 ## `/token <symbol>`
-Purpose:
-- analyze token context
-- evaluate signal quality
-- highlight top risks
-- use Binance Spot as supporting exchange-native confirmation when available
+**Purpose:** Analyze token context with full conviction assessment.
+- Evaluate signal quality
+- Highlight top risks
+- Use Binance Spot as supporting exchange-native confirmation when available
+- Includes audit, market rank, and trading signal context
+
+**Example:** `python3 src/main.py token BNB`
+
+---
 
 ## `/signal <token>`
-Purpose:
-- evaluate whether a signal is worth attention
-- show fragility and confirmation conditions
-- distinguish between live exchange price and matched smart-money signal quality
+**Purpose:** Evaluate whether a smart-money signal is worth attention.
+- Show fragility and confirmation conditions
+- Distinguish between live exchange price and matched smart-money signal quality
+- Show signal timing, direction, and exit rate
+
+**Example:** `python3 src/main.py signal DOGE`
+
+---
 
 ## `/wallet <address>`
-Purpose:
-- interpret wallet concentration and exposure
-- summarize whether the wallet is worth monitoring
+**Purpose:** Interpret wallet concentration, behavior, and exposure.
+- Summarize whether the wallet is worth monitoring
+- Provide behavior-aware analysis (not just a holdings snapshot)
+- Follow verdict based on trading patterns
+
+**Example:** `python3 src/main.py wallet 0x1234567890ab`
+
+---
+
+## `/risk <symbol>`
+**Purpose:** Downside-first risk assessment.
+- Identify top risk factors by severity
+- Surface what could go wrong
+- Risk tags with clear severity labels
+
+**Example:** `python3 src/main.py risk ETH`
+
+---
+
+## `/audit <symbol>`
+**Purpose:** Security-first token audit card.
+- Scam/vulnerability detection
+- Contract risk assessment
+- Risk gate that blocks on critical findings
+- Only valid when `hasResult=true` and `isSupported=true`
+
+**Example:** `python3 src/main.py audit BNB`
+
+---
 
 ## `/watchtoday`
-Purpose:
-- filter broad market noise
-- prioritize narratives, signals, and risk zones
-- anchor the board with a compact Binance Spot exchange board when available
+**Purpose:** Filter broad market noise into a daily board.
+- Prioritize narratives, signals, and risk zones
+- Anchor the board with a compact Binance Spot exchange board when available
+- Smart-money context and trending narratives
+
+**Example:** `python3 src/main.py watchtoday`
+
+---
+
+## `/meme <symbol>`
+**Purpose:** First-pass meme token scan.
+- Meme lifecycle status (new / finalizing / migrated)
+- Holder distribution risk
+- Launch status and hype assessment
+
+**Example:** `python3 src/main.py meme DOGE`
+
+---
+
+## `careers`
+**Purpose:** Binance ecosystem intelligence through hiring data.
+- Active hiring areas and team growth signals
+- Ecosystem priority context
+- Not a trading signal — treat as company intelligence
+
+**Example:** `python3 src/main.py careers` or `python3 src/main.py careers --cache-only`
+
+---
+
+## Output Shape (all commands)
+- Quick Verdict
+- Signal Quality / Conviction
+- Top Risks
+- Why It Matters
+- What To Watch Next
+- Risk Tags (when applicable)
