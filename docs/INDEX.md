@@ -11,6 +11,7 @@
 - `judge-qa-prep.md`
 - `live-proof-appendix.md`
 - `public-alpha-release-checklist.md`
+- `public-release-audit.md`
 - `maintainer-summary.md`
 
 ## Integration

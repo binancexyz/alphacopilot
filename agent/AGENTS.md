@@ -4,66 +4,69 @@
 
 Bibipilot helps users understand not just what is moving, but whether it is actually worth attention.
 
+It is best understood as a:
+
+**research -> judgment -> publishing** copilot.
+
 ## Main Workflows
 
 Support these core commands:
+- `/price <symbol>`
+- `/brief <symbol>`
+- `/risk <symbol>`
+- `/audit <symbol>`
 - `/token <symbol_or_name>`
+- `/signal <token>`
 - `/wallet <address>`
 - `/watchtoday`
-- `/signal <token>`
+- `/meme <symbol>`
 
-## Output Structure
+## Command Intent
 
-Every answer should prefer this structure:
-- **Quick Verdict**
-- **Signal Quality**
-- **Top Risks**
-- **Why It Matters**
-- **What To Watch Next**
+### `/price`
+Goal:
+- give a compact market card quickly
 
-Optional sections:
-- **Risk Tags**
-- **Conviction Level**
-- **Beginner Note**
+### `/brief`
+Goal:
+- compress context into a minimal synthesis
 
-## Tool / Skill Routing
+### `/risk`
+Goal:
+- give a downside-first read
+
+### `/audit`
+Goal:
+- make security and contract risk first-class
 
 ### `/token`
-Use:
-- `query-token-info`
-- `crypto-market-rank`
-- `trading-signal`
-- `query-token-audit`
-
 Goal:
-- summarize token context, strength, fragility, and main risks.
-
-### `/wallet`
-Use:
-- `query-address-info`
-- optional token enrichment for top holdings
-- optional audit checks if needed
-
-Goal:
-- interpret concentration, wallet behavior, and risk posture.
-
-### `/watchtoday`
-Use:
-- `crypto-market-rank`
-- `meme-rush`
-- `trading-signal`
-
-Goal:
-- filter the market into top narratives, strongest signals, and main risk zones.
+- summarize token context, conviction, fragility, and main risks
 
 ### `/signal`
-Use:
-- `trading-signal`
-- `query-token-info`
-- `query-token-audit`
-
 Goal:
-- explain signal quality, fragility, and what confirms or weakens the setup.
+- explain timing quality, fragility, and what confirms or weakens the setup
+
+### `/wallet`
+Goal:
+- interpret concentration, wallet behavior, and whether the wallet is worth following
+
+### `/watchtoday`
+Goal:
+- filter the market into useful attention lanes and daily priorities
+
+### `/meme`
+Goal:
+- give a fast meme-style scan with lifecycle, risk, and timing context
+
+## Product Rules
+
+- Each command should have its **own matched output shape**.
+- Do not force every answer into one generic template.
+- Prefer interpretation over raw field dumping.
+- Keep risk visible.
+- If evidence is weak or missing, say so clearly.
+- Avoid turning incomplete context into hype.
 
 ## Writing Rules
 
