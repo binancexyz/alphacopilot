@@ -28,10 +28,14 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
     price = 0.0
     change = 0.0
     rank = 0
+    spread_pct = 0.0
+    exchange_symbol = ""
     if quote:
         price = float(quote.get("price") or 0)
         change = float(quote.get("percent_change_24h") or 0)
         rank = int(quote.get("rank") or 0)
+        spread_pct = float(quote.get("spread_pct") or 0)
+        exchange_symbol = str(quote.get("exchange_symbol") or "")
     elif token.price > 0:
         price = token.price
 
@@ -45,11 +49,20 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
 
     if not price and not quote:
         top_risk = "Live market quote temporarily unavailable, so this brief is using thinner fallback context."
+    elif quote_source == "Binance Spot":
+        if spread_pct >= 0.5:
+            top_risk = f"Binance Spot spread is relatively wide at {spread_pct:.2f}%, so execution quality may be less clean than the headline price suggests."
+        elif signal.signal_status == "unmatched":
+            top_risk = f"Binance Spot price is live through {exchange_symbol or display_symbol}, but there is still no matched live smart-money signal on the board."
+        else:
+            top_risk = f"Using Binance Spot market data via {exchange_symbol or display_symbol}; exchange price context is good, but setup quality still depends on confirmation."
     elif quote and quote_source and quote_source != "CoinGecko":
-        top_risk = f"Primary CoinGecko quote was unavailable, so this brief is using {quote_source} market data."
+        top_risk = f"Primary Binance Spot/CoinGecko quote was unavailable, so this brief is using {quote_source} market data."
 
     if signal_quality == "High" and not token.audit_flags:
         verdict = "Looks constructive, but still needs follow-through."
+    elif signal_quality == "Medium" and quote_source == "Binance Spot" and spread_pct <= 0.2:
+        verdict = "Worth watching; exchange price context looks clean enough, but setup quality still needs proof."
     elif signal_quality == "Medium":
         verdict = "Worth watching, but not clean enough to trust blindly."
     else:
@@ -60,7 +73,7 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
     return AnalysisBrief(
         entity=f"Brief: {display_symbol}",
         quick_verdict=why,
-        signal_quality=signal_quality,
+        signal_quality="High" if quote_source == "Binance Spot" and signal_quality == "High" else signal_quality,
         top_risks=[],
         why_it_matters="",
         what_to_watch_next=[],
