@@ -9,8 +9,12 @@
 - `challenge-package.md`
 - `judge-cheat-sheet.md`
 - `judge-qa-prep.md`
+- `spoken-pitch-pack.md`
+- `demo-operator-sheet.md`
 - `live-proof-appendix.md`
+- `final-remaining-work-tracker.md`
 - `public-alpha-release-checklist.md`
+- `final-public-release-check.md`
 - `public-release-audit.md`
 - `maintainer-summary.md`
 
