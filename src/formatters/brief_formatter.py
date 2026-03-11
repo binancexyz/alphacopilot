@@ -10,6 +10,7 @@ ENTITY_EMOJI = {
     "Risk:": "🛡️",
     "Audit:": "🔐",
     "Signal:": "📡",
+    "Meme:": "🚀",
     "Wallet:": "👛",
     "Market Watch": "🌐",
 }
@@ -267,6 +268,8 @@ def format_brief(brief: AnalysisBrief) -> str:
         return _format_risk_card(brief)
     if brief.entity.startswith("Audit:"):
         return _format_audit_card(brief)
+    if brief.entity.startswith("Meme:"):
+        return _format_token_card(brief)
     if brief.entity.startswith("Token:"):
         return _format_token_card(brief)
     if brief.entity.startswith("Signal:"):

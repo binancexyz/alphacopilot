@@ -9,7 +9,7 @@ from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from src.config import settings
-from src.services.binance_skill_mapping import AUDIT_SKILLS, SIGNAL_SKILLS, TOKEN_SKILLS, WALLET_SKILLS, WATCH_TODAY_SKILLS
+from src.services.binance_skill_mapping import AUDIT_SKILLS, MEME_SKILLS, SIGNAL_SKILLS, TOKEN_SKILLS, WALLET_SKILLS, WATCH_TODAY_SKILLS
 from src.utils.parsing import normalize_token_input
 
 app = FastAPI(title="Bibipilot Live Bridge", version="0.2.0")
@@ -41,7 +41,7 @@ def health() -> dict[str, str]:
 
 @app.get("/runtime", response_model=BridgeResponse)
 def runtime(
-    command: str = Query(..., description="token|signal|wallet|watchtoday|audit"),
+    command: str = Query(..., description="token|signal|wallet|watchtoday|audit|meme"),
     entity: str = Query("", description="symbol or address when relevant"),
 ) -> BridgeResponse:
     command_key = command.strip().lower()
@@ -49,12 +49,12 @@ def runtime(
     if skills is None:
         raise HTTPException(status_code=400, detail=f"Unsupported command: {command}")
 
-    if command_key in {"token", "signal", "audit"} and not entity:
+    if command_key in {"token", "signal", "audit", "meme"} and not entity:
         raise HTTPException(status_code=400, detail=f"command={command_key} requires entity")
     if command_key == "wallet" and not entity:
         raise HTTPException(status_code=400, detail="command=wallet requires entity")
 
-    if settings.bridge_live_enabled and command_key in {"token", "signal", "audit"}:
+    if settings.bridge_live_enabled and command_key in {"token", "signal", "audit", "meme"}:
         raw = _fetch_live_token_bundle(entity)
         return BridgeResponse(
             command=command_key,
@@ -295,5 +295,6 @@ def _skills_for(command: str) -> list[str] | None:
         "wallet": WALLET_SKILLS,
         "watchtoday": WATCH_TODAY_SKILLS,
         "audit": AUDIT_SKILLS,
+        "meme": MEME_SKILLS,
     }
     return mapping.get(command)

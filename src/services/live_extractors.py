@@ -208,6 +208,46 @@ def extract_audit_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     }
 
 
+def extract_meme_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
+    token = extract_token_context(raw, symbol)
+    signal = raw.get("trading-signal", {})
+    first_signal = _first_item(signal.get("data")) or {}
+    launch_platform = str(first_signal.get("launchPlatform") or "")
+    is_alpha = bool(first_signal.get("isAlpha"))
+    status = str(first_signal.get("status") or "").lower()
+    exit_rate = _pick_number(first_signal, "exitRate", "exit_rate")
+    progress = _pick_number(first_signal, "progress")
+
+    lifecycle = "unknown"
+    if status in {"valid", "watch", "bullish", "triggered"}:
+        lifecycle = "new"
+    if progress >= 90:
+        lifecycle = "finalizing"
+    if status in {"timeout", "exitrate", "exitRate".lower()} or exit_rate >= 70:
+        lifecycle = "migrated"
+
+    return {
+        "symbol": token.get("symbol", symbol),
+        "display_name": token.get("display_name", symbol),
+        "price": token.get("price", 0.0),
+        "liquidity": token.get("liquidity", 0.0),
+        "market_rank_context": token.get("market_rank_context", ""),
+        "signal_status": token.get("signal_status", "unknown"),
+        "audit_flags": token.get("audit_flags", []),
+        "major_risks": token.get("major_risks", []),
+        "smart_money_count": token.get("smart_money_count", 0),
+        "exit_rate": token.get("exit_rate", 0.0),
+        "signal_age_hours": token.get("signal_age_hours", 0.0),
+        "signal_freshness": token.get("signal_freshness", "UNKNOWN"),
+        "audit_gate": token.get("audit_gate", "ALLOW"),
+        "blocked_reason": token.get("blocked_reason", ""),
+        "launch_platform": launch_platform,
+        "is_alpha": is_alpha,
+        "lifecycle_stage": lifecycle,
+        "bonded_progress": progress,
+    }
+
+
 def _extract_audit_flags_and_risks(audit: dict[str, Any]) -> tuple[list[str], list[str]]:
     if not audit:
         return [], []

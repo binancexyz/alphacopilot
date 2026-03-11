@@ -10,6 +10,7 @@ if __package__ is None or __package__ == "":
 from src.analyzers.audit_analysis import analyze_audit
 from src.analyzers.brief_analysis import analyze_brief
 from src.analyzers.market_watch import watch_today
+from src.analyzers.meme_analysis import analyze_meme
 from src.analyzers.price_analysis import analyze_price
 from src.analyzers.risk_analysis import analyze_risk
 from src.analyzers.signal_check import analyze_signal
@@ -38,6 +39,9 @@ def main() -> None:
     audit_parser = subparsers.add_parser("audit")
     audit_parser.add_argument("symbol")
 
+    meme_parser = subparsers.add_parser("meme")
+    meme_parser.add_argument("symbol")
+
     wallet_parser = subparsers.add_parser("wallet")
     wallet_parser.add_argument("address")
 
@@ -61,6 +65,8 @@ def main() -> None:
         brief = analyze_risk(normalize_token_input(args.symbol))
     elif args.command == "audit":
         brief = analyze_audit(normalize_token_input(args.symbol))
+    elif args.command == "meme":
+        brief = analyze_meme(normalize_token_input(args.symbol))
     elif args.command == "wallet":
         brief = analyze_wallet(normalize_wallet_input(args.address))
     elif args.command == "signal":

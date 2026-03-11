@@ -56,6 +56,28 @@ class WatchTodayContext:
 
 
 @dataclass
+class MemeContext:
+    symbol: str
+    display_name: str
+    price: float = 0.0
+    liquidity: float = 0.0
+    market_rank_context: str = ""
+    signal_status: str = "unknown"
+    audit_flags: list[str] = field(default_factory=list)
+    major_risks: list[str] = field(default_factory=list)
+    smart_money_count: int = 0
+    exit_rate: float = 0.0
+    signal_age_hours: float = 0.0
+    signal_freshness: str = "UNKNOWN"
+    audit_gate: str = "ALLOW"
+    blocked_reason: str = ""
+    launch_platform: str = ""
+    is_alpha: bool = False
+    lifecycle_stage: str = "unknown"
+    bonded_progress: float = 0.0
+
+
+@dataclass
 class SignalContext:
     token: str
     signal_status: str = "unknown"

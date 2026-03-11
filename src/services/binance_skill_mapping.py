@@ -41,3 +41,10 @@ AUDIT_SKILLS = [
     "query-token-info",
     "query-token-audit",
 ]
+
+MEME_SKILLS = [
+    "query-token-info",
+    "query-token-audit",
+    "trading-signal",
+    "meme-rush",
+]

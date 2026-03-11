@@ -78,3 +78,25 @@ class MockMarketDataService:
             "risk_level": "Medium",
             "audit_summary": "No live audit payload available in mock mode.",
         }
+
+    def get_meme_context(self, symbol: str) -> NormalizedDict:
+        return {
+            "symbol": symbol,
+            "display_name": symbol,
+            "price": 0.0,
+            "liquidity": 250000.0,
+            "market_rank_context": f"{symbol} has meme-style attention but still needs proper filtering.",
+            "signal_status": "watch",
+            "audit_flags": [],
+            "major_risks": ["Meme setups can reverse quickly when attention fades."],
+            "smart_money_count": 2,
+            "exit_rate": 15.0,
+            "signal_age_hours": 0.8,
+            "signal_freshness": "FRESH",
+            "audit_gate": "WARN",
+            "blocked_reason": "Audit coverage is partial or unavailable.",
+            "launch_platform": "Fourmeme",
+            "is_alpha": True,
+            "lifecycle_stage": "new",
+            "bonded_progress": 42.0,
+        }

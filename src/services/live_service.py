@@ -7,6 +7,7 @@ from typing import Any
 from src.services.fallbacks import missing_context_warning
 from src.services.live_extractors import (
     extract_audit_context,
+    extract_meme_context,
     extract_signal_context,
     extract_token_context,
     extract_wallet_context,
@@ -56,6 +57,11 @@ class LiveMarketDataService:
         raw = self._load_payload("audit", symbol)
         context = extract_audit_context(raw, symbol)
         return self._apply_fallbacks("audit", context)
+
+    def get_meme_context(self, symbol: str) -> NormalizedDict:
+        raw = self._load_payload("meme", symbol)
+        context = extract_meme_context(raw, symbol)
+        return self._apply_fallbacks("meme", context)
 
     def _load_payload(self, command: str, entity: str = "") -> dict[str, Any]:
         if not self.base_url:

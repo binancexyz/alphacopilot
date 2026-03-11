@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.models.context import SignalContext, TokenContext, WalletContext, WalletHolding, WatchTodayContext
+from src.models.context import MemeContext, SignalContext, TokenContext, WalletContext, WalletHolding, WatchTodayContext
 
 
 def normalize_token_context(payload: dict) -> TokenContext:
@@ -72,6 +72,29 @@ def normalize_signal_context(payload: dict) -> SignalContext:
         signal_freshness=str(payload.get("signal_freshness", "UNKNOWN")),
         audit_gate=str(payload.get("audit_gate", "ALLOW")),
         blocked_reason=str(payload.get("blocked_reason", "")),
+    )
+
+
+def normalize_meme_context(payload: dict) -> MemeContext:
+    return MemeContext(
+        symbol=str(payload.get("symbol", "UNKNOWN")),
+        display_name=str(payload.get("display_name", payload.get("symbol", "UNKNOWN"))),
+        price=_to_float(payload.get("price")),
+        liquidity=_to_float(payload.get("liquidity")),
+        market_rank_context=str(payload.get("market_rank_context", "")),
+        signal_status=str(payload.get("signal_status", "unknown")),
+        audit_flags=[str(x) for x in payload.get("audit_flags", [])],
+        major_risks=[str(x) for x in payload.get("major_risks", [])],
+        smart_money_count=_to_int(payload.get("smart_money_count")),
+        exit_rate=_to_float(payload.get("exit_rate")),
+        signal_age_hours=_to_float(payload.get("signal_age_hours")),
+        signal_freshness=str(payload.get("signal_freshness", "UNKNOWN")),
+        audit_gate=str(payload.get("audit_gate", "ALLOW")),
+        blocked_reason=str(payload.get("blocked_reason", "")),
+        launch_platform=str(payload.get("launch_platform", "")),
+        is_alpha=bool(payload.get("is_alpha", False)),
+        lifecycle_stage=str(payload.get("lifecycle_stage", "unknown")),
+        bonded_progress=_to_float(payload.get("bonded_progress")),
     )
 
 
