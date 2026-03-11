@@ -108,11 +108,14 @@ class LiveMarketDataService:
         return payload
 
     def _load_from_directory(self, command: str, entity: str = "") -> dict[str, Any]:
-        base_path = Path(self.base_url.removeprefix("file://")).expanduser()
+        base_path = Path(self.base_url.removeprefix("file://")).expanduser().resolve()
         candidates = self._candidate_paths(base_path, command, entity)
         for path in candidates:
-            if path.exists() and path.is_file():
-                with open(path, "r", encoding="utf-8") as f:
+            resolved = path.resolve()
+            if not resolved.is_relative_to(base_path):
+                continue
+            if resolved.exists() and resolved.is_file():
+                with open(resolved, "r", encoding="utf-8") as f:
                     return json.load(f)
         raise FileNotFoundError(
             "No live payload file found for "
@@ -139,10 +142,13 @@ class LiveMarketDataService:
             headers["X-API-Secret"] = self.api_secret
 
         endpoint = self.base_url.rstrip("/")
+        if not endpoint.startswith(("https://", "http://")):
+            raise RuntimeError(f"Live bridge URL must use http or https scheme, got: {endpoint!r}")
+
         last_exc: Exception | None = None
         for attempt in range(max(1, settings.bridge_http_retries)):
             try:
-                with httpx.Client(timeout=settings.bridge_http_timeout_seconds, follow_redirects=True) as client:
+                with httpx.Client(timeout=settings.bridge_http_timeout_seconds, follow_redirects=False) as client:
                     response = client.get(endpoint, params=params, headers=headers)
                     response.raise_for_status()
                     payload = response.json()
