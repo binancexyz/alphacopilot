@@ -68,6 +68,9 @@ def _format_price_card(brief: AnalysisBrief) -> str:
     if market_bits:
         parts.append("💼 Market:")
         parts.append(" | ".join(market_bits))
+    if brief.top_risks:
+        parts.append("")
+        parts.append(f"⚠️ Note: {brief.top_risks[0]}")
     return "\n".join(parts).strip() + "\n"
 
 
@@ -101,6 +104,8 @@ def _format_compact_brief_card(brief: AnalysisBrief) -> str:
         parts.append(f"⚡ {verdict}")
     if top_risk:
         parts.append(f"⚠️ Top Risk: {top_risk}")
+    if not price_f and rank_i > 0:
+        parts.append("📝 Quote source identified the asset correctly, but live price details were not carried into this compact brief.")
     return "\n".join(parts).strip() + "\n"
 
 

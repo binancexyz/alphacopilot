@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.analyzers.price_analysis import _fetch_cmc_quote
+from src.analyzers.price_analysis import _fetch_market_quote
 from src.services.factory import get_market_data_service
 from src.services.normalizers import normalize_signal_context, normalize_token_context
 from src.models.schemas import AnalysisBrief
@@ -23,7 +23,7 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
 
     token = normalize_token_context(token_raw)
     signal = normalize_signal_context(signal_raw)
-    quote = _fetch_cmc_quote(symbol)
+    quote, quote_source = _fetch_market_quote(symbol)
 
     price = 0.0
     change = 0.0
@@ -42,6 +42,11 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
 
     signal_quality = "High" if signal.signal_status in {"triggered", "bullish"} else "Medium" if signal.signal_status in {"watch"} else "Low"
     top_risk = token.major_risks[0] if token.major_risks else signal.major_risks[0] if signal.major_risks else "Context is still incomplete, so treat this as a monitor-first setup."
+
+    if not price and not quote:
+        top_risk = "Live market quote temporarily unavailable, so this brief is using thinner fallback context."
+    elif quote and quote_source and quote_source != "CoinGecko":
+        top_risk = f"Primary CoinGecko quote was unavailable, so this brief is using {quote_source} market data."
 
     if signal_quality == "High" and not token.audit_flags:
         verdict = "Looks constructive, but still needs follow-through."
