@@ -7,7 +7,9 @@ from pathlib import Path
 if __package__ is None or __package__ == "":
     sys.path.append(str(Path(__file__).resolve().parents[1]))
 
+from src.analyzers.audit_analysis import analyze_audit
 from src.analyzers.market_watch import watch_today
+from src.analyzers.meme_analysis import analyze_meme
 from src.analyzers.signal_check import analyze_signal
 from src.analyzers.token_analysis import analyze_token
 from src.analyzers.wallet_analysis import analyze_wallet
@@ -27,6 +29,14 @@ def main() -> None:
     signal.add_argument("token")
     signal.add_argument("--publish", action="store_true")
 
+    audit = sub.add_parser("audit")
+    audit.add_argument("symbol")
+    audit.add_argument("--publish", action="store_true")
+
+    meme = sub.add_parser("meme")
+    meme.add_argument("symbol")
+    meme.add_argument("--publish", action="store_true")
+
     wallet = sub.add_parser("wallet")
     wallet.add_argument("address")
     wallet.add_argument("--publish", action="store_true")
@@ -41,6 +51,12 @@ def main() -> None:
         publish = args.publish
     elif args.command == "signal":
         brief = analyze_signal(normalize_token_input(args.token))
+        publish = args.publish
+    elif args.command == "audit":
+        brief = analyze_audit(normalize_token_input(args.symbol))
+        publish = args.publish
+    elif args.command == "meme":
+        brief = analyze_meme(normalize_token_input(args.symbol))
         publish = args.publish
     elif args.command == "wallet":
         brief = analyze_wallet(normalize_wallet_input(args.address))
