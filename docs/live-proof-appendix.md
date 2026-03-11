@@ -86,6 +86,7 @@ What it proves:
 What it proves:
 - Bibipilot can turn live rank/signal flows into a market board
 - output is structured into lanes, not one blended blob
+- the board now has a Binance Spot Exchange Board anchor and lane-coverage honesty
 
 ### `/wallet`
 What it proves:
@@ -121,10 +122,13 @@ What it proves:
 Recent product improvements already implemented include:
 - audit gate surfaced in `/token` and `/signal`
 - standalone `/audit`
+- Binance Spot read-only grounding for `/price` and `/brief`
 - live market-lane rendering in `/watchtoday`
+- Exchange Board anchoring + lane-coverage honesty in `/watchtoday`
 - more truthful fallback behavior when no matched live signal exists
-- wallet follow verdict layer
+- stronger wallet follow verdict / behavior layer
 - first-pass `/meme`
+- live runtime health diagnostics via `/health`
 
 ### What this proves
 - Bibipilot is not only adding commands

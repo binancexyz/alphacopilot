@@ -74,7 +74,7 @@ Bibipilot does not stop at surfacing movement.
 It tries to answer what deserves conviction, caution, or rejection.
 
 ### 2. It is Binance-native
-Its architecture and product story are grounded in Binance Skills and Binance Square, not generic crypto prompts.
+Its architecture and product story are grounded in Binance Skills, Binance Spot read-only market data, and Binance Square — not generic crypto prompts.
 
 ### 3. It closes the loop
 Most entries stop at analysis.
@@ -87,10 +87,12 @@ The command surface is clear, chat-friendly, and demoable in a few minutes.
 ## Live Proof Points
 - live Binance Square posting works
 - a scheduled 7-post/day Binance Square engine is active
-- `/watchtoday` now renders live market lanes
+- Binance Spot read-only grounding now strengthens `/price`, `/brief`, and `/watchtoday`
+- `/watchtoday` now renders live market lanes with an Exchange Board anchor
 - `/audit` is a first-class command
-- `/wallet` includes explicit follow verdicts
+- `/wallet` includes explicit follow verdicts and stronger behavior judgment
 - `/meme` exists as a first-pass command
+- live runtime health diagnostics now exist via `/health`
 
 ## Why It Matters
 People do not need more crypto noise.

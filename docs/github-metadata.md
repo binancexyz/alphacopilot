@@ -13,7 +13,7 @@
 - **Bibipilot**
 
 ## GitHub Description
-Bibipilot: OpenClaw + Binance Skills Hub research copilot for token, wallet, signal, and risk analysis.
+Bibipilot: Binance-native research copilot for token, signal, wallet, audit, and market-board judgment.
 
 ## Suggested Topics
 - openclaw
