@@ -6,6 +6,7 @@
 - `submission-medium.md`
 - `prd.md`
 - `demo-script.md`
+- `challenge-package.md`
 - `maintainer-summary.md`
 
 ## Integration
