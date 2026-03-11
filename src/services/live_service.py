@@ -141,6 +141,12 @@ class LiveMarketDataService:
     def _apply_fallbacks(self, command: str, context: dict[str, Any]) -> dict[str, Any]:
         context = dict(context)
         risks = list(context.get("major_risks", []))
+        if command == "audit":
+            has_live_audit = bool(context.get("audit_summary")) and str(context.get("audit_gate", "WARN")).upper() in {"ALLOW", "WARN", "BLOCK"}
+            if not risks and not has_live_audit:
+                risks.append(missing_context_warning(command))
+            context["major_risks"] = risks
+            return context
         if not risks:
             risks.append(missing_context_warning(command))
         context["major_risks"] = risks
