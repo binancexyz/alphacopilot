@@ -60,9 +60,13 @@ def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
 
     if ctx.notable_exposures:
         risk_tags.append(RiskTag(name="Narrative Risk", level="Medium", note=", ".join(ctx.notable_exposures)))
-    risk_tags.append(RiskTag(name="Follow Verdict", level="Low" if ctx.follow_verdict == "Track" else "Medium" if ctx.follow_verdict == "Unknown" else "High", note=ctx.follow_verdict))
 
-    if ctx.follow_verdict == "Track":
+    thin_context = ctx.portfolio_value <= 0 and ctx.holdings_count <= 0 and not ctx.top_holdings
+
+    if thin_context:
+        quick_verdict = "This wallet does not currently have enough live evidence to justify a strong follow call."
+        ctx.follow_verdict = "Unknown"
+    elif ctx.follow_verdict == "Track":
         quick_verdict = "This wallet is worth tracking because the size, spread, and visible exposures are strong enough to study seriously without looking blindly copy-tradable."
     elif ctx.follow_verdict == "Don't follow":
         quick_verdict = "This wallet does not have enough visible structure to justify following right now."
@@ -75,8 +79,12 @@ def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
     else:
         quick_verdict = "This wallet has some readable structure, but the edge still comes more from watching behavior over time than from one static snapshot."
 
+    risk_tags.append(RiskTag(name="Follow Verdict", level="Low" if ctx.follow_verdict == "Track" else "Medium" if ctx.follow_verdict == "Unknown" else "High", note=ctx.follow_verdict))
+
     top_risks = list(ctx.major_risks)
     if not top_risks:
+        if thin_context:
+            top_risks.append("Current live wallet context is too thin to support a strong behavior judgment.")
         if ctx.top_concentration_pct >= 60:
             top_risks.append("High concentration can turn one bad position into a large portfolio hit.")
         if not ctx.top_holdings:
@@ -89,7 +97,7 @@ def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
         quick_verdict=quick_verdict,
         signal_quality=quality,
         top_risks=top_risks,
-        why_it_matters=_wallet_why_it_matters(ctx),
+        why_it_matters=_wallet_why_it_matters(ctx) if not thin_context else "Current live wallet evidence is limited, so this read should be treated as provisional rather than definitive.",
         what_to_watch_next=_wallet_watch_next(ctx),
         risk_tags=risk_tags,
         conviction=conviction,

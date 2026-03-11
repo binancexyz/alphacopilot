@@ -107,7 +107,7 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
 
     if portfolio_value >= 100_000 and top_concentration_pct < 70 and len(items) >= 5:
         follow_verdict = "Track"
-    elif portfolio_value > 0:
+    elif portfolio_value > 0 or len(items) > 0:
         follow_verdict = "Unknown"
     else:
         follow_verdict = "Don't follow"
