@@ -112,6 +112,17 @@ def extract_watch_today_context(raw: dict[str, Any]) -> dict[str, Any]:
     top_narratives = _extract_top_narratives(market_rank, meme_rush)
     strongest_signals = _extract_strongest_signals(signal)
     risk_zones = _extract_risk_zones(market_rank, meme_rush)
+    trending_now = _extract_trending_now(market_rank)
+    smart_money_flow = _extract_smart_money_flow(market_rank, signal)
+    social_hype = _extract_social_hype(market_rank)
+    meme_watch = _extract_meme_watch(meme_rush)
+    top_picks = _extract_top_picks(trending_now, strongest_signals, top_narratives)
+    if not smart_money_flow and strongest_signals:
+        smart_money_flow = strongest_signals[:3]
+    if not social_hype and trending_now:
+        social_hype = trending_now[:2]
+    if not top_picks:
+        top_picks = _extract_top_picks(trending_now, strongest_signals, top_narratives)
 
     return {
         "top_narratives": top_narratives,
@@ -119,6 +130,11 @@ def extract_watch_today_context(raw: dict[str, Any]) -> dict[str, Any]:
         "risk_zones": risk_zones,
         "market_takeaway": _build_market_rank_context(market_rank) or _extract_topic_summary(meme_rush),
         "major_risks": _merge_risks(_extract_market_rank_risks(market_rank), _extract_meme_risks(meme_rush), _extract_signal_risks(signal)),
+        "trending_now": trending_now,
+        "smart_money_flow": smart_money_flow,
+        "social_hype": social_hype,
+        "meme_watch": meme_watch,
+        "top_picks": top_picks,
     }
 
 
@@ -364,6 +380,100 @@ def _extract_strongest_signals(signal: dict[str, Any]) -> list[str]:
         status = item.get("status") or "unknown"
         out.append(f"{ticker}: {direction} ({status})")
     return _unique(out)
+
+
+def _extract_trending_now(market_rank: dict[str, Any]) -> list[str]:
+    direct = [str(x) for x in market_rank.get("trending_now", []) or []]
+    if direct:
+        return direct[:3]
+
+    out: list[str] = []
+    tokens = market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []
+    for item in tokens[:3]:
+        symbol = item.get("symbol") or item.get("baseAsset") or "Token"
+        rank = item.get("rank") or item.get("marketCapRank")
+        if rank:
+            out.append(f"{symbol} — rank #{rank}")
+        else:
+            out.append(str(symbol))
+    leaderboard = market_rank.get("data", {}).get("leaderBoardList", []) or market_rank.get("leaderBoardList", []) or []
+    for item in leaderboard[:3]:
+        symbol = item.get("symbol") or item.get("baseAsset") or item.get("name") or "Token"
+        brief = item.get("socialHypeInfo", {}).get("socialSummaryBriefTranslated") or item.get("socialHypeInfo", {}).get("socialSummaryBrief")
+        out.append(f"{symbol} — {brief}" if brief else str(symbol))
+    return _unique(out)[:3]
+
+
+
+def _extract_smart_money_flow(market_rank: dict[str, Any], signal: dict[str, Any]) -> list[str]:
+    direct = [str(x) for x in market_rank.get("smart_money_flow", []) or []]
+    if direct:
+        return direct[:3]
+
+    out: list[str] = []
+    items = signal.get("data", []) or []
+    for item in items[:3]:
+        ticker = item.get("ticker") or "Token"
+        count = _to_int(item.get("smartMoneyCount"))
+        direction = str(item.get("direction") or "signal").upper()
+        if count:
+            out.append(f"{ticker} — {count} smart-money wallets | {direction}")
+        else:
+            out.append(f"{ticker} — {direction}")
+    return _unique(out)[:3]
+
+
+
+def _extract_social_hype(market_rank: dict[str, Any]) -> list[str]:
+    direct = [str(x) for x in market_rank.get("social_hype", []) or []]
+    if direct:
+        return direct[:2]
+
+    out: list[str] = []
+    leaderboard = market_rank.get("data", {}).get("leaderBoardList", []) or market_rank.get("leaderBoardList", []) or []
+    for item in leaderboard[:3]:
+        symbol = item.get("symbol") or item.get("baseAsset") or item.get("name") or "Token"
+        brief = item.get("socialHypeInfo", {}).get("socialSummaryBriefTranslated") or item.get("socialHypeInfo", {}).get("socialSummaryBrief")
+        if brief:
+            out.append(f"{symbol} — {brief}")
+        else:
+            out.append(f"{symbol} — social attention visible")
+    return _unique(out)[:2]
+
+
+
+def _extract_meme_watch(meme_rush: dict[str, Any]) -> list[str]:
+    direct = [str(x) for x in meme_rush.get("meme_watch", []) or []]
+    if direct:
+        return direct[:3]
+
+    out: list[str] = []
+    items = meme_rush.get("data", []) or meme_rush.get("tokens", []) or []
+    for item in items[:3]:
+        symbol = item.get("symbol") or item.get("name", {}).get("topicNameEn") or item.get("type") or "Token"
+        progress = _pick_number(item, "progress")
+        migrate = _to_int(item.get("migrateStatus"))
+        if migrate == 1:
+            out.append(f"{symbol} — migrated")
+        elif progress >= 90:
+            out.append(f"{symbol} — near migration ({progress:.0f}% bonded)")
+        elif progress > 0:
+            out.append(f"{symbol} — building ({progress:.0f}% bonded)")
+        else:
+            out.append(str(symbol))
+    return _unique(out)[:3]
+
+
+
+def _extract_top_picks(trending_now: list[str], strongest_signals: list[str], top_narratives: list[str]) -> list[str]:
+    picks: list[str] = []
+    if strongest_signals:
+        picks.append(f"{strongest_signals[0]} — best visible setup")
+    if trending_now:
+        picks.append(f"{trending_now[0]} — strongest broad attention")
+    if top_narratives:
+        picks.append(f"{top_narratives[0]} — narrative worth ranking, not chasing")
+    return _unique(picks)[:3]
 
 
 def _extract_risk_zones(market_rank: dict[str, Any], meme_rush: dict[str, Any]) -> list[str]:

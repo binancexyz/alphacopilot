@@ -26,6 +26,7 @@ class AnalysisBrief:
     why_it_matters: str = ""
     what_to_watch_next: list[str] = field(default_factory=list)
     risk_tags: list[RiskTag] = field(default_factory=list)
+    sections: list[BriefSection] = field(default_factory=list)
     conviction: Optional[str] = None
     beginner_note: Optional[str] = None
     audit_gate: Optional[str] = None

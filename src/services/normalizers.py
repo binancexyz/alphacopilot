@@ -48,6 +48,11 @@ def normalize_watch_today_context(payload: dict) -> WatchTodayContext:
         risk_zones=[str(x) for x in payload.get("risk_zones", [])],
         market_takeaway=str(payload.get("market_takeaway", "")),
         major_risks=[str(x) for x in payload.get("major_risks", [])],
+        trending_now=[str(x) for x in payload.get("trending_now", [])],
+        smart_money_flow=[str(x) for x in payload.get("smart_money_flow", [])],
+        social_hype=[str(x) for x in payload.get("social_hype", [])],
+        meme_watch=[str(x) for x in payload.get("meme_watch", [])],
+        top_picks=[str(x) for x in payload.get("top_picks", [])],
     )
 
 

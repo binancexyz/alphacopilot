@@ -219,6 +219,12 @@ def _format_wallet_card(brief: AnalysisBrief) -> str:
 
 def _format_watchtoday_card(brief: AnalysisBrief) -> str:
     parts = [_entity_line(brief.entity), "", f"**⚡ Today**\n{brief.quick_verdict}"]
+    if brief.sections:
+        for section in brief.sections[:6]:
+            if section.content:
+                parts.append("")
+                parts.append(f"**{section.title}**")
+                parts.append(section.content)
     if brief.why_it_matters:
         parts.append("")
         parts.append(f"**🧠 Priority**\n{brief.why_it_matters}")

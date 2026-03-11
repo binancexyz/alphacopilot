@@ -2,22 +2,21 @@ from __future__ import annotations
 
 from src.formatters.heuristics import watch_today_signal_quality
 from src.models.context import WatchTodayContext
-from src.models.schemas import AnalysisBrief, RiskTag
+from src.models.schemas import AnalysisBrief, BriefSection, RiskTag
 
 
 def _watch_why_it_matters(ctx: WatchTodayContext) -> str:
     strongest = ", ".join(ctx.strongest_signals[:2]) if ctx.strongest_signals else "no clean signal leaders yet"
-    narratives = ", ".join(ctx.top_narratives[:3]) if ctx.top_narratives else "no durable narrative leaders yet"
-    return (
-        f"Top signal lanes: {strongest}. "
-        f"Narratives getting the most attention: {narratives}. "
-        "The edge today is ranking what still has structure versus what is just loud."
-    )
+    narratives = ", ".join(ctx.top_narratives[:2]) if ctx.top_narratives else "no durable narrative leaders yet"
+    return f"Top signal lanes: {strongest}. Narrative heat: {narratives}. The edge today is separating structure from noise."
+
 
 
 def _watch_next(ctx: WatchTodayContext) -> list[str]:
     watch: list[str] = []
-    if ctx.strongest_signals:
+    if ctx.top_picks:
+        watch.append(f"whether the lead idea stays with {ctx.top_picks[0]} instead of fading into noise")
+    elif ctx.strongest_signals:
         watch.append(f"whether the cleanest setup stays with {ctx.strongest_signals[0]} instead of rolling over fast")
     else:
         watch.append("whether a genuinely clean setup appears instead of scattered noise")
@@ -32,6 +31,25 @@ def _watch_next(ctx: WatchTodayContext) -> list[str]:
     else:
         watch.append("whether hype starts outrunning liquidity and contract quality")
     return watch
+
+
+
+def _watch_sections(ctx: WatchTodayContext) -> list[BriefSection]:
+    sections: list[BriefSection] = []
+    if ctx.trending_now:
+        sections.append(BriefSection(title="🔥 Trending Now", content="\n".join(f"- {item}" for item in ctx.trending_now[:3])))
+    if ctx.smart_money_flow:
+        sections.append(BriefSection(title="🧠 Smart Money Flow", content="\n".join(f"- {item}" for item in ctx.smart_money_flow[:3])))
+    if ctx.social_hype:
+        sections.append(BriefSection(title="📣 Social Hype", content="\n".join(f"- {item}" for item in ctx.social_hype[:2])))
+    if ctx.meme_watch:
+        sections.append(BriefSection(title="🚀 Meme Watch", content="\n".join(f"- {item}" for item in ctx.meme_watch[:3])))
+    if ctx.top_narratives:
+        sections.append(BriefSection(title="🌊 Narrative", content="\n".join(f"- {item}" for item in ctx.top_narratives[:3])))
+    if ctx.top_picks:
+        sections.append(BriefSection(title="👀 Today's Top 3", content="\n".join(f"- {item}" for item in ctx.top_picks[:3])))
+    return sections
+
 
 
 def build_watchtoday_brief(ctx: WatchTodayContext) -> AnalysisBrief:
@@ -72,6 +90,7 @@ def build_watchtoday_brief(ctx: WatchTodayContext) -> AnalysisBrief:
         why_it_matters=_watch_why_it_matters(ctx),
         what_to_watch_next=_watch_next(ctx),
         risk_tags=risk_tags,
+        sections=_watch_sections(ctx),
         conviction=conviction,
         beginner_note="Not everything trending deserves capital or attention. Strong activity and strong quality are not the same thing.",
     )

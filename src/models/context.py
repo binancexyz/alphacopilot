@@ -48,6 +48,11 @@ class WatchTodayContext:
     risk_zones: list[str] = field(default_factory=list)
     market_takeaway: str = ""
     major_risks: list[str] = field(default_factory=list)
+    trending_now: list[str] = field(default_factory=list)
+    smart_money_flow: list[str] = field(default_factory=list)
+    social_hype: list[str] = field(default_factory=list)
+    meme_watch: list[str] = field(default_factory=list)
+    top_picks: list[str] = field(default_factory=list)
 
 
 @dataclass
