@@ -8,7 +8,7 @@ from src.models.schemas import AnalysisBrief, BriefSection, RiskTag
 def _watch_why_it_matters(ctx: WatchTodayContext) -> str:
     strongest = ", ".join(ctx.strongest_signals[:2]) if ctx.strongest_signals else "no clean signal leaders yet"
     narratives = ", ".join(ctx.top_narratives[:2]) if ctx.top_narratives else "no durable narrative leaders yet"
-    return f"Top signal lanes: {strongest}. Narrative heat: {narratives}. The edge today is separating structure from noise."
+    return f"Top signal lanes: {strongest}. Narrative heat: {narratives}. The edge today is ranking clean setups ahead of crowded or concentrated names."
 
 
 
@@ -29,7 +29,7 @@ def _watch_next(ctx: WatchTodayContext) -> list[str]:
     if ctx.risk_zones:
         watch.append(f"whether risk pockets like {', '.join(ctx.risk_zones[:2])} cool down or keep trapping late attention")
     else:
-        watch.append("whether hype starts outrunning liquidity and contract quality")
+        watch.append("whether concentration, caution flags, or late flows start overpowering the cleaner setups")
     return watch
 
 

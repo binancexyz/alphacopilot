@@ -251,6 +251,20 @@ def _extract_audit_flags_and_risks(audit: dict[str, Any]) -> tuple[list[str], li
 def _extract_market_rank_risks(market_rank: dict[str, Any], symbol: str | None = None) -> list[str]:
     risks = list(market_rank.get("risks", []) or [])
     tokens = market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []
+    if symbol is None:
+        for token in tokens[:5]:
+            top10 = _pick_number(token, "holdersTop10Percent", "top10HoldersPercentage")
+            if top10 >= 90:
+                risks.append(f"{token.get('symbol', 'Token')} has extreme top-10 holder concentration.")
+            elif top10 >= 80:
+                risks.append(f"{token.get('symbol', 'Token')} has very high top-10 holder concentration.")
+            audit_info = token.get("auditInfo") or {}
+            risk_num = _to_int(audit_info.get("riskNum"))
+            caution_num = _to_int(audit_info.get("cautionNum"))
+            if risk_num > 0 or caution_num > 0:
+                risks.append(f"{token.get('symbol', 'Token')} shows audit cautions in market rank context.")
+        return _unique(risks)
+
     target = _normalize_match_key(symbol)
     token = _best_symbol_match(tokens, target) if target else None
     if not token:
@@ -301,6 +315,12 @@ def _extract_meme_risks(meme_rush: dict[str, Any]) -> list[str]:
 
 def _build_market_rank_context(market_rank: dict[str, Any], symbol: str | None = None) -> str:
     tokens = market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []
+    if symbol is None:
+        if not tokens:
+            return ""
+        leaders = [str(item.get("symbol") or "Token") for item in tokens[:3]]
+        return f"Current rank leaders: {', '.join(leaders)}. Opportunity exists, but selectivity matters."
+
     target = _normalize_match_key(symbol)
     matched = _best_symbol_match(tokens, target) if target else None
     if matched:
@@ -341,6 +361,10 @@ def _extract_top_narratives(market_rank: dict[str, Any], meme_rush: dict[str, An
         return direct_market
 
     out: list[str] = []
+    tokens = market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []
+    for item in tokens[:8]:
+        for label in (item.get("tokenTag") or {}).keys():
+            out.append(str(label))
     leaderboard = market_rank.get("data", {}).get("leaderBoardList", []) or market_rank.get("leaderBoardList", []) or []
     for item in leaderboard[:3]:
         brief = item.get("socialHypeInfo", {}).get("socialSummaryBriefTranslated") or item.get("socialHypeInfo", {}).get("socialSummaryBrief")
@@ -352,7 +376,12 @@ def _extract_top_narratives(market_rank: dict[str, Any], meme_rush: dict[str, An
         if name:
             out.append(str(name))
     out.extend([str(x) for x in meme_rush.get("top_narratives", []) or []])
-    return _unique(out)
+    cleaned = []
+    for item in out:
+        short = str(item).strip()
+        if short and len(short) <= 40:
+            cleaned.append(short)
+    return _unique(cleaned)[:5]
 
 
 def _extract_topic_summary(meme_rush: dict[str, Any]) -> str:
@@ -435,11 +464,12 @@ def _extract_trending_now(market_rank: dict[str, Any]) -> list[str]:
     tokens = market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []
     for item in tokens[:3]:
         symbol = item.get("symbol") or item.get("baseAsset") or "Token"
-        rank = item.get("rank") or item.get("marketCapRank")
-        if rank:
-            out.append(f"{symbol} — rank #{rank}")
+        search_count = _to_int(item.get("searchCount24h"))
+        liquidity = _pick_number(item, "liquidity")
+        if search_count > 0:
+            out.append(f"{symbol} — {search_count} searches | Liq {_human_money_short(liquidity)}")
         else:
-            out.append(str(symbol))
+            out.append(f"{symbol} — Liq {_human_money_short(liquidity)}")
     leaderboard = market_rank.get("data", {}).get("leaderBoardList", []) or market_rank.get("leaderBoardList", []) or []
     for item in leaderboard[:3]:
         symbol = item.get("symbol") or item.get("baseAsset") or item.get("name") or "Token"
@@ -482,6 +512,15 @@ def _extract_social_hype(market_rank: dict[str, Any]) -> list[str]:
             out.append(f"{symbol} — {brief}")
         else:
             out.append(f"{symbol} — social attention visible")
+    if out:
+        return _unique(out)[:2]
+
+    tokens = market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []
+    for item in tokens[:2]:
+        symbol = item.get("symbol") or "Token"
+        search_count = _to_int(item.get("searchCount24h"))
+        if search_count > 0:
+            out.append(f"{symbol} — {search_count} searches in 24h")
     return _unique(out)[:2]
 
 
@@ -518,6 +557,18 @@ def _extract_top_picks(trending_now: list[str], strongest_signals: list[str], to
     if top_narratives:
         picks.append(f"{top_narratives[0]} — narrative worth ranking, not chasing")
     return _unique(picks)[:3]
+
+
+def _human_money_short(value: float) -> str:
+    if value >= 1_000_000_000:
+        return f"${value/1_000_000_000:.1f}B"
+    if value >= 1_000_000:
+        return f"${value/1_000_000:.1f}M"
+    if value >= 1_000:
+        return f"${value/1_000:.1f}K"
+    if value > 0:
+        return f"${value:.0f}"
+    return "n/a"
 
 
 def _extract_risk_zones(market_rank: dict[str, Any], meme_rush: dict[str, Any]) -> list[str]:
