@@ -49,12 +49,12 @@ class _DummyClient:
 
 
 def test_fetch_binance_spot_quote_prefers_usdt_pair():
-    old_client = price_analysis.httpx.Client
-    price_analysis.httpx.Client = lambda *args, **kwargs: _DummyClient({})
+    old_client = price_analysis._httpx_client
+    price_analysis._httpx_client = lambda *args, **kwargs: _DummyClient({})
     try:
         quote = price_analysis._fetch_binance_spot_quote('BNB')
     finally:
-        price_analysis.httpx.Client = old_client
+        price_analysis._httpx_client = old_client
 
     assert quote is not None
     assert quote['source'] == 'Binance Spot'

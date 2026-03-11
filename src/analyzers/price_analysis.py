@@ -5,8 +5,6 @@ from datetime import datetime, timedelta, UTC
 from pathlib import Path
 from typing import Any
 
-import httpx
-
 from src.config import settings
 from src.models.schemas import AnalysisBrief, RiskTag
 from src.services.factory import get_market_data_service
@@ -28,6 +26,14 @@ CACHE_TTL_MINUTES = 15
 
 class QuoteFetchError(RuntimeError):
     pass
+
+
+def _httpx_client(*args, **kwargs):
+    try:
+        import httpx  # type: ignore
+    except ModuleNotFoundError as exc:
+        raise QuoteFetchError("httpx is required for external market quote fetches.") from exc
+    return httpx.Client(*args, **kwargs)
 
 
 def _load_quote_cache() -> dict[str, Any]:
@@ -74,7 +80,7 @@ def _fetch_binance_spot_quote(symbol: str) -> dict[str, Any] | None:
     base = symbol.upper()
     candidate_pairs = [f"{base}USDT", f"{base}BUSD", f"{base}USDC"]
 
-    with httpx.Client(timeout=20.0, follow_redirects=True) as client:
+    with _httpx_client(timeout=20.0, follow_redirects=True) as client:
         chosen_symbol = None
         exchange_symbols: dict[str, Any] = {}
         for root in (BINANCE_SPOT_MARKET_DATA_URL, BINANCE_SPOT_BASE_URL):
@@ -149,7 +155,7 @@ def _fetch_binance_spot_quote(symbol: str) -> dict[str, Any] | None:
 
 def _fetch_coingecko_quote(symbol: str) -> dict[str, Any] | None:
     sym = symbol.upper()
-    with httpx.Client(timeout=20.0, follow_redirects=True) as client:
+    with _httpx_client(timeout=20.0, follow_redirects=True) as client:
         search_resp = client.get(COINGECKO_SEARCH_URL, params={"query": sym})
         search_resp.raise_for_status()
         coins = (search_resp.json() or {}).get("coins") or []
@@ -196,7 +202,7 @@ def _fetch_cmc_quote(symbol: str) -> dict[str, Any] | None:
     payload: dict[str, Any] | None = None
     for _ in range(2):
         try:
-            with httpx.Client(timeout=20.0, follow_redirects=True) as client:
+            with _httpx_client(timeout=20.0, follow_redirects=True) as client:
                 response = client.get(CMC_QUOTES_URL, params=params, headers=headers)
                 response.raise_for_status()
                 payload = response.json()
