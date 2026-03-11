@@ -157,6 +157,7 @@ def extract_watch_today_context(raw: dict[str, Any]) -> dict[str, Any]:
         "social_hype": social_hype,
         "meme_watch": meme_watch,
         "top_picks": top_picks,
+        "exchange_board": _extract_watchtoday_exchange_board(market_rank),
     }
 
 
@@ -233,14 +234,26 @@ def extract_meme_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     token_info = raw.get("query-token-info", {})
     market_rank = raw.get("crypto-market-rank", {})
     signal = raw.get("trading-signal", {})
+    meme_rush = raw.get("meme-rush", {})
     first_signal = _first_item(signal.get("data")) or {}
     metadata = token_info.get("metadata", {}) or {}
     search_item = _best_token_match(token_info.get("search"), symbol, metadata) or metadata or {}
+    market_tokens = market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []
+    matched_rank = _best_symbol_match(market_tokens, _normalize_match_key(token.get("symbol", symbol))) if market_tokens else None
+    meme_items = meme_rush.get("data", []) or meme_rush.get("tokens", []) or []
+    matched_meme = _best_symbol_match(meme_items, _normalize_match_key(token.get("symbol", symbol))) if meme_items else None
+
     launch_platform = str(first_signal.get("launchPlatform") or search_item.get("launchPlatform") or metadata.get("launchPlatform") or "")
     is_alpha = bool(first_signal.get("isAlpha"))
     status = str(first_signal.get("status") or "").lower()
     exit_rate = _pick_number(first_signal, "exitRate", "exit_rate")
     progress = _pick_number(first_signal, "progress")
+    top_holder_concentration_pct = _pick_number(matched_rank or {}, "holdersTop10Percent", "top10HoldersPercentage") or _pick_number(matched_meme or {}, "holdersTop10Percent")
+    social_brief = ""
+    if matched_rank:
+        social_info = matched_rank.get("socialHypeInfo") or {}
+        social_brief = str(social_info.get("socialSummaryBriefTranslated") or social_info.get("socialSummaryBrief") or "")
+    meme_score = _pick_number(matched_meme or {}, "topicHeatScore", "score")
 
     tag_values = []
     for source in (search_item.get("tokenTag") or {}, metadata.get("tokenTag") or {}):
@@ -251,6 +264,8 @@ def extract_meme_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     display_name = str(token.get("display_name", symbol))
 
     meme_like = any(x in market_context for x in ["meme", "community"]) or any(x in " ".join(tag_values) for x in ["meme", "community", "dog", "frog"])
+    if social_brief and any(x in social_brief.lower() for x in ["meme", "community", "viral", "trend"]):
+        meme_like = True
     known_meme_symbols = {"DOGE", "SHIB", "PEPE", "BONK", "FLOKI", "WIF"}
     if symbol_upper in known_meme_symbols:
         meme_like = True
@@ -262,10 +277,14 @@ def extract_meme_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         lifecycle = "late"
     elif status in {"valid", "watch", "bullish", "triggered"} or token.get("smart_money_count", 0) > 0:
         lifecycle = "active"
-    elif meme_like:
+    elif meme_like or meme_score > 0:
         lifecycle = "attention"
 
     risks = list(token.get("major_risks", []))
+    if top_holder_concentration_pct >= 85:
+        risks.append(f"Top-holder concentration is extreme at {top_holder_concentration_pct:.1f}%.")
+    elif top_holder_concentration_pct >= 70:
+        risks.append(f"Top-holder concentration is high at {top_holder_concentration_pct:.1f}%.")
     if not meme_like:
         risks.insert(0, "This asset does not currently read as a clear meme candidate from the available live context.")
 
@@ -277,7 +296,7 @@ def extract_meme_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         "market_rank_context": token.get("market_rank_context", ""),
         "signal_status": token.get("signal_status", "unknown"),
         "audit_flags": token.get("audit_flags", []),
-        "major_risks": risks,
+        "major_risks": _unique(risks),
         "smart_money_count": token.get("smart_money_count", 0),
         "exit_rate": token.get("exit_rate", 0.0),
         "signal_age_hours": token.get("signal_age_hours", 0.0),
@@ -288,6 +307,9 @@ def extract_meme_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         "is_alpha": is_alpha,
         "lifecycle_stage": lifecycle,
         "bonded_progress": progress,
+        "meme_score": meme_score,
+        "social_brief": social_brief,
+        "top_holder_concentration_pct": top_holder_concentration_pct,
     }
 
 
@@ -436,6 +458,21 @@ def _build_signal_context(signal: dict[str, Any]) -> str:
     if freshness != "UNKNOWN":
         parts.append(f"and {freshness.lower()} timing")
     return " ".join(parts).strip() + "."
+
+
+def _extract_watchtoday_exchange_board(market_rank: dict[str, Any]) -> list[str]:
+    rows: list[str] = []
+    tokens = market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []
+    for item in tokens[:5]:
+        symbol = item.get("symbol") or "Token"
+        change = _pick_number(item, "priceChangePercent24h", "priceChange24h", "change24h", "percentChange24h")
+        liq = _pick_number(item, "liquidity", "liquidityUsd")
+        if change or liq:
+            bits = [f"{symbol} {change:+.1f}%" if change else str(symbol)]
+            if liq > 0:
+                bits.append(f"liq ${liq/1_000_000:.1f}M")
+            rows.append(" | ".join(bits))
+    return _unique(rows)[:3]
 
 
 def _extract_top_narratives(market_rank: dict[str, Any], meme_rush: dict[str, Any]) -> list[str]:

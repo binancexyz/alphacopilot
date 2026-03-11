@@ -78,6 +78,9 @@ class MemeContext:
     is_alpha: bool = False
     lifecycle_stage: str = "unknown"
     bonded_progress: float = 0.0
+    meme_score: float = 0.0
+    social_brief: str = ""
+    top_holder_concentration_pct: float = 0.0
 
 
 @dataclass

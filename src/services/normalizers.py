@@ -98,6 +98,9 @@ def normalize_meme_context(payload: dict) -> MemeContext:
         is_alpha=bool(payload.get("is_alpha", False)),
         lifecycle_stage=str(payload.get("lifecycle_stage", "unknown")),
         bonded_progress=_to_float(payload.get("bonded_progress")),
+        meme_score=_to_float(payload.get("meme_score")),
+        social_brief=str(payload.get("social_brief", "")),
+        top_holder_concentration_pct=_to_float(payload.get("top_holder_concentration_pct")),
     )
 
 

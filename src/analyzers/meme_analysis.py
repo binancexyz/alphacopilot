@@ -19,10 +19,14 @@ def _meme_evidence_level(ctx) -> tuple[str, str]:
         score += 1
     if ctx.lifecycle_stage not in {"unknown", "inactive"}:
         score += 1
+    if ctx.social_brief:
+        score += 1
+    if ctx.meme_score > 0:
+        score += 1
 
-    if score >= 5:
+    if score >= 6:
         return "High", "The meme read has enough live context to support a more serious lifecycle read."
-    if score >= 3:
+    if score >= 4:
         return "Medium", "The meme read is usable, but some live timing or participation context is still incomplete."
     return "Low", "The meme read is provisional because live participation and lifecycle evidence are still thin."
 
@@ -41,6 +45,8 @@ def analyze_meme(symbol: str) -> AnalysisBrief:
         tags.append(RiskTag(name="Alpha", level="Medium", note="Marked alpha in current signal context."))
     if ctx.signal_freshness != "UNKNOWN":
         tags.append(RiskTag(name="Timing", level="High" if ctx.signal_freshness == "STALE" else "Medium" if ctx.signal_freshness == "AGING" else "Low", note=f"{ctx.signal_freshness.title()} | {ctx.signal_age_hours:.1f}h old"))
+    if ctx.top_holder_concentration_pct > 0:
+        tags.append(RiskTag(name="Holder Concentration", level="High" if ctx.top_holder_concentration_pct >= 80 else "Medium", note=f"Top holders {ctx.top_holder_concentration_pct:.1f}%"))
 
     if ctx.audit_gate == "BLOCK":
         verdict = f"{ctx.display_name} is blocked as a meme setup because the audit layer is too dangerous to ignore."
@@ -69,8 +75,12 @@ def analyze_meme(symbol: str) -> AnalysisBrief:
     why_bits.append(f"Lifecycle: {ctx.lifecycle_stage}.")
     if ctx.market_rank_context:
         why_bits.append(ctx.market_rank_context)
+    if ctx.social_brief:
+        why_bits.append(ctx.social_brief)
     if ctx.smart_money_count > 0:
         why_bits.append(f"{ctx.smart_money_count} smart-money wallets are visible.")
+    if ctx.meme_score > 0:
+        why_bits.append(f"Meme/topic score reads {ctx.meme_score:.1f}.")
     if ctx.signal_freshness != "UNKNOWN":
         why_bits.append(f"Timing is {ctx.signal_freshness.lower()} ({ctx.signal_age_hours:.1f}h old).")
     why = " ".join(why_bits).strip()
@@ -81,6 +91,8 @@ def analyze_meme(symbol: str) -> AnalysisBrief:
     if not risks:
         if evidence_level == "Low":
             risks.append("Live meme participation is still too thin to treat this as a strong setup.")
+        if ctx.top_holder_concentration_pct >= 80:
+            risks.append("Top-holder concentration is extreme, so meme participation may be less healthy than headline attention suggests.")
         if ctx.exit_rate >= 70:
             risks.append("Most tracked smart money may already be exiting, which makes this meme setup look late.")
         elif ctx.exit_rate >= 40:
