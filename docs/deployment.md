@@ -26,6 +26,8 @@ pip install -r requirements.txt
 ./scripts/start_api.sh
 ```
 
+Bibipilot now auto-loads local `.env` / `.env.local` values when present, so local API keys and runtime settings do not need to be manually exported every time.
+
 ## Recommended hardening
 - keep secrets in environment variables or a secret manager
 - enable `API_AUTH_ENABLED=true` and set `API_AUTH_KEY` before public exposure

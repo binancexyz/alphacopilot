@@ -3,8 +3,8 @@
 Use this right before making the repo public.
 
 ## Safety
-- [ ] `.env` is not tracked
-- [ ] `.env.example` has placeholders only
+- [x] `.env` is not tracked
+- [x] `.env.example` has placeholders only
 - [ ] No secrets found in tracked files
 - [ ] Example payloads reviewed
 - [ ] No private notes or personal data remain in public docs

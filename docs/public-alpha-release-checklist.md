@@ -7,8 +7,8 @@ This checklist is for making Bibipilot safe and clear as an open-source public a
 ## Must fix before public release
 
 ### Repo safety
-- [ ] Confirm `.env` is ignored and not committed
-- [ ] Confirm `.env.example` contains placeholders only
+- [x] Confirm `.env` is ignored and not committed
+- [x] Confirm `.env.example` contains placeholders only
 - [ ] Run one final broad secret scan before flipping visibility
 - [ ] Review tracked example payloads for anything private or account-specific
 - [ ] Review tracked docs for any private notes or personal references
@@ -52,8 +52,8 @@ Keep a clean first path for strangers:
 - [x] Add a short "What is still partial" section if needed
 
 ### Release confidence
-- [ ] Run tests/checks one final time before opening the repo broadly
-- [ ] Confirm the latest public docs match the current code and command surface
+- [x] Run tests/checks one final time before opening the repo broadly
+- [x] Confirm the latest public docs match the current code and command surface
 - [ ] Confirm no accidental workspace-local references remain in public-facing docs unless intentional
 
 ---
