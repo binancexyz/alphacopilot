@@ -28,19 +28,14 @@ Activates `.venv`, runs checks/tests, and performs a quick smoke test.
 Shows which live env values should be filled before real usage.
 
 ## `install_square_diary_cron.sh`
-Installs the current 7-post/day Binance Square schedule in `Asia/Phnom_Penh`:
-- 07:30 — `morning-diary`
-- 09:30 — `education`
-- 11:30 — `market`
-- 13:30 — `builder`
-- 15:30 — `ecosystem`
-- 18:30 — `motivation`
+Installs the current premium 1-post/day Binance Square schedule in `Asia/Phnom_Penh`:
 - 21:30 — `night-diary`
 
 The scheduler now works with a stronger quality layer around `src/square_diary.py`, including:
 - quality guardrails / cringe filter
 - performance logging to `tmp/square_post_log.jsonl`
 - topic rotation memory
+- premium daily quality guardrails for one high-standard post
 - slot-specific hooks, voice, and series labels
 - CTA rotation for interaction
 - weekly recap generation in `tmp/square_weekly_recap.md`

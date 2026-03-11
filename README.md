@@ -181,7 +181,7 @@ The careers pulse is deliberately separate from token/signal logic. Treat it as 
 Bibipilot already includes:
 - live Binance Square posting
 - draft/publish support
-- scheduled 7-post/day engine
+- scheduled premium 1-post/day engine
 - Asia/Phnom_Penh cron schedule
 
 This matters because Bibipilot is not only built for internal analysis.

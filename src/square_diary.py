@@ -46,14 +46,9 @@ DEFAULT_CONFIG = {
         "OpenClaw product design",
     ],
     "schedule": {
-        "morning-diary": "07:30",
-        "education": "09:30",
-        "market": "11:30",
-        "builder": "13:30",
-        "ecosystem": "15:30",
-        "motivation": "18:30",
         "night-diary": "21:30",
     },
+    "quality_mode": "premium-daily",
 }
 
 SERIES_NAMES = {
@@ -531,7 +526,7 @@ def cringe_filter(text: str, state: dict[str, Any]) -> list[str]:
     for fragment in BANNED_FRAGMENTS:
         if fragment in lower:
             issues.append(f"banned phrase: {fragment}")
-    if len(text) < 220:
+    if len(text) < 260:
         issues.append("too short")
     if len(text) > 950:
         issues.append("too long")
@@ -597,7 +592,7 @@ def generate_post(slot: str, config: dict, state: dict[str, Any]) -> tuple[str, 
     last_text = ""
     last_meta: dict[str, str] = {}
     last_issues: list[str] = []
-    for _ in range(8):
+    for _ in range(12):
         text, meta = build_post(slot, config, state)
         issues = cringe_filter(text, state)
         last_text, last_meta, last_issues = text, meta, issues

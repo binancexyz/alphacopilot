@@ -41,13 +41,9 @@ python3 src/square_diary.py ecosystem --publish
 This repo includes a scheduled Square content engine in `src/square_diary.py`.
 
 Current schedule in `Asia/Phnom_Penh`:
-- 07:30 — `morning-diary`
-- 09:30 — `education`
-- 11:30 — `market`
-- 13:30 — `builder`
-- 15:30 — `ecosystem`
-- 18:30 — `motivation`
 - 21:30 — `night-diary`
+
+This is now intentionally a **one-post-per-day premium mode**. The goal is not slot coverage. The goal is publishing one post that is actually worth attention.
 
 Install/update the cron schedule with:
 
@@ -90,5 +86,6 @@ Known important codes include:
 - this repo sends `bodyTextOnly`
 - this repo sends `clienttype: binanceSkill`
 - this repo parses `data.id` and constructs the final post URL when available
-- the scheduled content engine rotates across diary, education, market, builder, ecosystem, motivation, and reflection content
+- the scheduled content engine now focuses on a single daily `night-diary` publishing slot
+- the daily post is expected to blend diary voice with the strongest builder / market / ecosystem angle available that day
 - the scheduled engine keeps a lightweight local state file at `tmp/square_diary_state.json` to reduce repeated hooks, CTAs, and topics across recurring posts
