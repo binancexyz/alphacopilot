@@ -1,5 +1,10 @@
 # Short Submission
 
-**Bibipilot** (**Bibipilot**) is an OpenClaw-based AI research assistant powered by Binance Skills Hub. It helps users analyze tokens, wallets, market signals, and risk in one place, then turns fragmented crypto data into a concise research brief with a quick verdict, signal quality, top risks, and what to watch next.
+**Bibipilot** is a Binance-native copilot that **checks what’s moving, filters what’s dangerous, and publishes what’s worth attention**.
 
-Its core difference is simple: it focuses on **signal + risk + conviction**, not just what is trending.
+It turns Binance Skills outputs into a real workflow:
+- research tokens, signals, wallets, and market attention
+- apply judgment through audit-aware and command-specific analysis
+- publish useful output directly to Binance Square
+
+Bibipilot is not just summarizing crypto data. It is a **research -> judgment -> publishing** product built around real Binance workflows.
