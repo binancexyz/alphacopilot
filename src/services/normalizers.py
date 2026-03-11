@@ -40,6 +40,8 @@ def normalize_wallet_context(payload: dict) -> WalletContext:
         major_risks=[str(x) for x in payload.get("major_risks", [])],
         follow_verdict=str(payload.get("follow_verdict", "Unknown")),
         style_read=str(payload.get("style_read", "")),
+        style_profile=str(payload.get("style_profile", "")),
+        exposure_breakdown=[str(x) for x in payload.get("exposure_breakdown", [])],
     )
 
 

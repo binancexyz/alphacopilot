@@ -74,7 +74,9 @@ def _wallet_why_it_matters(ctx: WalletContext) -> str:
         pieces.append(ctx.style_read)
     else:
         pieces.append(_format_holding_summary(ctx))
-    return " ".join(pieces[:3]).strip()
+    if ctx.exposure_breakdown:
+        pieces.append(f"Exposure mix: {', '.join(ctx.exposure_breakdown[:3])}.")
+    return " ".join(pieces[:4]).strip()
 
 
 def _wallet_watch_next(ctx: WalletContext) -> list[str]:
@@ -115,6 +117,8 @@ def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
 
     if ctx.notable_exposures:
         risk_tags.append(RiskTag(name="Narrative Risk", level="Medium", note=", ".join(ctx.notable_exposures[:3])))
+    if ctx.style_profile:
+        risk_tags.append(RiskTag(name="Style Profile", level="Low", note=ctx.style_profile))
 
     thin_context = ctx.portfolio_value <= 0 and ctx.holdings_count <= 0 and not ctx.top_holdings
 

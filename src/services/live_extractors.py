@@ -59,22 +59,27 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
             "change_24h": _to_float(address_info.get("change_24h")),
             "notable_exposures": [str(x) for x in address_info.get("notable_exposures", [])],
             "major_risks": [str(x) for x in address_info.get("major_risks", [])],
+            "style_profile": str(address_info.get("style_profile", "")),
+            "exposure_breakdown": [str(x) for x in address_info.get("exposure_breakdown", [])],
         }
 
     holdings = []
     portfolio_value = 0.0
     biggest = 0.0
-    notable_exposures: list[str] = []
+    exposure_weights: dict[str, float] = {}
+    symbol_weights: list[tuple[str, float]] = []
     for item in items:
-        symbol = item.get("symbol", "UNKNOWN")
+        symbol = str(item.get("symbol", "UNKNOWN"))
         price = _to_float(item.get("price"))
         qty = _to_float(item.get("remainQty"))
         value = price * qty
         portfolio_value += value
         biggest = max(biggest, value)
-        holdings.append({"symbol": symbol, "value": value, "change_24h": _to_float(item.get("percentChange24h"))})
-        if symbol not in notable_exposures:
-            notable_exposures.append(symbol)
+        change_24h = _to_float(item.get("percentChange24h"))
+        holdings.append({"symbol": symbol, "value": value, "change_24h": change_24h})
+        symbol_weights.append((symbol, value))
+        bucket = _wallet_exposure_bucket(symbol)
+        exposure_weights[bucket] = exposure_weights.get(bucket, 0.0) + value
 
     top_holdings = []
     if portfolio_value > 0:
@@ -90,22 +95,33 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
         change_24h = weighted / portfolio_value
 
     top_concentration_pct = (biggest / portfolio_value) * 100 if portfolio_value > 0 else 0.0
+    notable_exposures = [name for name, value in sorted(exposure_weights.items(), key=lambda pair: pair[1], reverse=True) if value > 0][:5]
+    exposure_breakdown = []
+    if portfolio_value > 0:
+        for name, value in sorted(exposure_weights.items(), key=lambda pair: pair[1], reverse=True)[:4]:
+            exposure_breakdown.append(f"{name} {(value / portfolio_value) * 100:.1f}%")
+
     risks: list[str] = []
     if top_concentration_pct >= 60:
         risks.append("Wallet is highly concentrated in one token or theme.")
+    if portfolio_value > 0 and len(exposure_weights) <= 1 and len(items) >= 3:
+        risks.append("Wallet diversification is weaker than the holding count first suggests because exposures cluster into one theme.")
 
+    style_profile = _wallet_style_profile(top_concentration_pct, len(items), exposure_weights, change_24h)
     style_bits: list[str] = []
     if notable_exposures:
         style_bits.append(f"Narrative bias: {', '.join(notable_exposures[:2])}")
+    if style_profile:
+        style_bits.append(f"Style profile: {style_profile}")
     if top_concentration_pct >= 75:
         style_bits.append("Risk posture: concentrated")
-    elif len(items) >= 5:
+    elif len(items) >= 5 and len(exposure_weights) >= 2:
         style_bits.append("Risk posture: diversified")
     else:
         style_bits.append("Risk posture: mixed")
     style_read = " | ".join(style_bits)
 
-    if portfolio_value >= 100_000 and top_concentration_pct < 70 and len(items) >= 5:
+    if portfolio_value >= 100_000 and top_concentration_pct < 70 and len(items) >= 5 and len(exposure_weights) >= 2:
         follow_verdict = "Track"
     elif portfolio_value > 0 or len(items) > 0:
         follow_verdict = "Unknown"
@@ -123,6 +139,8 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
         "major_risks": risks,
         "follow_verdict": follow_verdict,
         "style_read": style_read,
+        "style_profile": style_profile,
+        "exposure_breakdown": exposure_breakdown,
     }
 
 
@@ -458,6 +476,42 @@ def _build_signal_context(signal: dict[str, Any]) -> str:
     if freshness != "UNKNOWN":
         parts.append(f"and {freshness.lower()} timing")
     return " ".join(parts).strip() + "."
+
+
+WALLET_EXPOSURE_BUCKETS = {
+    "meme": {"DOGE", "SHIB", "PEPE", "BONK", "FLOKI", "WIF"},
+    "ai": {"AI", "FET", "AGIX", "OCEAN", "TAO", "ARKM"},
+    "l1": {"BTC", "ETH", "BNB", "SOL", "AVAX", "SUI", "APT"},
+    "defi": {"UNI", "AAVE", "MKR", "SNX", "CRV", "COMP"},
+    "infra": {"LINK", "ATOM", "OP", "ARB", "TIA", "PYTH"},
+}
+
+
+def _wallet_exposure_bucket(symbol: str) -> str:
+    upper = str(symbol or "").upper()
+    for bucket, symbols in WALLET_EXPOSURE_BUCKETS.items():
+        if upper in symbols:
+            return bucket.upper()
+    return upper
+
+
+
+def _wallet_style_profile(top_concentration_pct: float, holdings_count: int, exposure_weights: dict[str, float], change_24h: float) -> str:
+    if top_concentration_pct >= 75:
+        base = "high-conviction concentrated"
+    elif holdings_count >= 8 and len(exposure_weights) >= 3:
+        base = "multi-theme diversified"
+    elif holdings_count >= 5:
+        base = "selective diversified"
+    else:
+        base = "narrow watchlist"
+
+    if change_24h >= 8:
+        return base + " momentum-seeking"
+    if change_24h <= -8:
+        return base + " under pressure"
+    return base
+
 
 
 def _extract_watchtoday_exchange_board(market_rank: dict[str, Any]) -> list[str]:

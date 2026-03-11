@@ -41,6 +41,8 @@ class WalletContext:
     major_risks: list[str] = field(default_factory=list)
     follow_verdict: str = "Unknown"
     style_read: str = ""
+    style_profile: str = ""
+    exposure_breakdown: list[str] = field(default_factory=list)
 
 
 @dataclass

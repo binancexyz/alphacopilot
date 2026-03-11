@@ -15,7 +15,9 @@ class DummyService:
             'change_24h': 5.1,
             'notable_exposures': ['AI', 'L1'],
             'follow_verdict': 'Track',
-            'style_read': 'Narrative bias: AI, L1 | Risk posture: diversified',
+            'style_read': 'Narrative bias: AI, L1 | Style profile: selective diversified momentum-seeking | Risk posture: diversified',
+            'style_profile': 'selective diversified momentum-seeking',
+            'exposure_breakdown': ['L1 55.5%', 'AI 22.0%'],
         }
 
 
@@ -28,4 +30,6 @@ def test_analyze_wallet_adds_lead_holding_tag():
         wallet_analysis.get_market_data_service = old_service
 
     assert any(tag.name == 'Lead Holding' for tag in brief.risk_tags)
+    assert any(tag.name == 'Style Profile' for tag in brief.risk_tags)
     assert 'more useful for behavior study' in brief.why_it_matters
+    assert 'Exposure mix:' in brief.why_it_matters
