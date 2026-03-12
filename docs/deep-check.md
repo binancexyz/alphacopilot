@@ -1,5 +1,8 @@
 # Deep Check - Bibipilot
 
+> Historical review note: this document captures an earlier audit pass during the transition from a wider command surface toward the newer canonical five-command map. Treat it as diagnostic history, not the latest product surface reference.
+
+
 ## Goal
 A focused product/code audit of the current Bibipilot surface with emphasis on:
 - command quality

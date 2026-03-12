@@ -23,6 +23,7 @@
 - [`judge-cheat-sheet.md`](judge-cheat-sheet.md)
 - [`judge-qa-prep.md`](judge-qa-prep.md)
 - [`live-proof-appendix.md`](live-proof-appendix.md)
+- [`deep-check.md`](deep-check.md) — Historical deep audit of an earlier command-surface phase
 
 ## Integration
 - [`live-integration-checklist.md`](live-integration-checklist.md)

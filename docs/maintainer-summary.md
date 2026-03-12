@@ -27,7 +27,7 @@ If you come back later and want the shortest summary possible:
 - GitHub repo is already pushed
 
 ## Best next engineering move
-Deepen live coverage and runtime quality: richer meme/wallet live context, better logging/health visibility, stronger watchtoday lane population, and cleaner live bridge reliability under partial failures.
+Deepen live coverage and runtime quality: richer external-wallet and speculative-context evidence, better logging/health visibility, stronger watchtoday lane population, and cleaner live bridge reliability under partial failures.
 
 ## Best next presentation move
 Add screenshots, a short demo asset, and a few example live Square post links, then optionally trim public docs noise for a cleaner open-source first impression.

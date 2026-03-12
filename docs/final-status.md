@@ -12,7 +12,7 @@
 - mock/live split
 - normalized contracts
 - upgraded live extractor paths
-- `/token BNB` live matching fix across bridge and extractor layers
+- deeper asset-read live matching fix across bridge and extractor layers
 - live Binance Square draft/publish flow
 - scheduled Binance Square autoposting with a verified quality-focused premium 1-post/day Asia/Phnom_Penh cron engine
 - broader slash-command layer was first refined into core/specialist groups and has now been reduced further into a canonical public surface: `/brief`, `/signal`, `/holdings`, `/watchtoday`, `/audit`
@@ -20,10 +20,10 @@
 - command-specific layouts for deeper asset, signal, holdings, watchtoday, and audit reads
 - secondary-market fallback framing for `/price` and `/brief` without leaking provider-specific wording
 - hidden native BNB audit quirk suppression for cleaner risk output
-- explicit audit gate surfaced in `/token` and `/signal`
+- explicit audit gate surfaced in deeper asset reads and `/signal`
 - standalone `/audit` command
-- first-pass `/meme` command
-- explicit wallet follow verdict layer
+- merged meme lens inside `/audit`
+- explicit holdings / wallet follow-verdict layer
 - live market-lane rendering in `/watchtoday`
 - improved live bridge coverage for `token`, `signal`, `audit`, and `watchtoday`
 - `make bridge-live` helper for local bridge startup
@@ -42,9 +42,9 @@
 
 ## Best next build direction
 - deepen signal freshness and `exitRate` usage from richer live payloads
-- improve wallet live-runtime depth so follow verdicts get stronger evidence
-- improve `/meme` with richer live lifecycle / meme-rush data
-- keep enriching `/watchtoday` lanes with better narrative and meme coverage
+- improve external-wallet live-runtime depth so follow verdicts get stronger evidence
+- improve speculative/meme-style lifecycle depth where it informs `/audit`
+- keep enriching `/watchtoday` lanes with better narrative and speculative coverage
 - add Square compression templates between analysis output and `square-post`
 - parallelize multi-skill fetches where possible
 - continue bridge/runtime stabilization for live usage
