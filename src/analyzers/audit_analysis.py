@@ -54,13 +54,25 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
     try:
         meme_brief = analyze_meme(symbol)
         meme_note = meme_brief.quick_verdict.strip()
-        meme_tags = []
-        for tag in meme_brief.risk_tags:
-            if tag.name in {"Participation Quality", "Lifecycle"}:
-                suffix = f": {tag.note}" if tag.note else ""
-                meme_tags.append(f"{tag.name}: {tag.level}{suffix}")
-        meme_lines = [meme_note] + meme_tags[:2]
-        sections.append(BriefSection(title="🧪 Meme Lens", content="\n".join(f"- {line}" for line in meme_lines if line)))
+        lower_note = meme_note.lower()
+        show_meme = not any([
+            "does not currently read as a strong meme candidate" in lower_note,
+            "not a strong meme candidate" in lower_note,
+        ])
+        if show_meme:
+            participation_tag = next((tag for tag in meme_brief.risk_tags if tag.name == "Participation Quality"), None)
+            lifecycle_tag = next((tag for tag in meme_brief.risk_tags if tag.name == "Lifecycle"), None)
+            if participation_tag and lifecycle_tag:
+                show_meme = not (participation_tag.level == "Low" and str(lifecycle_tag.note or lifecycle_tag.level).lower() in {"unknown", "inactive"})
+        if show_meme:
+            meme_tags = []
+            for tag in meme_brief.risk_tags:
+                if tag.name in {"Participation Quality", "Lifecycle"}:
+                    suffix = f": {tag.note}" if tag.note else ""
+                    meme_tags.append(f"{tag.name}: {tag.level}{suffix}")
+            meme_lines = meme_tags[:2]
+            if meme_lines:
+                sections.append(BriefSection(title="🧪 Meme Lens", content="\n".join(f"- {line}" for line in meme_lines if line)))
     except Exception:
         pass
 

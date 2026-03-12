@@ -37,7 +37,7 @@ def test_brief_endpoint():
     assert payload["entity"] == "BNB"
     assert payload["mode"] in {"mock", "live"}
     assert payload["runtime_state"] in {"mock", "live_ok", "live_degraded", None}
-    assert "Brief: BNB" in payload["rendered"]
+    assert "🧩 BNB" in payload["rendered"]
 
 
 def test_brief_deep_endpoint():
@@ -46,7 +46,7 @@ def test_brief_deep_endpoint():
     payload = response.json()
     assert payload["command"] == "token"
     assert payload["entity"] == "BNB"
-    assert "Token: BNB" in payload["rendered"]
+    assert "🧩 BNB" in payload["rendered"] or "🪙 BNB" in payload["rendered"]
 
 
 def test_watchtoday_endpoint():
@@ -56,7 +56,7 @@ def test_watchtoday_endpoint():
     assert payload["command"] == "watchtoday"
     assert payload["mode"] in {"mock", "live"}
     assert payload["runtime_state"] in {"mock", "live_ok", "live_degraded", None}
-    assert "Market Watch" in payload["rendered"]
+    assert "Watchtoday" in payload["rendered"]
 
 
 def test_holdings_endpoint():
@@ -65,7 +65,7 @@ def test_holdings_endpoint():
     payload = response.json()
     assert payload["command"] == "holdings"
     assert payload["mode"] in {"mock", "live"}
-    assert "Portfolio:" in payload["rendered"]
+    assert "Holdings Binance Spot" in payload["rendered"]
 
 
 def test_wallet_endpoint_rejects_bad_address():
