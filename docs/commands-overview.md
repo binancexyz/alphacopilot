@@ -1,9 +1,10 @@
 # Commands Overview
 
 ## `/price <symbol>`
-**Purpose:** Show a compact market card.
+**Purpose:** Show a premium market card.
 - Prefer Binance Spot read-only market data when available
 - Surface spread / exchange-pair context instead of just a raw quote
+- Show cleaner source/context framing when secondary market data is used
 
 **Example:** `python3 src/main.py price BNB`
 
@@ -37,6 +38,7 @@
 - Show fragility and confirmation conditions
 - Distinguish between live exchange price and matched smart-money signal quality
 - Show signal timing, direction, and exit rate
+- Surface explicit invalidation when possible
 - Factors in current portfolio posture when private Spot account context is available
 
 **Example:** `python3 src/main.py signal DOGE`
@@ -58,7 +60,7 @@
 **Purpose:** Read your private Binance Spot posture in a safe, read-only way.
 - Uses signed Binance API account-read endpoints
 - Estimates visible USD value from current spot prices
-- Summarizes top holdings, concentration, stablecoin share, current posture, and historical drift
+- Summarizes top holdings, concentration, stablecoin share, current posture, freshness, and historical drift
 - Does not place trades or manage orders
 - Best paired mentally with `/wallet`, which reads public posture from an external address
 
@@ -82,7 +84,8 @@
 - Scam/vulnerability detection
 - Contract risk assessment
 - Risk gate that blocks on critical findings
-- Only valid when `hasResult=true` and `isSupported=true`
+- Surfaces audit validity more explicitly when live audit visibility is partial
+- Only fully valid when `hasResult=true` and `isSupported=true`
 
 **Example:** `python3 src/main.py audit BNB`
 
@@ -119,10 +122,9 @@
 
 ---
 
-## Output Shape (all commands)
-- Quick Verdict
-- Signal Quality / Conviction
-- Top Risks
-- Why It Matters
-- What To Watch Next
-- Risk Tags (when applicable)
+## Output Shape (current command family)
+- Structured section-based layout
+- Read / Verdict / Risks / Watch blocks where appropriate
+- Context / Source / Validity tags when relevant
+- Command-specific additions like `Invalidation` for `/signal`
+- Premium tree-style hierarchy for grouped outputs

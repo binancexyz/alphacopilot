@@ -144,7 +144,7 @@ This sequence shows range, product shape, and publishing reality without wasting
 
 #### 1. `/price BNB`
 **Why first:** instant grounding.
-Show the clean, compact market card.
+Show the clean, premium market card with source/context framing.
 
 **Judge takeaway:** this is fast, readable, and product-like.
 

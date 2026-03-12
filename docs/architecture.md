@@ -88,7 +88,7 @@ Future options:
 ## Command Map
 
 ### `/price <symbol>`
-Input → Binance Spot read-only data → compact market card
+Input → Binance Spot read-only data → premium market card with source/context framing
 
 ### `/brief <symbol>`
 Input → token info + signal + market context + Spot → fast market synthesis

@@ -16,9 +16,9 @@
 - live Binance Square draft/publish flow
 - scheduled Binance Square autoposting with a verified quality-focused premium 1-post/day Asia/Phnom_Penh cron engine
 - broader slash-command layer: `/token`, `/brief`, `/price`, `/risk`, `/signal`, `/wallet`, `/watchtoday`, `watch today`, `/audit`, and `/meme`
-- compact `/brief`, `/price`, and `/risk` command layer
-- command-specific layouts for `/token`, `/signal`, `/wallet`, and `/watchtoday`
-- stable CoinGecko-first market quote path for `/price` and `/brief`
+- upgraded premium `/brief`, `/price`, and `/risk` command layer
+- command-specific layouts for `/token`, `/signal`, `/wallet`, `/watchtoday`, `/portfolio`, and `/audit`
+- secondary-market fallback framing for `/price` and `/brief` without leaking provider-specific wording
 - hidden native BNB audit quirk suppression for cleaner risk output
 - explicit audit gate surfaced in `/token` and `/signal`
 - standalone `/audit` command

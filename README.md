@@ -58,12 +58,12 @@ Bibipilot currently supports **11 research commands**:
 
 | Command | Purpose |
 |---------|---------|
-| `/price <symbol>` | Compact market card with Binance Spot read-only data |
+| `/price <symbol>` | Premium market card with source/context-aware quote framing |
 | `/brief <symbol>` | Fast market synthesis with exchange-native grounding |
 | `/token <symbol>` | Token setup and conviction read with audit and signal context |
-| `/signal <token>` | Smart-money signal timing and setup validation |
+| `/signal <token>` | Smart-money signal timing, setup validation, and invalidation framing |
 | `/wallet <address>` | Public wallet posture / behavior interpretation with follow verdict |
-| `/portfolio` | Private Binance Spot posture snapshot with history-aware drift |
+| `/portfolio` | Private Binance Spot posture snapshot with freshness and history-aware drift |
 | `/risk <symbol>` | Downside-first risk assessment |
 | `/audit <symbol>` | Security-first token audit card |
 | `/watchtoday` | Daily market board with trending narratives and live lanes |

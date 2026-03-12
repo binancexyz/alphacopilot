@@ -191,7 +191,7 @@ Users should be able to ask:
 ---
 
 ### E. `/price <symbol>`
-**Purpose:** Show a compact market card with exchange-native data.
+**Purpose:** Show a premium market card with exchange-native data.
 
 **Inputs:** Binance Spot read-only data (preferred), token info fallback
 

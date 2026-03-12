@@ -13,9 +13,9 @@ The product is built around a simple loop:
 
 ## Demo 1 — `/price BNB`
 ### Show
-- compact market card
+- premium market card
 - fast price/trend/rank view
-- Binance Spot source / spread-aware note when available
+- source/context framing and Binance Spot spread-aware note when available
 
 ### Narration
 Start with grounding.

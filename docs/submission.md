@@ -43,7 +43,7 @@ So Bibipilot is not just an AI that summarizes crypto.
 It is a **research -> judgment -> publishing** product.
 
 ## Current Command Surface
-- `/price` — compact market card
+- `/price` — premium market card with source/context framing
 - `/brief` — fast synthesis
 - `/risk` — downside-first risk read
 - `/audit` — security-first audit card
