@@ -392,7 +392,7 @@ bibipilot/
 │   ├── models/              # Data models and Pydantic schemas
 │   ├── services/            # Business logic and integrations
 │   └── utils/               # Parsing, validation, helpers
-├── tests/                   # 33 test files covering all components
+├── tests/                   # 33 test files
 ├── docs/                    # 123 documentation files
 ├── examples/                # Payload examples and output samples
 ├── agent/                   # Agent identity and operating files
