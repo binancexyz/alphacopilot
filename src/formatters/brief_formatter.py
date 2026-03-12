@@ -358,6 +358,19 @@ def _format_portfolio_card(brief: AnalysisBrief) -> str:
     if brief.why_it_matters:
         parts.append("")
         parts.append(f"**🧠 Why**\n{brief.why_it_matters}")
+
+    change_lines: list[str] = []
+    for name in ["Freshness", "Top Change", "Short Trend"]:
+        for tag in brief.risk_tags:
+            if tag.name == name and tag.note:
+                label = "Recent Change" if name == "Top Change" else name
+                change_lines.append(f"{label}: {tag.note}")
+                break
+    if change_lines:
+        parts.append("")
+        parts.append("**📈 Recent Change**")
+        parts.extend(_tree_lines(change_lines[:3]))
+
     if brief.beginner_note:
         parts.append("")
         parts.append("**💼 Top Holdings**")
@@ -367,9 +380,11 @@ def _format_portfolio_card(brief: AnalysisBrief) -> str:
         parts.append("**⚠️ Risks**")
         parts.extend(_tree_lines(brief.top_risks[:3]))
     if brief.what_to_watch_next:
-        parts.append("")
-        parts.append("**👀 Watch**")
-        parts.extend(_tree_lines(brief.what_to_watch_next[:2]))
+        watch_lines = [line for line in brief.what_to_watch_next if not line.startswith("Freshness:") and not line.startswith("Strongest recent change:") and not line.startswith("Short trend:")]
+        if watch_lines:
+            parts.append("")
+            parts.append("**👀 Watch**")
+            parts.extend(_tree_lines(watch_lines[:2]))
     if brief.risk_tags:
         parts.append("")
         parts.append("**🏷️ Tags**")

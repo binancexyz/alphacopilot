@@ -286,6 +286,17 @@ def analyze_portfolio() -> AnalysisBrief:
         what_to_watch_next=watch_items[:3],
         risk_tags=snapshot["tags"],
     )
+    summary_lines: list[str] = []
+    if previous_age:
+        summary_lines.append(f"Freshness: {previous_age}")
+    if strongest_change:
+        summary_lines.append(strongest_change)
+    elif delta_summary:
+        summary_lines.append(delta_summary)
+    if trend_summary:
+        summary_lines.append(f"Short trend: {trend_summary}")
     if snapshot["top_lines"]:
         brief.beginner_note = "\n".join(snapshot["top_lines"])
+    if summary_lines:
+        brief.what_to_watch_next = summary_lines[:2] + brief.what_to_watch_next[:2]
     return brief
