@@ -79,15 +79,15 @@ This is a decision system, not just a signal repeater.
 
 ---
 
-## Demo 5 — `/wallet <address>`
+## Demo 5 — `/holdings <address>`
 ### Show
 - follow verdict
 - interpretation layer
 - risk / watch output
 
 ### Narration
-Wallet tools often stop at balances.
-Bibipilot tries to answer whether the wallet is even worth following.
+Holdings can mean your own posture or an external wallet.
+In this mode, Bibipilot tries to answer whether the wallet is even worth following.
 
 ### Judge takeaway
 The assistant interprets behavior, not just holdings.

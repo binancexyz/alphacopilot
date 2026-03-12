@@ -65,9 +65,9 @@ Run the best short live demo with clear narration and safe fallback lines.
 
 ---
 
-### 5. `/wallet <address>`
+### 5. `/holdings <address>`
 **What to say:**
-"Wallet tools often stop at balances. Bibipilot tries to answer whether the wallet is even worth following, and now does a better job explaining concentration, activity, and why a wallet is useful for behavior study."
+"Holdings can mean your own posture or an external wallet. In this mode, Bibipilot tries to answer whether the wallet is even worth following, and does a better job explaining concentration, activity, and why a wallet is useful for behavior study."
 
 **What it proves:**
 - interpretation layer
@@ -76,7 +76,7 @@ Run the best short live demo with clear narration and safe fallback lines.
 - behavior-aware wallet judgment
 
 **Fallback if sparse:**
-"The live wallet path is still thinner than token/signal, but the judgment shape is already in place."
+"The external-wallet path is still thinner than brief/signal, but the judgment shape is already in place."
 
 ---
 

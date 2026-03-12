@@ -1,8 +1,8 @@
 # OpenClaw Command Templates
 
-These are suggested runtime command patterns for the first live integration phase.
+These are suggested runtime command patterns for the canonical command surface.
 
-## `/token <symbol>`
+## `/brief <symbol>`
 Runtime goal:
 1. parse symbol
 2. call live skills
@@ -18,10 +18,17 @@ Suggested logical flow:
   - `trading-signal`
   - `query-token-audit`
 - build raw payload dict
-- call `extract_token_context(raw_payload, symbol)`
+- call `extract_token_context(raw_payload, symbol)` when deeper context is needed
 - normalize
 - build brief
 - return response
+
+### `/brief <symbol> deep`
+Use the fuller asset path with:
+- `query-token-info`
+- `crypto-market-rank`
+- `trading-signal`
+- `query-token-audit`
 
 ## `/signal <token>`
 Same pattern with:
@@ -29,10 +36,16 @@ Same pattern with:
 - `query-token-info`
 - `query-token-audit`
 
-## `/wallet <address>`
+## `/holdings <address>`
 Same pattern with:
 - `query-address-info`
 - optional holding enrichment
+
+## `/holdings`
+Suggested runtime shape:
+- use signed Binance account-read endpoints
+- compute posture, concentration, freshness, and drift
+- preserve private posture inside the unified holdings command
 
 ## `/watchtoday`
 Same pattern with:
@@ -40,14 +53,8 @@ Same pattern with:
 - `meme-rush`
 - `trading-signal`
 
-## `/brief <symbol>`
+## `/audit <symbol>`
 Suggested runtime shape:
-- reuse token + signal + quote context
-- prefer the shortest high-value answer path
-- preserve explicit source/context framing
-
-## `/portfolio`
-Suggested runtime shape:
-- use signed Binance account-read endpoints
-- compute posture, concentration, freshness, and drift
-- preserve private posture as a distinct command, not a public-wallet variant
+- use `query-token-audit` as the safety anchor
+- enrich with token context when available
+- fold meme/lifecycle context into audit findings when relevant

@@ -7,8 +7,9 @@ Use OpenClaw as the user-facing runtime while keeping the research logic reusabl
 
 ### 1. User sends a command
 Examples:
-- `/token BNB`
-- `/wallet 0x...`
+- `/brief BNB`
+- `/brief BNB deep`
+- `/holdings 0x...`
 - `/watchtoday`
 - `/signal DOGE`
 

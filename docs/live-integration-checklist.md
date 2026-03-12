@@ -2,8 +2,8 @@
 
 This is the final practical checklist for turning the scaffold into a live OpenClaw-powered assistant.
 
-## Phase 1 — `/token`
-- [ ] parse `/token <symbol>` in the runtime flow
+## Phase 1 — `/brief deep`
+- [ ] parse `/brief <symbol> deep` in the runtime flow
 - [ ] call `query-token-info`
 - [ ] call `crypto-market-rank`
 - [ ] call `trading-signal`
@@ -23,8 +23,8 @@ This is the final practical checklist for turning the scaffold into a live OpenC
 - [x] normalize with `normalize_signal_context(...)`
 - [x] build final brief with `build_signal_brief(...)`
 
-## Phase 3 — `/wallet`
-- [ ] parse `/wallet <address>`
+## Phase 3 — `/holdings <address>`
+- [ ] parse `/holdings <address>`
 - [ ] call `query-address-info`
 - [ ] optionally enrich top holdings
 - [x] extract wallet payload

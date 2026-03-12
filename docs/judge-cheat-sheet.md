@@ -103,7 +103,7 @@ So instead of just showing crypto movement, Bibipilot helps answer what is worth
 ### 4. `/signal BNB`
 **Proves:** timing logic and honest handling of weak/no match cases
 
-### 5. `/wallet <address>`
+### 5. `/holdings <address>`
 **Proves:** opinionated behavior interpretation
 
 ### 6. `/watchtoday`

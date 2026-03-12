@@ -1,8 +1,40 @@
 # Live Command Mapping
 
-This document defines the exact live integration plan for each command.
+This document defines the exact live integration plan for each canonical command.
 
-## `/token <symbol>`
+## `/brief <symbol>`
+
+### Live skills to call
+1. `query-token-info`
+2. `crypto-market-rank`
+3. `trading-signal`
+4. `query-token-audit` (for deeper path when needed)
+
+### OpenClaw responsibility
+- accept user input
+- resolve token symbol/name
+- call Binance Skills Hub tools
+- collect raw outputs
+- normalize into one asset context payload
+
+### Python responsibility
+- interpret signal quality
+- synthesize risk summary
+- generate confidence framing
+- format the fast default brief
+
+### Minimum normalized fields
+- symbol
+- display_name
+- price
+- liquidity
+- market_rank_context
+- signal_status
+- major_risks
+
+---
+
+## `/brief <symbol> deep`
 
 ### Live skills to call
 1. `query-token-info`
@@ -10,35 +42,14 @@ This document defines the exact live integration plan for each command.
 3. `trading-signal`
 4. `query-token-audit`
 
-### OpenClaw responsibility
-- accept user input
-- resolve token symbol/name
-- call Binance Skills Hub tools
-- collect raw outputs
-- normalize into one token context payload
-
 ### Python responsibility
-- interpret signal quality
-- synthesize risk summary
-- generate risk tags
 - assign conviction label
-- format final brief
-
-### Minimum normalized fields
-- symbol
-- display_name
-- price
-- liquidity
-- holders
-- market_rank_context
-- signal_status
-- signal_trigger_context
-- audit_flags
-- major_risks
+- generate deeper risk/watch structure
+- produce the richer asset brief
 
 ---
 
-## `/wallet <address>`
+## `/holdings <address>`
 
 ### Live skills to call
 1. `query-address-info`
@@ -67,6 +78,24 @@ This document defines the exact live integration plan for each command.
 - change_24h
 - notable_exposures
 - major_risks
+
+---
+
+## `/holdings`
+
+### Live skills to call
+1. signed Binance account-read endpoints
+2. live price map / supporting spot data
+
+### OpenClaw responsibility
+- fetch private Spot balances
+- normalize balances and LD-style holdings
+- pass posture snapshot into Python
+
+### Python responsibility
+- compute posture
+- summarize concentration and grouped exposures
+- describe freshness and drift
 
 ---
 
@@ -128,3 +157,17 @@ This document defines the exact live integration plan for each command.
 - audit_flags
 - major_risks
 - supporting_context
+
+---
+
+## `/audit <symbol>`
+
+### Live skills to call
+1. `query-token-audit`
+2. `query-token-info`
+3. optional `meme-rush` when speculative/lifecycle context is useful
+
+### Python responsibility
+- interpret structural safety
+- surface audit validity clearly
+- fold meme-lens context into audit findings when relevant

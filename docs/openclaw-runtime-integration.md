@@ -15,11 +15,12 @@ Do not put all business logic into prompt text.
 Use prompt/rules for behavior, but keep extraction, normalization, and heuristics in Python.
 
 ## First command to wire
-Start with `/token <symbol>`.
+Start with `/brief <symbol> deep`.
 
 ## Why
 - strongest demo value
 - clearest multi-skill path
+- aligns with the canonical flagship command
 - easiest to reuse later for `/signal`
 
 ## Runtime pipeline
@@ -33,20 +34,24 @@ Start with `/token <symbol>`.
 8. send final response
 
 ## Live-skill sequence by command
-### `/token`
+### `/brief` / `/brief deep`
 - `query-token-info`
 - `crypto-market-rank`
 - `trading-signal`
-- `query-token-audit`
+- `query-token-audit` (for deeper path)
 
 ### `/signal`
 - `trading-signal`
 - `query-token-info`
 - `query-token-audit`
 
-### `/wallet`
+### `/holdings <address>`
 - `query-address-info`
 - optional enrichment
+
+### `/holdings`
+- signed Binance account-read endpoints
+- live price map
 
 ### `/watchtoday`
 - `crypto-market-rank`
