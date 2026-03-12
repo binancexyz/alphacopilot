@@ -49,6 +49,17 @@
 
 ---
 
+## `/portfolio`
+**Purpose:** Read your Binance Spot account in a safe, read-only way.
+- Uses signed Binance API account-read endpoints
+- Estimates visible USD value from current spot prices
+- Summarizes top holdings and concentration
+- Does not place trades or manage orders
+
+**Example:** `python3 src/main.py portfolio`
+
+---
+
 ## `/risk <symbol>`
 **Purpose:** Downside-first risk assessment.
 - Identify top risk factors by severity

@@ -12,6 +12,7 @@ ENTITY_EMOJI = {
     "Signal:": "📡",
     "Meme:": "🚀",
     "Wallet:": "👛",
+    "Portfolio:": "📂",
     "Market Watch": "🌐",
 }
 
@@ -278,6 +279,35 @@ def _format_watchtoday_card(brief: AnalysisBrief) -> str:
     return "\n".join(parts).strip() + "\n"
 
 
+def _format_portfolio_card(brief: AnalysisBrief) -> str:
+    parts = [_entity_line(brief.entity), "", f"**⚡ Portfolio Read**\n{brief.quick_verdict}"]
+    if brief.signal_quality:
+        parts.append("")
+        parts.append(f"**📊 Posture**\n{brief.signal_quality}")
+    if brief.why_it_matters:
+        parts.append("")
+        parts.append(f"**🧠 Why**\n{brief.why_it_matters}")
+    if brief.beginner_note:
+        parts.append("")
+        parts.append("**💼 Top Holdings**")
+        parts.extend([f"- {line}" for line in brief.beginner_note.splitlines()[:5] if line.strip()])
+    if brief.top_risks:
+        parts.append("")
+        parts.append("**⚠️ Risks**")
+        parts.extend([f"- {item}" for item in brief.top_risks[:3]])
+    if brief.what_to_watch_next:
+        parts.append("")
+        parts.append("**👀 Watch**")
+        parts.extend([f"- {item}" for item in brief.what_to_watch_next[:2]])
+    if brief.risk_tags:
+        parts.append("")
+        parts.append("**🏷️ Tags**")
+        for tag in brief.risk_tags[:3]:
+            suffix = f" — {tag.note}" if tag.note else ""
+            parts.append(f"- {tag.name}: {tag.level}{suffix}")
+    return "\n".join(parts).strip() + "\n"
+
+
 def format_brief(brief: AnalysisBrief) -> str:
     if brief.entity.startswith("Price:"):
         return _format_price_card(brief)
@@ -295,6 +325,8 @@ def format_brief(brief: AnalysisBrief) -> str:
         return _format_signal_card(brief)
     if brief.entity.startswith("Wallet:"):
         return _format_wallet_card(brief)
+    if brief.entity.startswith("Portfolio:"):
+        return _format_portfolio_card(brief)
     if brief.entity == "Market Watch":
         return _format_watchtoday_card(brief)
 

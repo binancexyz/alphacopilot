@@ -181,7 +181,16 @@ Users should be able to ask:
 
 ---
 
-### D. `/price <symbol>`
+### D. `/portfolio`
+**Purpose:** Read a user's own Binance Spot account in a private, read-only way.
+
+**Inputs:** signed Binance API account read, current spot prices
+
+**Output:** estimated visible portfolio value, top holdings, concentration context, major risks, what to watch next
+
+---
+
+### E. `/price <symbol>`
 **Purpose:** Show a compact market card with exchange-native data.
 
 **Inputs:** Binance Spot read-only data (preferred), token info fallback
@@ -190,7 +199,7 @@ Users should be able to ask:
 
 ---
 
-### E. `/brief <symbol>`
+### F. `/brief <symbol>`
 **Purpose:** Fast market synthesis with exchange-native grounding.
 
 **Inputs:** token info, trading signal, market context, Binance Spot (optional)
@@ -199,7 +208,7 @@ Users should be able to ask:
 
 ---
 
-### F. `/risk <symbol>`
+### G. `/risk <symbol>`
 **Purpose:** Downside-first risk assessment.
 
 **Inputs:** token info, audit data, signal context, market data
@@ -208,7 +217,7 @@ Users should be able to ask:
 
 ---
 
-### G. `/audit <symbol>`
+### H. `/audit <symbol>`
 **Purpose:** Security-first token audit card.
 
 **Inputs:** token audit, token info
@@ -219,7 +228,7 @@ Users should be able to ask:
 
 ---
 
-### H. `/watchtoday`
+### I. `/watchtoday`
 **Purpose:** Summarize what matters today across the market.
 
 **Alias:** `watch today` is accepted as an alternative.
@@ -230,7 +239,7 @@ Users should be able to ask:
 
 ---
 
-### I. `/meme <symbol>`
+### J. `/meme <symbol>`
 **Purpose:** First-pass meme token scan.
 
 **Inputs:** meme-rush, token info
@@ -239,7 +248,7 @@ Users should be able to ask:
 
 ---
 
-### J. `careers`
+### K. `careers`
 **Purpose:** Binance ecosystem intelligence through hiring data.
 
 **Inputs:** Binance Careers API
@@ -259,6 +268,14 @@ Users should be able to ask:
 - Premium scheduled daily post path centered on one strong post per day
 - Active scheduled slot: `night-diary` at `21:30` Asia/Phnom_Penh
 - Context-aware nightly generation with diary / builder / market mode variation
+
+---
+
+### Portfolio safety rule
+- read-only first
+- no order placement
+- no silent trading logic
+- private account data must stay local and human-supervised
 
 ---
 

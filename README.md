@@ -63,6 +63,7 @@ Bibipilot currently supports **10 research commands**:
 | `/token <symbol>` | Token setup and conviction read with audit and signal context |
 | `/signal <token>` | Smart-money signal timing and setup validation |
 | `/wallet <address>` | Wallet behavior interpretation with follow verdict |
+| `/portfolio` | Read-only Binance Spot account portfolio snapshot |
 | `/risk <symbol>` | Downside-first risk assessment |
 | `/audit <symbol>` | Security-first token audit card |
 | `/watchtoday` | Daily market board with trending narratives and live lanes |
@@ -156,6 +157,7 @@ python3 src/main.py brief BTC
 python3 src/main.py token BNB
 python3 src/main.py signal DOGE
 python3 src/main.py wallet 0x1234567890ab
+python3 src/main.py portfolio
 python3 src/main.py risk ETH
 python3 src/main.py audit BNB
 python3 src/main.py watchtoday

@@ -11,6 +11,7 @@ from src.analyzers.audit_analysis import analyze_audit
 from src.analyzers.brief_analysis import analyze_brief
 from src.analyzers.market_watch import watch_today
 from src.analyzers.meme_analysis import analyze_meme
+from src.analyzers.portfolio_analysis import analyze_portfolio
 from src.analyzers.price_analysis import analyze_price
 from src.analyzers.risk_analysis import analyze_risk
 from src.analyzers.signal_check import analyze_signal
@@ -49,6 +50,8 @@ def main() -> None:
     signal_parser = subparsers.add_parser("signal")
     signal_parser.add_argument("token")
 
+    subparsers.add_parser("portfolio")
+
     watch_parser = subparsers.add_parser("watch")
     watch_parser.add_argument("scope", nargs="?", default="today")
 
@@ -75,6 +78,8 @@ def main() -> None:
         brief = analyze_wallet(normalize_wallet_input(args.address))
     elif args.command == "signal":
         brief = analyze_signal(normalize_token_input(args.token))
+    elif args.command == "portfolio":
+        brief = analyze_portfolio()
     elif args.command == "watch":
         scope = str(args.scope or "today").strip().lower().replace("-", "")
         if scope not in {"today", "todays"}:
