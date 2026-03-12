@@ -9,6 +9,7 @@ from urllib.parse import urlencode
 
 from src.config import settings
 from src.models.schemas import AnalysisBrief, RiskTag
+from src.services.portfolio_history import append_snapshot, describe_delta, latest_snapshot
 
 BINANCE_API_BASE_URL = "https://api.binance.com"
 ACCOUNT_INFO_URL = "/api/v3/account"
@@ -218,6 +219,10 @@ def get_portfolio_snapshot() -> dict[str, Any]:
         "concentration": concentration,
         "posture": posture_note,
         "total_value": float(total_value),
+        "priced_assets": [
+            {"asset": item["asset"], "usd_value": float(item["usd_value"]), "wrapped": bool(item["wrapped"])}
+            for item in priced_assets
+        ],
     }
 
 
@@ -238,16 +243,28 @@ def analyze_portfolio() -> AnalysisBrief:
             ],
         )
 
+    previous = latest_snapshot()
+    delta_summary, delta_watch = describe_delta(previous, snapshot)
+    append_snapshot(snapshot)
+
+    why = snapshot["why"]
+    if delta_summary:
+        why = f"{why} {delta_summary}"
+
+    watch_items = [
+        "whether the top holding keeps growing relative to the rest of the account",
+        "whether stablecoin dry powder changes meaningfully after the next rotation",
+    ]
+    if delta_watch:
+        watch_items = delta_watch + watch_items
+
     brief = AnalysisBrief(
         entity="Portfolio: Binance Spot",
         quick_verdict=snapshot["verdict"],
         signal_quality=snapshot["quality"],
         top_risks=snapshot["top_risks"],
-        why_it_matters=snapshot["why"],
-        what_to_watch_next=[
-            "whether the top holding keeps growing relative to the rest of the account",
-            "whether stablecoin dry powder changes meaningfully after the next rotation",
-        ],
+        why_it_matters=why,
+        what_to_watch_next=watch_items[:3],
         risk_tags=snapshot["tags"],
     )
     if snapshot["top_lines"]:
