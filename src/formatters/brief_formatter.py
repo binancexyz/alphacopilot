@@ -46,6 +46,22 @@ def _tree_lines(items: list[str]) -> list[str]:
     return lines
 
 
+def _treeify_block(text: str) -> str:
+    raw_lines = [line.rstrip() for line in text.splitlines() if line.strip()]
+    if not raw_lines:
+        return text
+
+    bullet_like = []
+    for line in raw_lines:
+        stripped = line.strip()
+        if stripped.startswith("- ") or stripped.startswith("• "):
+            bullet_like.append(stripped[2:].strip())
+        else:
+            bullet_like.append(stripped)
+
+    return "\n".join(_tree_lines(bullet_like))
+
+
 def _format_price_card(brief: AnalysisBrief) -> str:
     name, symbol, link, rank = (brief.quick_verdict.split("|", 3) + ["", "", "", "0"])[:4]
     price, change_24h, high_24h, low_24h, market_cap, volume_24h, arrow = (brief.why_it_matters.split("|", 6) + ["0", "0", "0", "0", "0", "0", "➖"])[:7]
@@ -277,7 +293,7 @@ def _format_watchtoday_card(brief: AnalysisBrief) -> str:
             if section.content:
                 parts.append("")
                 parts.append(f"**{section.title}**")
-                parts.append(section.content)
+                parts.append(_treeify_block(section.content))
     if brief.why_it_matters:
         parts.append("")
         parts.append(f"**🧠 Priority**\n{brief.why_it_matters}")
