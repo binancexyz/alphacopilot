@@ -1,5 +1,10 @@
 # Bibipilot
 
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![API v0.2.1](https://img.shields.io/badge/API-v0.2.1-orange.svg)](docs/deployment.md)
+[![Bridge v0.2.0](https://img.shields.io/badge/Bridge-v0.2.0-orange.svg)](docs/openclaw-runtime-bridge.md)
+
 > **Less noise. Better conviction.**
 
 Bibipilot is a **Binance-native research copilot** that filters crypto signals, interprets risk, and publishes what is worth attention to Binance Square.
@@ -10,7 +15,7 @@ It uses Binance Skills Hub as the evidence layer, adds a Python judgment layer o
 
 > **Status: public alpha — real command surface, live publishing, security-hardened API**
 >
-> Bibipilot has 10 research commands, live Binance Square publishing, a FastAPI REST service (v0.2.1), a live bridge for OpenClaw integration (v0.2.0), and production-grade security hardening. It is not finished, but it is well beyond concept stage.
+> Bibipilot ships 10 research commands, live Binance Square publishing, a FastAPI REST service (v0.2.1), a live bridge for OpenClaw integration (v0.2.0), and production-grade security hardening. It is not finished, but it is well beyond concept stage.
 
 ---
 
@@ -21,6 +26,7 @@ It uses Binance Skills Hub as the evidence layer, adds a Python judgment layer o
 - [What makes it different](#what-makes-it-different)
 - [Architecture](#architecture)
 - [Quick start](#quick-start)
+- [Configuration](#configuration)
 - [API mode](#api-mode)
 - [Docker](#docker)
 - [Binance Square publishing](#binance-square-publishing)
@@ -63,11 +69,13 @@ Bibipilot currently supports **10 research commands**:
 | `/meme <symbol>` | First-pass meme token scan |
 | `careers` | Binance hiring pulse for ecosystem intelligence |
 
+> **Alias:** `watch today` is accepted as an alternative to `watchtoday`.
+
 It also supports:
 - **Binance Square publishing** — live text posting with draft/publish support
 - **Scheduled daily posting** — premium 1-post/day engine centered on the nightly `night-diary` slot
 - **REST API** — FastAPI service (v0.2.1) with auth, rate limiting, and security headers
-- **Live bridge** — OpenClaw runtime integration (v0.2.0) for token, signal, audit, meme, and watchtoday
+- **Live bridge** — OpenClaw runtime bridge (v0.2.0) with a single `/runtime` endpoint handling token, signal, audit, meme, wallet, and watchtoday via `command` query parameter
 
 ---
 
@@ -151,6 +159,7 @@ python3 src/main.py wallet 0x1234567890ab
 python3 src/main.py risk ETH
 python3 src/main.py audit BNB
 python3 src/main.py watchtoday
+python3 src/main.py watch today     # alias for watchtoday
 python3 src/main.py meme DOGE
 python3 src/main.py careers
 python3 src/main.py careers --cache-only
@@ -161,6 +170,52 @@ python3 src/main.py careers --cache-only
 make check   # compile checks
 make test    # test suite
 ```
+
+---
+
+## Configuration
+
+Copy `.env.example` to `.env` and fill in values:
+```bash
+cp .env.example .env
+```
+
+### Core settings
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `APP_ENV` | `development` | Environment name |
+| `APP_MODE` | `mock` | `mock` for local dev, `live` for real data |
+| `BINANCE_SKILLS_BASE_URL` | *(empty)* | Binance Skills adapter URL |
+| `BINANCE_API_KEY` | *(empty)* | Binance API key for Spot data |
+| `BINANCE_API_SECRET` | *(empty)* | Binance API secret |
+| `COINMARKETCAP_API_KEY` | *(empty)* | Optional market quote source |
+
+### API server settings
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `API_HOST` | `0.0.0.0` | API listen address |
+| `API_PORT` | `8000` | API listen port |
+| `API_AUTH_ENABLED` | `false` | Enable HMAC API key auth |
+| `API_AUTH_KEY` | *(empty)* | API key for `X-API-Key` header |
+| `API_RATE_LIMIT_ENABLED` | `true` | Enable rate limiting |
+| `API_RATE_LIMIT_REQUESTS` | `60` | Max requests per window |
+| `API_RATE_LIMIT_WINDOW_SECONDS` | `60` | Rate limit window |
+
+### Bridge settings
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `BRIDGE_LIVE_ENABLED` | `false` | Enable live bridge |
+| `BRIDGE_DEFAULT_CHAIN_ID` | `56` | Default chain (BSC) |
+| `BRIDGE_HTTP_TIMEOUT_SECONDS` | `20` | HTTP timeout |
+| `BRIDGE_HTTP_RETRIES` | `2` | Retry count |
+
+### Binance Square settings
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `BINANCE_SQUARE_API_KEY` | *(empty)* | Square publishing key |
+| `BINANCE_SQUARE_API_BASE_URL` | `https://www.binance.com` | Square API base |
+
+See [`.env.example`](.env.example) for the full template.
 
 ---
 
@@ -197,7 +252,16 @@ uvicorn src.api:app --host 0.0.0.0 --port 8000
 ```bash
 make bridge-api
 ```
-Provides OpenClaw runtime integration endpoints for token, signal, audit, meme, and watchtoday. Wallet bridge is scaffolded.
+Provides a single `/runtime` endpoint for OpenClaw integration. Pass `command` and `entity` as query parameters:
+```
+GET /runtime?command=token&entity=BNB
+GET /runtime?command=signal&entity=DOGE
+GET /runtime?command=audit&entity=BNB
+GET /runtime?command=meme&entity=DOGE
+GET /runtime?command=watchtoday
+GET /runtime?command=wallet&entity=0x...
+```
+The bridge also exposes `/health` for readiness checks.
 
 ---
 
@@ -313,6 +377,32 @@ See also: [`SECURITY.md`](SECURITY.md) and [`SECURITY-CHECKLIST.md`](SECURITY-CH
 
 ## Documentation
 
+### Project layout
+```
+bibipilot/
+├── src/
+│   ├── main.py              # CLI entry point
+│   ├── api.py               # FastAPI REST service (v0.2.1)
+│   ├── bridge_api.py        # OpenClaw runtime bridge (v0.2.0)
+│   ├── config.py            # Configuration and environment
+│   ├── square_cli.py        # Binance Square publishing CLI
+│   ├── square_diary.py      # Scheduled daily posting engine
+│   ├── analyzers/           # Command-specific analysis logic
+│   ├── formatters/          # Output formatting and heuristics
+│   ├── models/              # Data models and Pydantic schemas
+│   ├── services/            # Business logic and integrations
+│   └── utils/               # Parsing, validation, helpers
+├── tests/                   # 33 test files
+├── docs/                    # 123 documentation files
+├── examples/                # Payload examples and output samples
+├── agent/                   # Agent identity and operating files
+├── config/                  # Runtime configuration
+├── scripts/                 # Deployment and utility scripts
+├── Dockerfile               # Python 3.12-slim, non-root container
+├── Makefile                 # 15 development targets
+└── pyproject.toml           # Package metadata (v0.1.0)
+```
+
 ### Start here
 | Document | Purpose |
 |----------|---------|
@@ -334,11 +424,14 @@ See also: [`SECURITY.md`](SECURITY.md) and [`SECURITY-CHECKLIST.md`](SECURITY-CH
 | [`examples/current-output-examples.md`](examples/current-output-examples.md) | Fresh CLI output examples |
 
 ### Tech stack
-- **Python 3.10+** (3.12 in Docker)
-- **FastAPI** and **uvicorn** — REST API
-- **httpx** — HTTP client
-- **rich** — terminal formatting
-- **python-dotenv** — environment configuration
+| Component | Technology | Version |
+|-----------|-----------|---------|
+| Language | Python | 3.10+ (3.12 in Docker) |
+| API framework | FastAPI | 0.135.1 |
+| ASGI server | uvicorn | 0.41.0 |
+| HTTP client | httpx | 0.28.1 |
+| Terminal formatting | rich | 13.7.1 |
+| Configuration | python-dotenv | 1.2.2 |
 
 ---
 

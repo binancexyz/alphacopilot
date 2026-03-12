@@ -222,6 +222,8 @@ Users should be able to ask:
 ### H. `/watchtoday`
 **Purpose:** Summarize what matters today across the market.
 
+**Alias:** `watch today` is accepted as an alternative.
+
 **Inputs:** crypto-market-rank, meme-rush, trading-signal, Binance Spot (optional)
 
 **Output:** Top narratives, strongest signals, smart-money context, main risk zones, market takeaway
@@ -276,6 +278,23 @@ Users should be able to ask:
 | GET | `/brief/watchtoday` | Daily market board |
 
 **Security:** Optional API key auth (HMAC timing-safe), rate limiting, security headers, CORS (disabled by default)
+
+---
+
+### M. OpenClaw Bridge (v0.2.0)
+**Purpose:** Live bridge for OpenClaw runtime integration.
+
+**Architecture:** Single generic `/runtime` endpoint dispatches to command-specific skill sets via `command` and `entity` query parameters, rather than separate per-command endpoints.
+
+**Endpoints:**
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/health` | Bridge health and mode status |
+| GET | `/runtime?command=<cmd>&entity=<val>` | Dispatch to skill set for command |
+
+**Supported commands:** `token`, `signal`, `audit`, `meme`, `wallet`, `watchtoday`
+
+**Configuration:** Controlled via `BRIDGE_LIVE_ENABLED`, `BRIDGE_DEFAULT_CHAIN_ID`, `BRIDGE_HTTP_TIMEOUT_SECONDS`, `BRIDGE_HTTP_RETRIES`, and `BRIDGE_HEALTHCHECK_ENABLED` environment variables.
 
 ---
 
@@ -374,6 +393,17 @@ Requirements:
 - SSRF protection with `follow_redirects=False` and URL scheme validation
 - Security headers on all responses
 - Non-root container execution
+
+### Configurable security settings
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `API_AUTH_ENABLED` | `false` | Enable API key authentication |
+| `API_AUTH_KEY` | *(empty)* | API key for HMAC comparison |
+| `API_AUTH_HEADER` | `X-API-Key` | Header name for API key |
+| `API_RATE_LIMIT_ENABLED` | `true` | Enable rate limiting |
+| `API_RATE_LIMIT_REQUESTS` | `60` | Max requests per window |
+| `API_RATE_LIMIT_WINDOW_SECONDS` | `60` | Rate limit window in seconds |
+| `API_REQUEST_LOGGING_ENABLED` | `true` | Enable request logging |
 
 ---
 
@@ -486,7 +516,7 @@ Still remaining for full live readiness:
 | Terminal formatting | rich | 13.7.1 |
 | Configuration | python-dotenv | 1.2.2 |
 | Container | Docker | Python 3.12-slim |
-| Testing | Custom runner | tests/run_tests.py |
+| Testing | Custom runner | tests/run_tests.py (33 test files) |
 | CI/CD | GitHub Actions | python-checks.yml |
 
 ---

@@ -9,8 +9,9 @@
 
 ### Improved
 - comprehensive documentation overhaul across all docs to reflect actual codebase state
-- README.md rewritten with table of contents, full API docs, Docker instructions, architecture overview, and current status
-- docs/prd.md expanded to cover all 10 commands, REST API, security, tech stack, and current state
+- README.md rewritten with badges, table of contents, full configuration reference, project layout, API docs, Docker instructions, architecture overview, and current status
+- docs/prd.md expanded to cover all 10 commands, REST API, OpenClaw bridge (section M), security settings table, tech stack with 33 test files, and current state
+- .env.example synced with config.py: added API security, bridge, and rate-limiting settings; removed orphaned placeholders not consumed by any code
 - docs/architecture.md updated to reflect FastAPI, bridge API, security layer, and service architecture
 - docs/roadmap.md updated with progress tracking (Phase 1 complete, Phase 2 in progress)
 - docs/quick-reference.md updated with all 10 commands, API endpoints, and publishing commands
