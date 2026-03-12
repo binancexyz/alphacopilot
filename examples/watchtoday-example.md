@@ -1,21 +1,25 @@
-# Example: /watchtoday
+# Example: `/watchtoday`
 
-**Market Watch**
+```text
+**🌐 Watchtoday**
 
-**Quick Verdict**
-Today’s market looks active, but filtering matters more than chasing broad noise.
+**⚡ Signals**
+┣ 万事币安 — 7 smart-money wallets | BUY
+┣ SAFE — 4 smart-money wallets | BUY
+┗ Fight — 5 smart-money wallets | BUY
 
-**Signal Quality**
-Medium — there is opportunity, but selectivity is more important than speed.
+**🔥 Attention**
+┣ quq — 40 searches | Liq $2.3M
+┣ WMTX — 22 searches | Liq $1.2M
+┗ BSB — 73 searches | Liq $1.4M
 
-**Top Risks**
-- Trending sectors may already be overheated.
-- Signal quality can vary sharply across the same narrative.
+**🧠 Board 🟢🟢🟢⚪**
+Opportunity visible. Be selective.
 
-**Why It Matters**
-When multiple narratives heat up at once, users need prioritization and risk filtering more than more dashboards.
+**⚠️ Attention ≠ signal · Verify before entry**
+```
 
-**What To Watch Next**
-- top narratives with real liquidity support
-- signals that persist beyond the first attention spike
-- risk mismatches between hype and contract quality
+What this demonstrates:
+- smart-money lanes are shown first
+- attention/hype is separated from signal quality
+- older board clutter such as narrative/social/exchange blocks is intentionally removed from the compact public shape

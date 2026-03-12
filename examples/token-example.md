@@ -1,21 +1,20 @@
-# Example: /token BNB
+# Example: `/brief BNB deep`
 
-**Token: BNB**
+```text
+**🧩 BNB — +0.00% ➖**
 
-**Quick Verdict**
-BNB looks worth monitoring, but conviction still depends on confirmation and risk balance.
+**⚡ Snapshot**
+┣ Signal: No clear entry
+┣ Trend: Defensive drift
+┗ Liquidity: —
 
-**Signal Quality**
-Medium — early positive context, but not enough evidence yet for high conviction.
+**🧠 Verdict 🟡⚪⚪⚪**
+BNB Chain Native Token is still a provisional read right now because too much live context is incomplete, early, or unmatched.
 
-**Top Risks**
-- Signal may weaken if volume does not confirm.
-- Broader market sentiment can still reverse short-term strength.
+**⚠️ No matched live smart-money signal is visible on the current board, so this token read stays capped · Defensive market**
+```
 
-**Why It Matters**
-BNB may have useful signal value, but users need context on both upside and fragility rather than raw hype.
-
-**What To Watch Next**
-- volume follow-through
-- signal persistence across the next cycle
-- whether risk flags stay stable or worsen
+What this demonstrates:
+- `/token` is now folded into `/brief deep`
+- deeper asset judgment uses the same compact visual language as the default brief
+- the product now prefers one-line verdict and one-line risk footer instead of many explanatory blocks
