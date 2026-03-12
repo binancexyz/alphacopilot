@@ -64,14 +64,15 @@
 - [`release-checklist.md`](release-checklist.md)
 - [`release-tagging.md`](release-tagging.md)
 - [`final-release-checklist.md`](final-release-checklist.md)
-- [`repo-description.md`](repo-description.md)
-- [`repo-topics.md`](repo-topics.md)
 - [`public-release-message.md`](public-release-message.md)
 - [`public-alpha-release-checklist.md`](public-alpha-release-checklist.md)
 - [`final-public-release-check.md`](final-public-release-check.md)
 - [`public-release-audit.md`](public-release-audit.md)
 - [`maintainer-summary.md`](maintainer-summary.md)
 - [`final-remaining-work-tracker.md`](final-remaining-work-tracker.md)
+
+## Archive
+- [`archive/`](archive/) — historical planning notes, transitional repo notes, and lower-signal process docs kept for reference
 
 ## Security
 - [`security-principles.md`](security-principles.md)
