@@ -14,7 +14,10 @@ from zoneinfo import ZoneInfo
 if __package__ is None or __package__ == "":
     sys.path.append(str(Path(__file__).resolve().parents[1]))
 
+from src.analyzers.posture_context import load_portfolio_posture
 from src.services.careers_tracker import refresh_or_load as refresh_careers_snapshot, short_market_note as careers_market_note
+from src.services.factory import get_market_data_service
+from src.services.normalizers import normalize_watch_today_context
 from src.services.square_posts import masked_square_key, publish_square_post
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -605,7 +608,41 @@ def choose_night_mode(topic: str, commit_line: str) -> str:
     return random.choice(["diary", "builder", "market"])
 
 
+def fetch_market_tone(config: dict) -> str:
+    try:
+        service = get_market_data_service()
+        ctx = normalize_watch_today_context(service.get_watch_today_context())
+    except Exception:
+        return ""
+    if ctx.market_takeaway:
+        return str(ctx.market_takeaway).strip()
+    if ctx.strongest_signals:
+        return f"Tonight still looks selective: {ctx.strongest_signals[0]} is one of the cleaner visible setups."
+    if ctx.top_narratives:
+        return f"The board still leans toward {ctx.top_narratives[0]}, but only if follow-through stays honest."
+    focus = [str(x).upper() for x in config.get("market_focus", []) if str(x).strip()]
+    return f"The market still feels selective tonight, so names like {', '.join(focus[:3])} matter more for structure than for noise." if focus else ""
+
+
+def fetch_posture_note() -> str:
+    snapshot = load_portfolio_posture()
+    if not snapshot:
+        return ""
+    stable_pct = float(snapshot.get("stable_pct") or 0)
+    concentration = float(snapshot.get("concentration") or 0)
+    if concentration >= 70:
+        return "Current posture is already concentrated, so quality matters more than adding more exposure just to stay busy."
+    if stable_pct >= 55:
+        return "The current posture still looks defensive, so quality matters more than volume."
+    if stable_pct <= 20:
+        return "The current posture is already fairly deployed, so selectivity matters more than excitement."
+    return "The current posture is mixed, which makes clean selection more useful than broad participation."
+
+
 def contextual_market_line(config: dict, topic: str, mode: str = "market") -> str:
+    live_tone = fetch_market_tone(config)
+    if live_tone and ("market" in topic.lower() or "signal" in topic.lower() or random.random() < 0.55):
+        return live_tone
     focus = [str(x).upper() for x in config.get("market_focus", []) if str(x).strip()]
     if not focus:
         return ""
@@ -633,16 +670,20 @@ def contextual_market_line(config: dict, topic: str, mode: str = "market") -> st
 
 def contextual_builder_line(topic: str, commit_line: str, mode: str = "builder") -> str:
     lower = commit_line.lower()
+    posture_note = fetch_posture_note()
     if "docs" in lower or "release" in lower or "packaging" in lower:
         line = "A lot of useful work today was not flashy — it was about making the product easier to trust and easier to explain."
     elif "runtime" in lower or "bridge" in lower or "api" in lower:
         line = "The important work today was runtime quality: fewer brittle edges, clearer behavior, better honesty when the system is under pressure."
-    elif "wallet" in lower or "signal" in lower or "watchtoday" in lower or "audit" in lower:
+    elif "wallet" in lower or "signal" in lower or "watchtoday" in lower or "audit" in lower or "portfolio" in lower or "posture" in lower:
         line = "The strongest product work today was judgment work — making the output clearer, stricter, and less willing to fake conviction."
     elif "square" in lower or "post" in lower or "diary" in lower:
         line = "The content side matters too: fewer posts, better standards, and a stronger reason to publish at all."
     else:
         line = f"The thread running through today was still {topic}: making it more usable, more honest, and less noisy."
+
+    if posture_note and random.random() < 0.7:
+        line = f"{line} {posture_note}"
 
     if mode == "diary":
         return line.replace("today was", "today felt like").replace("The content side matters too", "What stood out to me")
