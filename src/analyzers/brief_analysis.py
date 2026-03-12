@@ -4,7 +4,7 @@ from src.analyzers.judgment_helpers import portfolio_note_for
 from src.analyzers.price_analysis import _fetch_market_quote
 from src.services.factory import get_market_data_service
 from src.services.normalizers import normalize_signal_context, normalize_token_context
-from src.models.schemas import AnalysisBrief
+from src.models.schemas import AnalysisBrief, RiskTag
 
 
 _MAJOR_SYMBOLS = {"BTC", "ETH", "BNB", "SOL", "XRP", "DOGE", "ADA", "TRX", "TON", "AVAX", "LINK"}
@@ -75,6 +75,13 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
 
     why = f"{display_name}|{display_symbol}|{price}|{change}|{rank}|{signal.signal_status}|{token.liquidity}|{top_risk}|{verdict}"
 
+    tags: list[RiskTag] = []
+    if quote_source:
+        level = "Low" if quote_source == "Binance Spot" else "Info"
+        tags.append(RiskTag(name="Source", level=level, note=quote_source if quote_source == "Binance Spot" else "Secondary market data"))
+    if quote_source == "Binance Spot" and exchange_symbol:
+        tags.append(RiskTag(name="Binance Spot", level="Low", note=exchange_symbol))
+
     return AnalysisBrief(
         entity=f"Brief: {display_symbol}",
         quick_verdict=why,
@@ -82,7 +89,7 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
         top_risks=[],
         why_it_matters="",
         what_to_watch_next=[],
-        risk_tags=[],
+        risk_tags=tags,
         conviction=None,
         beginner_note=None,
     )

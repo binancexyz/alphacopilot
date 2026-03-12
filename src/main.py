@@ -18,7 +18,6 @@ from src.analyzers.signal_check import analyze_signal
 from src.analyzers.token_analysis import analyze_token
 from src.analyzers.wallet_analysis import analyze_wallet
 from src.formatters.brief_formatter import format_brief
-from src.services.careers_tracker import load_snapshot, refresh_or_load, summarize_snapshot
 from src.utils.parsing import normalize_token_input, normalize_wallet_input
 
 
@@ -86,6 +85,8 @@ def main() -> None:
             raise SystemExit("watch currently supports only: watch today")
         brief = watch_today()
     elif args.command == "careers":
+        from src.services.careers_tracker import load_snapshot, refresh_or_load, summarize_snapshot
+
         snapshot = load_snapshot() if args.cache_only else refresh_or_load()
         if snapshot is None:
             raise SystemExit("No local careers cache exists yet. Run without --cache-only first.")

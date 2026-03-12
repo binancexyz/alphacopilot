@@ -285,6 +285,7 @@ def analyze_price(symbol: str) -> AnalysisBrief:
                 top_risks.append(f"Using Binance Spot market data ({quote.get('exchange_symbol') or quote['symbol']}).")
         elif source != "Binance Spot":
             top_risks.append("Using secondary market data.")
+        source_note = source if source == "Binance Spot" else "Secondary market data"
         return AnalysisBrief(
             entity=f"Price: {quote['symbol']}",
             quick_verdict=f"{quote['name']}|{quote['symbol']}|{quote['link']}|{quote['rank']}",
@@ -295,7 +296,7 @@ def analyze_price(symbol: str) -> AnalysisBrief:
                 f"{quote['market_cap']}|{quote['volume_24h']}|{arrow}"
             ),
             what_to_watch_next=[],
-            risk_tags=[RiskTag(name="Source", level="Low", note=source or "market quote")],
+            risk_tags=[RiskTag(name="Source", level="Low" if source == "Binance Spot" else "Info", note=source_note)],
             conviction=None,
             beginner_note=None,
         )

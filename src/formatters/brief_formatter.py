@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.models.schemas import AnalysisBrief
+from src.models.schemas import AnalysisBrief, RiskTag
 
 
 ENTITY_EMOJI = {
@@ -62,6 +62,16 @@ def _treeify_block(text: str) -> str:
     return "\n".join(_tree_lines(bullet_like))
 
 
+def _tag_line(tag: RiskTag) -> str:
+    suffix = f" — {tag.note}" if tag.note else ""
+    return f"{tag.name}: {tag.level}{suffix}"
+
+
+def _select_tags(brief: AnalysisBrief, *names: str) -> list[RiskTag]:
+    wanted = {name.lower() for name in names}
+    return [tag for tag in brief.risk_tags if tag.name.lower() in wanted]
+
+
 def _format_price_card(brief: AnalysisBrief) -> str:
     name, symbol, link, rank = (brief.quick_verdict.split("|", 3) + ["", "", "", "0"])[:4]
     price, change_24h, high_24h, low_24h, market_cap, volume_24h, arrow = (brief.why_it_matters.split("|", 6) + ["0", "0", "0", "0", "0", "0", "➖"])[:7]
@@ -77,28 +87,33 @@ def _format_price_card(brief: AnalysisBrief) -> str:
     except ValueError:
         return _entity_line(brief.entity)
 
-    title = f"💰 {name} ({symbol})"
-    parts = [title]
+    parts = [_entity_line(brief.entity)]
+    asset_lines = [f"Asset: {name} ({symbol})"]
     if rank_i > 0:
-        parts.append(f"Rank #{rank_i}")
-    parts.append("")
-    parts.append(f"💵 Current Price: ${price_f:,.2f}" if price_f > 0 else "💵 Current Price: unavailable")
-    parts.append("")
-    parts.append(f"📊 24h Change: {change_f:+.2f}% {arrow}")
-    if high_f > 0 or low_f > 0:
-        parts.append(f"📈 High: ${high_f:,.2f} | 📉 Low: ${low_f:,.2f}")
-    parts.append("")
-    market_bits: list[str] = []
+        asset_lines.append(f"Rank: #{rank_i}")
+    parts.extend(["", "**📁 Price**"])
+    parts.extend(_tree_lines(asset_lines))
+
+    market_lines = [f"Current Price: ${price_f:,.2f}" if price_f > 0 else "Current Price: unavailable", f"24h Change: {change_f:+.2f}% {arrow}"]
+    if high_f > 0:
+        market_lines.append(f"24h High: ${high_f:,.2f}")
+    if low_f > 0:
+        market_lines.append(f"24h Low: ${low_f:,.2f}")
     if market_cap_f > 0:
-        market_bits.append(f"Cap: {_human_money(market_cap_f)}")
+        market_lines.append(f"Market Cap: {_human_money(market_cap_f)}")
     if volume_f > 0:
-        market_bits.append(f"Vol: {_human_money(volume_f)}")
-    if market_bits:
-        parts.append("💼 Market:")
-        parts.append(" | ".join(market_bits))
+        market_lines.append(f"24h Volume: {_human_money(volume_f)}")
+    parts.extend(["", "**📊 Market**"])
+    parts.extend(_tree_lines(market_lines))
+
+    source_tags = _select_tags(brief, "source", "binance spot")
+    if source_tags:
+        parts.extend(["", "**🏷️ Context**"])
+        parts.extend(_tree_lines([_tag_line(tag) for tag in source_tags[:2]]))
+
     if brief.top_risks:
-        parts.append("")
-        parts.append(f"⚠️ Note: {brief.top_risks[0]}")
+        parts.extend(["", "**🧠 Source Note**"])
+        parts.extend(_tree_lines([brief.top_risks[0]]))
     return "\n".join(parts).strip() + "\n"
 
 
@@ -112,28 +127,33 @@ def _format_compact_brief_card(brief: AnalysisBrief) -> str:
     except ValueError:
         return _entity_line(brief.entity)
     arrow = "📈" if change_f > 0 else "📉" if change_f < 0 else "➖"
-    parts = [f"🧩 {name} ({symbol})"]
-    meta = []
+    parts = [_entity_line(brief.entity)]
+
+    read_lines = []
     if rank_i > 0:
-        meta.append(f"Rank #{rank_i}")
+        read_lines.append(f"Rank: #{rank_i}")
     if signal_status and signal_status != "unknown":
-        meta.append(f"Signal: {signal_status}")
-    if meta:
-        parts.append(" | ".join(meta))
-    parts.append("")
-    if price_f > 0:
-        parts.append(f"💵 Price: ${price_f:,.2f} | 24h: {change_f:+.2f}% {arrow}")
-    else:
-        parts.append("💵 Price: unavailable")
+        read_lines.append(f"Signal: {signal_status}")
+    read_lines.append(f"Price: ${price_f:,.2f} | 24h: {change_f:+.2f}% {arrow}" if price_f > 0 else "Price: unavailable")
     if liquidity_f > 0:
-        parts.append(f"💧 Visible Liquidity: {_human_money(liquidity_f)}")
+        read_lines.append(f"Visible Liquidity: {_human_money(liquidity_f)}")
+    parts.extend(["", "**⚡ Read**"])
+    parts.extend(_tree_lines(read_lines))
+
     if verdict:
-        parts.append("")
-        parts.append(f"⚡ {verdict}")
+        parts.extend(["", f"**🧠 Verdict**\n{verdict}"])
     if top_risk:
-        parts.append(f"⚠️ Top Risk: {top_risk}")
+        parts.extend(["", "**⚠️ Top Risk**"])
+        parts.extend(_tree_lines([top_risk]))
+
+    source_tags = _select_tags(brief, "source", "binance spot")
+    if source_tags:
+        parts.extend(["", "**🏷️ Context**"])
+        parts.extend(_tree_lines([_tag_line(tag) for tag in source_tags[:2]]))
+
     if not price_f and rank_i > 0:
-        parts.append("📝 Quote source identified the asset correctly, but live price details were not carried into this compact brief.")
+        parts.extend(["", "**📝 Note**"])
+        parts.extend(_tree_lines(["Quote source identified the asset correctly, but live price details were not carried into this compact brief."]))
     return "\n".join(parts).strip() + "\n"
 
 
@@ -144,20 +164,26 @@ def _format_risk_card(brief: AnalysisBrief) -> str:
     except ValueError:
         liquidity_f = 0.0
     level_emoji = {"High": "🔴", "Medium": "🟠", "Low": "🟢"}.get(risk_level, "🟠")
-    parts = [f"🛡️ {name} ({symbol})", f"Risk Level: {risk_level} {level_emoji}"]
+    parts = [_entity_line(brief.entity), "", "**📁 Risk**"]
+    risk_lines = [f"Asset: {name} ({symbol})", f"Risk Level: {risk_level} {level_emoji}"]
     if signal_status and signal_status != "unknown":
-        parts.append(f"Signal Status: {signal_status}")
-    parts.append("")
+        risk_lines.append(f"Signal Status: {signal_status}")
+    parts.extend(_tree_lines(risk_lines))
+
     if verdict:
-        parts.append(f"⚡ {verdict}")
-    if top_risk:
-        parts.append(f"⚠️ Top Risk: {top_risk}")
-    if second_risk:
-        parts.append(f"⚠️ Next Risk: {second_risk}")
+        parts.extend(["", f"**⚡ Read**\n{verdict}"])
+    if top_risk or second_risk:
+        parts.extend(["", "**⚠️ Main Risks**"])
+        parts.extend(_tree_lines([item for item in [top_risk, second_risk] if item]))
+
+    context_lines = []
     if audit_summary:
-        parts.append(f"🔍 Audit: {audit_summary}")
+        context_lines.append(f"Audit: {audit_summary}")
     if liquidity_f > 0:
-        parts.append(f"💧 Visible Liquidity: {_human_money(liquidity_f)}")
+        context_lines.append(f"Visible Liquidity: {_human_money(liquidity_f)}")
+    if context_lines:
+        parts.extend(["", "**🏷️ Context**"])
+        parts.extend(_tree_lines(context_lines))
     return "\n".join(parts).strip() + "\n"
 
 
@@ -166,16 +192,19 @@ def _format_audit_card(brief: AnalysisBrief) -> str:
     gate = brief.audit_gate or gate_status.upper()
     gate_emoji = "🔴" if gate == "BLOCK" else "🟠" if gate == "WARN" else "🟢"
     level_emoji = {"High": "🔴", "Medium": "🟠", "Low": "🟢"}.get(risk_level, "🟠")
-    parts = [f"🔐 {name} ({symbol})", f"Audit Gate: {gate} {gate_emoji}", f"Risk Level: {risk_level} {level_emoji}", ""]
+    parts = [_entity_line(brief.entity), "", "**📁 Audit**"]
+    parts.extend(_tree_lines([f"Asset: {name} ({symbol})", f"Audit Gate: {gate} {gate_emoji}", f"Risk Level: {risk_level} {level_emoji}"]))
+
     if verdict:
-        parts.append(f"⚡ {verdict}")
-    if top_flag:
-        parts.append(f"⚠️ Primary Flag: {top_flag}")
-    if second_flag:
-        parts.append(f"⚠️ Next Flag: {second_flag}")
+        parts.extend(["", f"**⚡ Read**\n{verdict}"])
+    if top_flag or second_flag:
+        parts.extend(["", "**⚠️ Findings**"])
+        parts.extend(_tree_lines([item for item in [top_flag, second_flag] if item]))
     if audit_summary:
-        parts.append(f"🔍 Summary: {audit_summary}")
-    parts.append("⚠️ This audit result is for reference only and does not constitute investment advice. Always conduct your own research.")
+        parts.extend(["", "**🔍 Summary**"])
+        parts.extend(_tree_lines([audit_summary]))
+    parts.extend(["", "**📝 Disclaimer**"])
+    parts.extend(_tree_lines(["This audit result is for reference only and does not constitute investment advice. Always conduct your own research."]))
     return "\n".join(parts).strip() + "\n"
 
 
