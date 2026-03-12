@@ -235,18 +235,32 @@ uvicorn src.api:app --host 0.0.0.0 --port 8000
 ### Endpoints
 
 Current note:
-- the **CLI/product surface** is now canonicalized to `brief`, `signal`, `holdings`, `watchtoday`, and `audit`
-- the **REST API** still exposes some older compatibility route names internally
+- the **CLI/product surface** is canonicalized to `brief`, `signal`, `holdings`, `watchtoday`, and `audit`
+- the **REST API** now exposes matching canonical routes while keeping older compatibility routes alive
+
+#### Canonical API
 
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/health` | System status, version, config warnings |
 | GET | `/runtime/report` | Extended runtime diagnostics |
-| GET | `/brief/token?symbol=BNB` | Deeper asset brief (compatibility route; CLI equivalent: `brief BNB deep`) |
+| GET | `/brief?symbol=BNB` | Default asset brief |
+| GET | `/brief?symbol=BNB&deep=true` | Deeper asset brief |
+| GET | `/signal?token=DOGE` | Signal validation brief |
+| GET | `/audit?symbol=BNB` | Security audit brief |
+| GET | `/holdings` | Private portfolio posture |
+| GET | `/holdings?address=0x...` | Wallet behavior read |
+| GET | `/watchtoday` | Daily market board |
+
+#### Compatibility API
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/brief/token?symbol=BNB` | Deeper asset brief |
 | GET | `/brief/signal?token=DOGE` | Signal validation brief |
 | GET | `/brief/audit?symbol=BNB` | Security audit brief |
-| GET | `/brief/meme?symbol=DOGE` | Specialist meme brief (compatibility route) |
-| GET | `/brief/wallet?address=0x...` | Wallet analysis brief (compatibility route; CLI equivalent: `holdings 0x...`) |
+| GET | `/brief/meme?symbol=DOGE` | Specialist meme brief |
+| GET | `/brief/wallet?address=0x...` | Wallet analysis brief |
 | GET | `/brief/watchtoday` | Daily market board |
 
 ### Security middleware

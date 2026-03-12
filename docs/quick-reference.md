@@ -27,17 +27,29 @@
 
 Current note:
 - canonical **CLI/product commands** are `brief`, `signal`, `holdings`, `watchtoday`, and `audit`
-- some API routes still use older compatibility naming
+- the API now exposes matching canonical routes while keeping older compatibility routes alive
 
+### Canonical API
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/health` | System status, version, config warnings |
 | GET | `/runtime/report` | Extended runtime diagnostics |
-| GET | `/brief/token?symbol=BNB` | Deeper asset brief (compatibility route) |
+| GET | `/brief?symbol=BNB` | Default asset brief |
+| GET | `/brief?symbol=BNB&deep=true` | Deeper asset brief |
+| GET | `/signal?token=DOGE` | Signal validation brief |
+| GET | `/audit?symbol=BNB` | Security audit brief |
+| GET | `/holdings` | Private portfolio posture |
+| GET | `/holdings?address=0x...` | Wallet analysis brief |
+| GET | `/watchtoday` | Daily market board |
+
+### Compatibility API
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/brief/token?symbol=BNB` | Deeper asset brief |
 | GET | `/brief/signal?token=DOGE` | Signal validation brief |
 | GET | `/brief/audit?symbol=BNB` | Security audit brief |
-| GET | `/brief/meme?symbol=DOGE` | Specialist meme brief (compatibility route) |
-| GET | `/brief/wallet?address=0x...` | Wallet analysis brief (compatibility route; CLI uses `holdings`) |
+| GET | `/brief/meme?symbol=DOGE` | Specialist meme brief |
+| GET | `/brief/wallet?address=0x...` | Wallet analysis brief |
 | GET | `/brief/watchtoday` | Daily market board |
 
 ## Product promise

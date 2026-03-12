@@ -50,8 +50,11 @@ def main() -> None:
 
     try:
         from tests.test_api import (
+            test_brief_endpoint,
+            test_brief_deep_endpoint,
             test_health,
-            test_token_endpoint,
+            test_holdings_endpoint,
+            test_wallet_compatibility_endpoint_rejects_bad_address,
             test_wallet_endpoint_rejects_bad_address,
             test_watchtoday_endpoint,
         )
@@ -64,9 +67,12 @@ def main() -> None:
         print("Skipping API tests: FastAPI test dependencies are not installed on this host.")
     else:
         test_health()
-        test_token_endpoint()
+        test_brief_endpoint()
+        test_brief_deep_endpoint()
+        test_holdings_endpoint()
         test_watchtoday_endpoint()
         test_wallet_endpoint_rejects_bad_address()
+        test_wallet_compatibility_endpoint_rejects_bad_address()
         test_bridge_health()
         test_bridge_runtime_token_contract()
         test_bridge_runtime_requires_entity_for_token()

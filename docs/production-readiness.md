@@ -21,10 +21,15 @@ make api
 Endpoints:
 - `GET /health`
 - `GET /runtime/report`
-- `GET /brief/token?symbol=BNB` (compatibility route; CLI equivalent: `brief BNB deep`)
-- `GET /brief/signal?token=DOGE`
-- `GET /brief/wallet?address=0x1234567890ab` (compatibility route; CLI equivalent: `holdings 0x1234567890ab`)
-- `GET /brief/watchtoday`
+- `GET /brief?symbol=BNB`
+- `GET /brief?symbol=BNB&deep=true`
+- `GET /signal?token=DOGE`
+- `GET /audit?symbol=BNB`
+- `GET /holdings`
+- `GET /holdings?address=0x1234567890ab`
+- `GET /watchtoday`
+
+Compatibility routes remain available for older `/brief/*` consumers.
 
 ## Mock mode
 Default mode for safe demos:

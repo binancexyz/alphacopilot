@@ -29,7 +29,27 @@ def test_runtime_report_endpoint():
     assert "runtime" in payload
 
 
-def test_token_endpoint():
+def test_brief_endpoint():
+    response = client.get("/brief", params={"symbol": "BNB"})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["command"] == "brief"
+    assert payload["entity"] == "BNB"
+    assert payload["mode"] in {"mock", "live"}
+    assert payload["runtime_state"] in {"mock", "live_ok", "live_degraded", None}
+    assert "Brief: BNB" in payload["rendered"]
+
+
+def test_brief_deep_endpoint():
+    response = client.get("/brief", params={"symbol": "BNB", "deep": "true"})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["command"] == "token"
+    assert payload["entity"] == "BNB"
+    assert "Token: BNB" in payload["rendered"]
+
+
+def test_token_compatibility_endpoint():
     response = client.get("/brief/token", params={"symbol": "BNB"})
     assert response.status_code == 200
     payload = response.json()
@@ -41,7 +61,7 @@ def test_token_endpoint():
 
 
 def test_watchtoday_endpoint():
-    response = client.get("/brief/watchtoday")
+    response = client.get("/watchtoday")
     assert response.status_code == 200
     payload = response.json()
     assert payload["command"] == "watchtoday"
@@ -50,6 +70,20 @@ def test_watchtoday_endpoint():
     assert "Market Watch" in payload["rendered"]
 
 
+def test_holdings_endpoint():
+    response = client.get("/holdings")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["command"] == "holdings"
+    assert payload["mode"] in {"mock", "live"}
+    assert "Portfolio:" in payload["rendered"]
+
+
 def test_wallet_endpoint_rejects_bad_address():
+    response = client.get("/holdings", params={"address": "not-a-wallet"})
+    assert response.status_code == 400
+
+
+def test_wallet_compatibility_endpoint_rejects_bad_address():
     response = client.get("/brief/wallet", params={"address": "not-a-wallet"})
     assert response.status_code == 400
