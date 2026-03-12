@@ -61,6 +61,20 @@ def _activity_read(ctx: WalletContext) -> str:
     return "little visible 24h movement"
 
 
+def _wallet_style_profile(ctx: WalletContext) -> str:
+    if ctx.style_profile:
+        return ctx.style_profile
+    if ctx.top_concentration_pct >= 75:
+        return "Concentrated Conviction"
+    if ctx.top_concentration_pct >= 50:
+        return "Focused Rotation"
+    if ctx.holdings_count >= 10 and ctx.top_concentration_pct <= 35:
+        return "Broad Basket"
+    if ctx.notable_exposures:
+        return "Narrative Tilt"
+    return "Mixed Observer"
+
+
 def _wallet_why_it_matters(ctx: WalletContext) -> str:
     pieces: list[str] = []
     if ctx.portfolio_value > 0:
@@ -69,6 +83,7 @@ def _wallet_why_it_matters(ctx: WalletContext) -> str:
         pieces.append(f"This wallet shows {ctx.holdings_count} holding(s), which is enough to inspect for concentration and rotation patterns.")
 
     pieces.append(f"Current read: {_concentration_read(ctx)} with {_activity_read(ctx)}.")
+    pieces.append(f"Behavior profile: {_wallet_style_profile(ctx)}.")
 
     if ctx.style_read:
         pieces.append(ctx.style_read)
@@ -117,8 +132,7 @@ def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
 
     if ctx.notable_exposures:
         risk_tags.append(RiskTag(name="Narrative Risk", level="Medium", note=", ".join(ctx.notable_exposures[:3])))
-    if ctx.style_profile:
-        risk_tags.append(RiskTag(name="Style Profile", level="Low", note=ctx.style_profile))
+    risk_tags.append(RiskTag(name="Style Profile", level="Low", note=_wallet_style_profile(ctx)))
 
     thin_context = ctx.portfolio_value <= 0 and ctx.holdings_count <= 0 and not ctx.top_holdings
 

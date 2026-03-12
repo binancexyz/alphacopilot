@@ -38,6 +38,9 @@ def analyze_meme(symbol: str) -> AnalysisBrief:
     evidence_level, evidence_note = _meme_evidence_level(ctx)
 
     tags: list[RiskTag] = [RiskTag(name="Evidence Quality", level=evidence_level, note=evidence_note)]
+    participation_quality = "High" if ctx.smart_money_count > 0 and ctx.signal_freshness == "FRESH" and ctx.top_holder_concentration_pct < 60 else "Medium" if ctx.smart_money_count > 0 or ctx.lifecycle_stage in {"attention", "active", "finalizing"} else "Low"
+    participation_note = "Participation looks healthier than pure headline hype." if participation_quality == "High" else "Participation is visible, but still needs discipline and confirmation." if participation_quality == "Medium" else "Participation quality is still too weak or one-dimensional to trust much."
+    tags.append(RiskTag(name="Participation Quality", level=participation_quality, note=participation_note))
     tags.append(RiskTag(name="Lifecycle", level="Medium", note=ctx.lifecycle_stage))
     if ctx.launch_platform:
         tags.append(RiskTag(name="Launch Platform", level="Low", note=ctx.launch_platform))
@@ -93,6 +96,8 @@ def analyze_meme(symbol: str) -> AnalysisBrief:
             risks.append("Live meme participation is still too thin to treat this as a strong setup.")
         if ctx.top_holder_concentration_pct >= 80:
             risks.append("Top-holder concentration is extreme, so meme participation may be less healthy than headline attention suggests.")
+        elif ctx.top_holder_concentration_pct >= 60:
+            risks.append("Holder concentration is still elevated, so participation quality may be weaker than the narrative suggests.")
         if ctx.exit_rate >= 70:
             risks.append("Most tracked smart money may already be exiting, which makes this meme setup look late.")
         elif ctx.exit_rate >= 40:

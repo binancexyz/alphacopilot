@@ -27,3 +27,4 @@ def test_analyze_meme_includes_evidence_quality():
         meme_analysis.get_market_data_service = old
     assert brief.entity == "Meme: DOGE"
     assert any(tag.name == "Evidence Quality" for tag in brief.risk_tags)
+    assert any(tag.name == "Participation Quality" for tag in brief.risk_tags)

@@ -18,4 +18,6 @@ def test_build_wallet_brief():
     assert brief.conviction is not None
     assert any(tag.name == "Evidence Quality" for tag in brief.risk_tags)
     assert any(tag.name == "Activity" for tag in brief.risk_tags)
+    assert any(tag.name == "Style Profile" for tag in brief.risk_tags)
     assert "Current read:" in brief.why_it_matters
+    assert "Behavior profile:" in brief.why_it_matters

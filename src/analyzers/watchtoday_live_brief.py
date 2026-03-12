@@ -96,7 +96,7 @@ def _watch_sections(ctx: WatchTodayContext) -> list[BriefSection]:
         sections.append(BriefSection(title="🚀 Meme Watch", content="\n".join(f"- {item}" for item in ctx.meme_watch[:3])))
     if ctx.top_narratives:
         sections.append(BriefSection(title="🌊 Narrative", content="\n".join(f"- {item}" for item in ctx.top_narratives[:3])))
-    if ctx.top_picks:
+    if len(ctx.top_picks) >= 2 or (ctx.top_picks and (ctx.strongest_signals or ctx.exchange_board)):
         sections.append(BriefSection(title="👀 Today's Top 3", content="\n".join(f"- {item}" for item in ctx.top_picks[:3])))
 
     populated, sparse = _watch_lane_summary(ctx)
