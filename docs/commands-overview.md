@@ -10,9 +10,11 @@
 ---
 
 ## `/brief <symbol>`
-**Purpose:** Compress token + signal + market context quickly.
+**Purpose:** Premium default market read.
+- Compress token + signal + market context quickly
 - Ground the answer in Binance Spot when available
 - Distinguish live exchange price from actual smart-money confirmation
+- Best default command when you want the shortest smart answer
 
 **Example:** `python3 src/main.py brief BTC`
 
@@ -24,6 +26,7 @@
 - Highlight top risks
 - Use Binance Spot as supporting exchange-native confirmation when available
 - Includes audit, market rank, and trading signal context
+- Starts factoring in current portfolio posture when private Spot account context is available
 
 **Example:** `python3 src/main.py token BNB`
 
@@ -53,7 +56,7 @@
 **Purpose:** Read your Binance Spot account in a safe, read-only way.
 - Uses signed Binance API account-read endpoints
 - Estimates visible USD value from current spot prices
-- Summarizes top holdings and concentration
+- Summarizes top holdings, concentration, stablecoin share, and current posture
 - Does not place trades or manage orders
 
 **Example:** `python3 src/main.py portfolio`
@@ -65,6 +68,7 @@
 - Identify top risk factors by severity
 - Surface what could go wrong
 - Risk tags with clear severity labels
+- Factors in current portfolio posture when private Spot account context is available
 
 **Example:** `python3 src/main.py risk ETH`
 
@@ -86,6 +90,7 @@
 - Prioritize narratives, signals, and risk zones
 - Anchor the board with a compact Binance Spot exchange board when available
 - Smart-money context and trending narratives
+- Factors in current portfolio posture when private Spot account context is available
 
 **Example:** `python3 src/main.py watchtoday`
 
