@@ -1,5 +1,27 @@
 # Commands Overview
 
+## Recommended product surface
+
+### Core commands
+- `/brief <symbol>` — default market read
+- `/token <symbol>` — deeper asset judgment
+- `/signal <token>` — setup timing and invalidation
+- `/portfolio` — private posture
+- `/wallet <address>` — public wallet behavior
+- `/watchtoday` — daily market board
+
+### Specialist commands
+- `/price <symbol>` — lightweight market utility card
+- `/risk <symbol>` — downside-only specialist lens
+- `/audit <symbol>` — security-first specialist view
+- `/meme <symbol>` — meme-specific scan
+- `careers` — ecosystem context lane
+
+### Alias
+- `watch today` → alias for `/watchtoday`
+
+---
+
 ## `/price <symbol>`
 **Purpose:** Show a premium market card.
 - Prefer Binance Spot read-only market data when available

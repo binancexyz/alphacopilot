@@ -54,28 +54,33 @@ Bibipilot is designed for that gap. It does not try to be a full autonomous trad
 
 ## What it does
 
-Bibipilot currently supports **11 research commands**:
+Bibipilot currently supports **11 research commands**, but they are best understood in two layers:
 
+### Core commands
+| Command | Purpose |
+|---------|---------|
+| `/brief <symbol>` | Fast default market read with source/context framing |
+| `/token <symbol>` | Fuller token judgment with conviction, risk, and audit-aware context |
+| `/signal <token>` | Smart-money signal timing, setup validation, and invalidation framing |
+| `/portfolio` | Private Binance Spot posture snapshot with freshness and history-aware drift |
+| `/wallet <address>` | Public wallet behavior/posture read with follow verdict |
+| `/watchtoday` | Daily market board with prioritized live lanes |
+
+### Specialist commands
 | Command | Purpose |
 |---------|---------|
 | `/price <symbol>` | Premium market card with source/context-aware quote framing |
-| `/brief <symbol>` | Fast market synthesis with exchange-native grounding |
-| `/token <symbol>` | Token setup and conviction read with audit and signal context |
-| `/signal <token>` | Smart-money signal timing, setup validation, and invalidation framing |
-| `/wallet <address>` | Public wallet posture / behavior interpretation with follow verdict |
-| `/portfolio` | Private Binance Spot posture snapshot with freshness and history-aware drift |
 | `/risk <symbol>` | Downside-first risk assessment |
 | `/audit <symbol>` | Security-first token audit card |
-| `/watchtoday` | Daily market board with trending narratives and live lanes |
 | `/meme <symbol>` | First-pass meme token scan |
 | `careers` | Optional Binance hiring pulse for ecosystem context |
 
 > **Alias:** `watch today` is accepted as an alternative to `watchtoday`.
 
-Core surfaces are:
-- **Market intelligence** — `/brief`, `/price`, `/watchtoday`
-- **Asset judgment** — `/token`, `/signal`, `/risk`, `/audit`
-- **Position intelligence** — `/portfolio` (private Binance Spot posture), `/wallet` (public external-wallet posture)
+Product surfaces are:
+- **Core daily surfaces** — `/brief`, `/portfolio`, `/watchtoday`
+- **Deeper judgment surfaces** — `/token`, `/signal`, `/wallet`
+- **Specialist lenses** — `/price`, `/risk`, `/audit`, `/meme`, `careers`
 - **Publishing** — premium nightly Binance Square output
 
 It also supports:

@@ -212,12 +212,29 @@ The product is better when it says less but says it more clearly.
 Priority:
 - omit weak or low-value sections instead of filling space
 
-## Recommended next implementation order
-1. Add stronger freshness/drift storytelling to `/portfolio`
-2. Tighten confidence language across `/brief`, `/token`, `/signal`
-3. Improve `/watchtoday` lane selectivity and omission logic
-4. Add invalidation framing to `/signal`
-5. Refine audit handling for partial/unsupported cases
+## Recommended command-surface direction
+A cleaner product story is now available:
+
+### Core commands
+- `/brief`
+- `/token`
+- `/signal`
+- `/portfolio`
+- `/wallet`
+- `/watchtoday`
+
+### Specialist commands
+- `/price`
+- `/risk`
+- `/audit`
+- `/meme`
+- `careers`
+
+Why this matters:
+- less overlap
+- better onboarding
+- cleaner demos
+- stronger product identity
 
 ## Current conclusion
 The right move remains refinement over expansion.
@@ -227,3 +244,4 @@ The highest-value path now is:
 - cleaner confidence language
 - stronger trust framing
 - better consistency across the command surface
+- clearer presentation of core vs specialist commands
