@@ -1,0 +1,86 @@
+# Current Public Copy
+
+A consolidated current reference for public-facing Bibipilot copy.
+
+## Core positioning
+**Bibipilot** is a Binance-native copilot that checks what’s moving, filters what’s dangerous, and publishes what’s worth attention.
+
+## Short description
+Bibipilot is a public-alpha Binance-native research copilot built around a simple loop:
+
+**research -> judgment -> publishing**
+
+It turns Binance Skills outputs into:
+- fast market reads
+- deeper asset judgment
+- signal timing and invalidation
+- public wallet behavior reads
+- private portfolio posture
+- Binance Square publishing output
+
+## Short submission version
+Bibipilot is a Binance-native copilot that checks what’s moving, filters what’s dangerous, and publishes what’s worth attention.
+It turns Binance Skills outputs into a research -> judgment -> publishing workflow instead of stopping at raw crypto movement.
+
+## Medium submission version
+Bibipilot is built for a simple problem: crypto attention moves faster than clean judgment.
+Users can already find token movement, wallet activity, ranking changes, narrative rotation, and smart-money signals everywhere, but that still does not answer the questions that matter: what is real, what is risky, what is late, and what is worth publishing?
+
+Bibipilot closes that gap.
+It uses Binance Skills as the evidence layer, adds a judgment layer through command-specific outputs such as `/brief`, `/token`, `/signal`, `/portfolio`, `/wallet`, and `/watchtoday`, and then closes the loop by publishing directly to Binance Square.
+
+## Public release message
+Launching **Bibipilot**.
+
+It is a **public-alpha Binance-native research copilot** built around:
+- research
+- judgment
+- publishing
+
+### Core commands
+- `/brief`
+- `/token`
+- `/signal`
+- `/portfolio`
+- `/wallet`
+- `/watchtoday`
+
+### Specialist commands
+- `/price`
+- `/risk`
+- `/audit`
+- `/meme`
+- `careers`
+
+### What is real today
+- runnable Python CLI + API surface
+- stronger evidence honesty across the main commands
+- Binance Spot read-only grounding for `price`, `brief`, and `watchtoday`
+- supporting Binance Spot confirmation for `token` and `signal`
+- improved wallet behavior judgment
+- Binance Square publishing + premium scheduled daily posting engine
+- live runtime health diagnostics via `/health`
+
+### What is still partial
+- live bridge coverage is strongest for `token`, `signal`, `audit`, and `watchtoday`
+- wallet and meme live depth still need richer runtime context
+- this should be treated as a credible public alpha, not a finished autonomous trading system
+
+## Social / launch post
+Building **Bibipilot** with OpenClaw.
+
+A Binance Skills-powered research copilot for:
+- market reads
+- token judgment
+- signal timing
+- wallet intelligence
+- portfolio posture
+- risk and audit checks
+
+Goal: help users understand not just what is moving, but whether it is actually worth attention.
+
+## Very short launch line
+Building **Bibipilot** — a Binance-native AI copilot for signal, risk, posture, and conviction.
+
+## Demo caption
+Bibipilot turns fragmented crypto data into a cleaner research -> judgment -> publishing workflow with sharper trust framing and more useful command-specific outputs.

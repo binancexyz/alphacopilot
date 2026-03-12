@@ -14,8 +14,7 @@
 
 ## Submission and Demo
 - [`submission.md`](submission.md)
-- [`submission-short.md`](submission-short.md)
-- [`submission-medium.md`](submission-medium.md)
+- [`current-public-copy.md`](current-public-copy.md) — Consolidated public/release/submission copy
 - [`current-demo-guide.md`](current-demo-guide.md) — Consolidated current demo path and narration
 - [`demo-script.md`](demo-script.md)
 - [`demo-checklist.md`](demo-checklist.md)
@@ -23,7 +22,6 @@
 - [`challenge-package.md`](challenge-package.md)
 - [`judge-cheat-sheet.md`](judge-cheat-sheet.md)
 - [`judge-qa-prep.md`](judge-qa-prep.md)
-- [`spoken-pitch-pack.md`](spoken-pitch-pack.md)
 - [`live-proof-appendix.md`](live-proof-appendix.md)
 
 ## Integration
