@@ -8,20 +8,8 @@
 | `/brief <symbol>` | Fast default asset read; can go deeper when data supports it |
 | `/signal <symbol>` | Setup validation with invalidation and risk merged in |
 | `/holdings [address]` | Portfolio posture or external wallet behavior |
-| `/watchtoday` | Daily board with Exchange Board + signal / narrative lanes |
-| `/audit <symbol>` | Security-first token read with meme lens folded in |
-
-### Hidden compatibility
-| Older command | New home |
-|---------|---------|
-| `/token <symbol>` | `/brief <symbol> deep` |
-| `/portfolio` | `/holdings` |
-| `/wallet <address>` | `/holdings <address>` |
-| `/risk <symbol>` | `/signal <symbol>` |
-| `/meme <symbol>` | `/audit <symbol>` |
-| `/price <symbol>` | hidden utility surface |
-| `/watch` | removed alias |
-| `careers` | removed from main product surface |
+| `/watchtoday` | Daily board with smart-money signals first and attention separated cleanly |
+| `/audit <symbol>` | Security-first token read with conditional meme lens |
 
 ## API Endpoints (v0.2.1)
 
@@ -46,18 +34,19 @@ Current note:
 
 ## What works especially well today
 - Stronger trust / evidence honesty across the main commands
-- Binance Spot read-only grounding for `price`, `brief`, and `watchtoday`
-- Supporting Binance Spot confirmation for `token` and `signal`
-- Wallet output is more behavior-aware
+- Binance Spot read-only grounding for `/brief` and `/watchtoday`
+- Supporting confirmation for deeper `/brief` and `/signal` reads
+- `/holdings` is more behavior-aware and posture-aware
 - Runtime health diagnostics in live mode via `/health`
 - Live Binance Square posting with scheduled daily engine
 - Security-hardened API (auth, rate limiting, SSRF protection, path traversal prevention)
 
 ## Output shape
-- Structured section-based layout
-- Read / Verdict / Risks / Watch blocks where appropriate
-- Context / Source / Validity tags when relevant
-- Command-specific additions like `Invalidation` for `/signal`
+- Compact product-style cards
+- One-line header with symbol/market context where available
+- Main state block (`Snapshot`, `Setup`, `Posture`, `Signals`, `Findings`)
+- One-line verdict with dot markers
+- One-line `⚠️` footer for compact risk/trust framing
 - Premium tree-style hierarchy for grouped outputs
 
 ## Publishing commands

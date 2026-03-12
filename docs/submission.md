@@ -51,12 +51,12 @@ It is a **research -> judgment -> publishing** product.
 - `/watchtoday` — daily market board with live lanes
 - `/audit` — security-first audit card with meme lens folded in
 
-### Hidden compatibility
-- `/token` — deeper asset path now represented by `/brief ... deep`
-- `/portfolio` / `/wallet` — absorbed into `/holdings`
-- `/risk` — absorbed into `/signal`
-- `/meme` — absorbed into `/audit`
-- `/price` — hidden utility surface
+### Public simplification
+- `/brief <symbol> deep` is the richer asset path
+- `/holdings` covers both private posture and external wallet study
+- risk is merged into `/signal`
+- meme/speculative context is merged into `/audit`
+- the public product story is intentionally kept to five commands only
 
 ## Skills Used
 ### Research core
@@ -93,8 +93,8 @@ The command surface is clear, chat-friendly, and demoable in a few minutes.
 - live Binance Square posting works
 - a scheduled premium 1-post/day Binance Square engine is active
 - Binance Spot read-only grounding now strengthens `/brief` and `/watchtoday`
-- `/watchtoday` now renders live market lanes with an Exchange Board anchor
-- `/audit` is a first-class command and now carries an embedded meme lens
+- `/watchtoday` now renders a cleaner live daily board with smart-money signals and attention separated
+- `/audit` is a first-class command and now carries a conditional meme lens when relevant
 - `/holdings` supports both private portfolio posture and external wallet behavior
 - live runtime health diagnostics now exist via `/health`
 

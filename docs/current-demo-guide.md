@@ -27,9 +27,9 @@ Bibipilot is a Binance-native copilot that checks whatâ€™s moving, filters whatâ
 
 ### 1. `/brief BNB`
 **What to show**
-- fast default market read
-- source/context framing
-- confidence-aware compact answer
+- one-line market header
+- compact snapshot block
+- verdict + risk footer in premium compact shape
 
 **What it proves**
 - Bibipilot can compress useful judgment quickly
@@ -47,9 +47,9 @@ Bibipilot is a Binance-native copilot that checks whatâ€™s moving, filters whatâ
 
 ### 3. `/watchtoday`
 **What to show**
-- market lanes
-- ranking/selectivity
-- daily board feel
+- smart-money signals first
+- attention separated from signal quality
+- one compact board verdict
 
 **What it proves**
 - Bibipilot can prioritize attention at the market level
@@ -57,9 +57,9 @@ Bibipilot is a Binance-native copilot that checks whatâ€™s moving, filters whatâ
 
 ### 4. `/brief BNB deep`
 **What to show**
-- deeper asset judgment
-- audit-aware context
-- richer risk/why/watch structure
+- deeper asset judgment under the same `/brief` family
+- same compact visual language as default `/brief`
+- fuller asset read without returning to the old `/token` command
 
 **What it proves**
 - Bibipilot can go deeper than `/brief` without becoming noisy
