@@ -54,7 +54,7 @@ Bibipilot is designed for that gap. It does not try to be a full autonomous trad
 
 ## What it does
 
-Bibipilot currently supports **10 research commands**:
+Bibipilot currently supports **11 research commands**:
 
 | Command | Purpose |
 |---------|---------|
@@ -68,9 +68,15 @@ Bibipilot currently supports **10 research commands**:
 | `/audit <symbol>` | Security-first token audit card |
 | `/watchtoday` | Daily market board with trending narratives and live lanes |
 | `/meme <symbol>` | First-pass meme token scan |
-| `careers` | Binance hiring pulse for ecosystem intelligence |
+| `careers` | Optional Binance hiring pulse for ecosystem context |
 
 > **Alias:** `watch today` is accepted as an alternative to `watchtoday`.
+
+Core surfaces are:
+- **Market intelligence** — `/brief`, `/price`, `/watchtoday`
+- **Asset judgment** — `/token`, `/signal`, `/risk`, `/audit`
+- **Position intelligence** — `/portfolio`, `/wallet`
+- **Publishing** — premium nightly Binance Square output
 
 It also supports:
 - **Binance Square publishing** — live text posting with draft/publish support

@@ -98,23 +98,9 @@ def _asset_usd_price(asset: str, prices: dict[str, Decimal]) -> Decimal:
     return Decimal("0")
 
 
-def analyze_portfolio() -> AnalysisBrief:
-    try:
-        account = _signed_get(ACCOUNT_INFO_URL, {})
-        prices = _load_prices()
-    except Exception as exc:
-        message = str(exc)
-        return AnalysisBrief(
-            entity="Portfolio: Binance Spot",
-            quick_verdict="Portfolio read is unavailable right now.",
-            signal_quality="Unavailable",
-            top_risks=[message],
-            why_it_matters="This command is read-only, but it still depends on valid Binance API credentials and account-read permission.",
-            what_to_watch_next=[
-                "confirm BINANCE_API_KEY and BINANCE_API_SECRET are set",
-                "make sure the API key has Spot read permissions",
-            ],
-        )
+def get_portfolio_snapshot() -> dict[str, Any]:
+    account = _signed_get(ACCOUNT_INFO_URL, {})
+    prices = _load_prices()
 
     balances = account.get("balances") or []
     merged: dict[str, dict[str, Any]] = {}
@@ -188,6 +174,8 @@ def analyze_portfolio() -> AnalysisBrief:
 
     available_assets = len(priced_assets)
     locked_assets = sum(1 for item in enriched if item["locked"] > 0)
+    posture_note = "defensive" if stable_pct >= 55 else "risk-on" if stable_pct <= 20 else "mixed"
+
     risk_lines: list[str] = []
     if total_value <= 0:
         risk_lines.append("No priced Spot balances were visible, so the portfolio read stays incomplete.")
@@ -202,12 +190,6 @@ def analyze_portfolio() -> AnalysisBrief:
     if not risk_lines:
         risk_lines.append("This is an estimated read-only snapshot, not a full PnL or cost-basis analysis.")
 
-    watch = [
-        "whether the top holding keeps growing relative to the rest of the account",
-        "whether stablecoin dry powder changes meaningfully after the next rotation",
-    ]
-
-    posture_note = "defensive" if stable_pct >= 55 else "risk-on" if stable_pct <= 20 else "mixed"
     why = (
         f"Estimated visible Spot value is about ${float(total_value):,.2f} across {available_assets} priced asset(s). "
         f"Stablecoins are {stable_pct:.1f}% of the priced snapshot and risk assets are {risk_pct:.1f}%. "
@@ -223,16 +205,51 @@ def analyze_portfolio() -> AnalysisBrief:
         tags.append(RiskTag(name="Top Concentration", level="High" if concentration >= 70 else "Medium" if concentration >= 40 else "Low", note=f"{concentration:.1f}%"))
     tags.append(RiskTag(name="Stablecoin Share", level="High" if stable_pct >= 55 else "Medium" if stable_pct >= 20 else "Low", note=f"{stable_pct:.1f}%"))
 
+    return {
+        "verdict": verdict,
+        "quality": quality,
+        "why": why,
+        "top_lines": top_lines,
+        "top_risks": risk_lines,
+        "tags": tags,
+        "available_assets": available_assets,
+        "stable_pct": stable_pct,
+        "risk_pct": risk_pct,
+        "concentration": concentration,
+        "posture": posture_note,
+        "total_value": float(total_value),
+    }
+
+
+def analyze_portfolio() -> AnalysisBrief:
+    try:
+        snapshot = get_portfolio_snapshot()
+    except Exception as exc:
+        message = str(exc)
+        return AnalysisBrief(
+            entity="Portfolio: Binance Spot",
+            quick_verdict="Portfolio read is unavailable right now.",
+            signal_quality="Unavailable",
+            top_risks=[message],
+            why_it_matters="This command is read-only, but it still depends on valid Binance API credentials and account-read permission.",
+            what_to_watch_next=[
+                "confirm BINANCE_API_KEY and BINANCE_API_SECRET are set",
+                "make sure the API key has Spot read permissions",
+            ],
+        )
+
     brief = AnalysisBrief(
         entity="Portfolio: Binance Spot",
-        quick_verdict=verdict,
-        signal_quality=quality,
-        top_risks=risk_lines,
-        why_it_matters=why,
-        what_to_watch_next=watch,
-        risk_tags=tags,
+        quick_verdict=snapshot["verdict"],
+        signal_quality=snapshot["quality"],
+        top_risks=snapshot["top_risks"],
+        why_it_matters=snapshot["why"],
+        what_to_watch_next=[
+            "whether the top holding keeps growing relative to the rest of the account",
+            "whether stablecoin dry powder changes meaningfully after the next rotation",
+        ],
+        risk_tags=snapshot["tags"],
     )
-    if top_lines:
-        brief.sections = []
-        brief.beginner_note = "\n".join(top_lines)
+    if snapshot["top_lines"]:
+        brief.beginner_note = "\n".join(snapshot["top_lines"])
     return brief

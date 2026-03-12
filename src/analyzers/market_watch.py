@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from src.analyzers.posture_context import load_portfolio_posture, posture_watchtoday_note
 from src.analyzers.price_analysis import _fetch_market_quote
 from src.analyzers.watchtoday_live_brief import build_watchtoday_brief
 from src.models.schemas import AnalysisBrief
@@ -37,5 +38,10 @@ def watch_today() -> AnalysisBrief:
             raw_context["exchange_board"] = exchange_board
             if not raw_context.get("market_takeaway"):
                 raw_context["market_takeaway"] = "Exchange board is populated from Binance Spot, but setup quality still depends on lane confirmation."
+    portfolio = load_portfolio_posture()
+    posture_note = posture_watchtoday_note(portfolio)
+    if posture_note:
+        takeaway = str(raw_context.get("market_takeaway") or "").strip()
+        raw_context["market_takeaway"] = f"{takeaway} {posture_note}".strip() if takeaway else posture_note
     watch_context = normalize_watch_today_context(raw_context)
     return build_watchtoday_brief(watch_context)
