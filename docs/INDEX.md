@@ -53,6 +53,8 @@
 - [`install.md`](install.md) — Installation and setup
 - [`deployment.md`](deployment.md) — Docker and deployment guide
 - [`developer-flow.md`](developer-flow.md)
+- [`current-checklist.md`](current-checklist.md) — Consolidated current working/release checklist
+- [`current-next-steps.md`](current-next-steps.md) — Consolidated current priority directions
 - [`build-checklist.md`](build-checklist.md)
 - [`first-session-checklist.md`](first-session-checklist.md)
 - [`runtime-demo.md`](runtime-demo.md)
