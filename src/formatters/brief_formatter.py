@@ -100,7 +100,7 @@ def _format_compact_brief_card(brief: AnalysisBrief) -> str:
     else:
         parts.append("💵 Price: unavailable")
     if liquidity_f > 0:
-        parts.append(f"💧 Liquidity: {_human_money(liquidity_f)}")
+        parts.append(f"💧 Visible Liquidity: {_human_money(liquidity_f)}")
     if verdict:
         parts.append("")
         parts.append(f"⚡ {verdict}")
@@ -131,7 +131,7 @@ def _format_risk_card(brief: AnalysisBrief) -> str:
     if audit_summary:
         parts.append(f"🔍 Audit: {audit_summary}")
     if liquidity_f > 0:
-        parts.append(f"💧 Liquidity: {_human_money(liquidity_f)}")
+        parts.append(f"💧 Visible Liquidity: {_human_money(liquidity_f)}")
     return "\n".join(parts).strip() + "\n"
 
 

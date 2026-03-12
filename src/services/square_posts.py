@@ -86,7 +86,7 @@ def _build_brief_post(brief: AnalysisBrief) -> str:
     if float(price or 0) > 0:
         lines.append(f"Price ${float(price):,.2f} | 24h {float(change or 0):+.2f}%")
     if float(liquidity or 0) > 0:
-        lines.append(f"Liquidity {_human_money_short(float(liquidity))}")
+        lines.append(f"Visible liquidity {_human_money_short(float(liquidity))}")
     if verdict:
         lines.append(verdict)
     if top_risk:
@@ -108,7 +108,7 @@ def _build_risk_post(brief: AnalysisBrief) -> str:
     if audit_summary:
         lines.append(f"Audit: {audit_summary}")
     if float(liquidity or 0) > 0:
-        lines.append(f"Liquidity {_human_money_short(float(liquidity))}")
+        lines.append(f"Visible liquidity {_human_money_short(float(liquidity))}")
     return "\n".join(lines)
 
 

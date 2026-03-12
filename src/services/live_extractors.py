@@ -642,7 +642,7 @@ def _extract_strongest_signals(signal: dict[str, Any]) -> list[str]:
 
 def _extract_symbol_and_liquidity(item: dict[str, Any]) -> tuple[str, float]:
     symbol = str(item.get("symbol") or item.get("baseAsset") or item.get("name") or "Token")
-    liquidity = _pick_number(item, "liquidity", "liquidityUsd", "quoteVolume", "volume")
+    liquidity = _pick_number(item, "liquidity", "liquidityUsd")
     return symbol, liquidity
 
 
