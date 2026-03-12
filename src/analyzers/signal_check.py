@@ -36,4 +36,20 @@ def analyze_signal(token: str) -> AnalysisBrief:
 
     append_posture_note_to_brief(brief, signal_context.token)
 
+    invalidation = ""
+    if signal_context.audit_gate == "BLOCK":
+        invalidation = "Breaks immediately if the audit state stays blocked."
+    elif signal_context.trigger_price > 0 and signal_context.current_price > 0:
+        if signal_context.current_price >= signal_context.trigger_price:
+            invalidation = "Breaks if price loses the trigger zone and follow-through fades."
+        else:
+            invalidation = "Still unproven until price reclaims the trigger zone with real follow-through."
+    elif signal_context.exit_rate >= 70:
+        invalidation = "Breaks if exit pressure stays elevated and fresh participation does not replace it."
+    elif signal_context.signal_status == "unmatched":
+        invalidation = "Breaks if price attention never turns into a matched smart-money signal."
+    else:
+        invalidation = "Breaks if confirmation does not improve in the next cycle."
+    brief.risk_tags.append(RiskTag(name="Invalidation", level="Info", note=invalidation))
+
     return brief

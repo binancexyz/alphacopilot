@@ -146,10 +146,14 @@ def _format_compact_brief_card(brief: AnalysisBrief) -> str:
         parts.extend(["", "**⚠️ Top Risk**"])
         parts.extend(_tree_lines([top_risk]))
 
+    context_lines: list[str] = []
     source_tags = _select_tags(brief, "source", "binance spot")
-    if source_tags:
+    context_lines.extend(_tag_line(tag) for tag in source_tags[:2])
+    if brief.signal_quality:
+        context_lines.append(f"Confidence: {brief.signal_quality}")
+    if context_lines:
         parts.extend(["", "**🏷️ Context**"])
-        parts.extend(_tree_lines([_tag_line(tag) for tag in source_tags[:2]]))
+        parts.extend(_tree_lines(context_lines))
 
     if not price_f and rank_i > 0:
         parts.extend(["", "**📝 Note**"])
@@ -268,16 +272,22 @@ def _format_signal_card(brief: AnalysisBrief) -> str:
         parts.append("")
         parts.append("**👀 Watch**")
         parts.extend(_tree_lines(brief.what_to_watch_next[:2]))
+    invalidation_tags = [tag for tag in brief.risk_tags if tag.name == "Invalidation"]
+    if invalidation_tags:
+        parts.append("")
+        parts.append("**🧩 Invalidation**")
+        parts.extend(_tree_lines([tag.note for tag in invalidation_tags if tag.note][:1]))
     if brief.top_risks:
         parts.append("")
         parts.append("**⚠️ Risks**")
         parts.extend(_tree_lines(brief.top_risks[:2]))
-    if brief.risk_tags:
+    visible_tags = [tag for tag in brief.risk_tags if tag.name != "Invalidation"]
+    if visible_tags:
         parts.append("")
         parts.append("**🏷️ Tags**")
-        limit = 4 if any(tag.name == "Binance Spot" for tag in brief.risk_tags) else 3
+        limit = 4 if any(tag.name == "Binance Spot" for tag in visible_tags) else 3
         tag_lines = []
-        for tag in brief.risk_tags[:limit]:
+        for tag in visible_tags[:limit]:
             suffix = f" — {tag.note}" if tag.note else ""
             tag_lines.append(f"{tag.name}: {tag.level}{suffix}")
         parts.extend(_tree_lines(tag_lines))

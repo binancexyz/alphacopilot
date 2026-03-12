@@ -82,6 +82,24 @@ def append_snapshot(snapshot: dict[str, Any]) -> None:
     HISTORY_PATH.write_text(json.dumps(trimmed, indent=2), encoding="utf-8")
 
 
+def top_change_note(previous: dict[str, Any] | None, current: dict[str, Any]) -> str:
+    if not previous:
+        return ""
+    prev_assets = {str(item.get('asset')): float(item.get('usd_value') or 0) for item in previous.get('priced_assets', []) if isinstance(item, dict)}
+    cur_assets = {str(item.get('asset')): float(item.get('usd_value') or 0) for item in current.get('priced_assets', []) if isinstance(item, dict)}
+    shared: list[tuple[str, float]] = []
+    for asset, cur_value in cur_assets.items():
+        if asset in prev_assets:
+            delta = cur_value - prev_assets[asset]
+            if abs(delta) >= 10:
+                shared.append((asset, delta))
+    if not shared:
+        return ""
+    strongest = max(shared, key=lambda item: abs(item[1]))
+    direction = "up" if strongest[1] > 0 else "down"
+    return f"Strongest recent change: {strongest[0]} {direction} ${abs(strongest[1]):,.2f}."
+
+
 def describe_delta(previous: dict[str, Any] | None, current: dict[str, Any]) -> tuple[str, list[str]]:
     if not previous:
         return "", []

@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 from src.config import settings
 from src.models.schemas import AnalysisBrief, RiskTag
 from src.services.exposure_groups import top_groups
-from src.services.portfolio_history import append_snapshot, describe_delta, describe_snapshot_age, describe_trend, earlier_snapshot, latest_snapshot
+from src.services.portfolio_history import append_snapshot, describe_delta, describe_snapshot_age, describe_trend, earlier_snapshot, latest_snapshot, top_change_note
 
 BINANCE_API_BASE_URL = "https://api.binance.com"
 ACCOUNT_INFO_URL = "/api/v3/account"
@@ -253,6 +253,7 @@ def analyze_portfolio() -> AnalysisBrief:
     prior_trend = earlier_snapshot(steps_back=3)
     previous_age = describe_snapshot_age(previous)
     delta_summary, delta_watch = describe_delta(previous, snapshot)
+    strongest_change = top_change_note(previous, snapshot)
     trend_summary = describe_trend(prior_trend, snapshot)
     append_snapshot(snapshot)
 
@@ -262,6 +263,9 @@ def analyze_portfolio() -> AnalysisBrief:
         snapshot["tags"].append(RiskTag(name="Freshness", level="Info", note=previous_age))
     if delta_summary:
         why = f"{why} {delta_summary}"
+    if strongest_change:
+        why = f"{why} {strongest_change}"
+        snapshot["tags"].append(RiskTag(name="Top Change", level="Info", note=strongest_change.replace('Strongest recent change: ', '').rstrip('.')))
     if trend_summary:
         why = f"{why} Short local trend: {trend_summary}."
         snapshot["tags"].append(RiskTag(name="Short Trend", level="Info", note=trend_summary))
