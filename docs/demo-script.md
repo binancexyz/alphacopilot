@@ -116,8 +116,8 @@ Bibipilot can rank what matters today, not just list what exists.
 
 ## Demo 7 — Binance Square publishing proof
 ### Show
-- one recent market post
-- one recent motivation post
+- one recent market-aware post
+- one recent reflective/nightly post
 - scheduled engine proof
 
 ### Narration

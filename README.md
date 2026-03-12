@@ -65,7 +65,7 @@ Bibipilot currently supports **10 research commands**:
 
 It also supports:
 - **Binance Square publishing** — live text posting with draft/publish support
-- **Scheduled daily posting** — premium 1-post/day engine with 7 diary series (morning, education, market, builder, ecosystem, motivation, night)
+- **Scheduled daily posting** — premium 1-post/day engine centered on the nightly `night-diary` slot
 - **REST API** — FastAPI service (v0.2.1) with auth, rate limiting, and security headers
 - **Live bridge** — OpenClaw runtime integration (v0.2.0) for token, signal, audit, meme, and watchtoday
 
@@ -80,7 +80,7 @@ Bibipilot does not stop at surfacing movement. It answers: should I care? Should
 Built around Binance Skills Hub for evidence, Binance Spot for exchange-native price grounding, and Binance Square for publishable output.
 
 ### 3. Real publishing loop
-Not just an analysis interface — it can publish live posts to Binance Square and includes a scheduled premium daily posting engine with anti-repetition tracking, CTA rotation, and series-aware voice profiles.
+Not just an analysis interface — it can publish live posts to Binance Square and includes a scheduled premium daily posting engine with context-aware topic selection and distinct diary / builder / market night modes.
 
 ### 4. Command-specific design
 Each command is shaped for its own job rather than forcing everything into one generic answer template.
@@ -229,12 +229,10 @@ Bibipilot includes a complete publishing pipeline:
 
 - **Live Binance Square posting** — publish text posts directly
 - **Draft/publish support** — editorial control before posting
-- **Scheduled premium 1-post/day engine** — 7 diary series with cron support:
-  - `morning-diary` / `education` / `market` / `builder` / `ecosystem` / `motivation` / `night-diary`
-- **Anti-repetition tracking** — avoids duplicate content across runs
-- **CTA rotation** and **topic rotation** — keeps posts fresh
-- **Series labels** and **slot-specific voice profiles** — adapts tone per diary type
-- **Git integration** — pulls recent commit context for builder posts
+- **Scheduled premium 1-post/day engine** — cron-driven nightly publishing via `night-diary` at `21:30` Asia/Phnom_Penh
+- **Context-aware topic selection** — weighs fresh repo/work context instead of simple slot rotation
+- **Night-mode variation** — adapts tone between diary / builder / market modes
+- **Git integration** — pulls recent commit context into the nightly post generator
 - **Performance logging** — tracks post metrics and writing seeds
 
 ### Publishing commands

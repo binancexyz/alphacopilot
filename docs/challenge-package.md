@@ -176,8 +176,8 @@ If no matched signal exists, that is still a useful truth.
 
 #### 7. Binance Square publishing proof
 Show:
-- a recent live market post
-- a recent live motivation post
+- a recent live market-aware post
+- a recent live reflective/nightly post
 - scheduled engine proof / cron story
 
 **Judge takeaway:** this is not just analysis. It publishes.

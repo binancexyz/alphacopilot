@@ -5,7 +5,7 @@
 - scheduled Binance Square content engine, now tightened to a premium 1-post/day mode centered on the nightly diary slot
 - lightweight anti-repetition state tracking for recurring Square posting
 - performance logging, internal writing-seed capture, and weekly recap generation for the Square content engine
-- CTA rotation, topic rotation, series labels, and slot-specific voice profiles for Square posts
+- context-aware nightly topic selection plus diary / builder / market night modes for Square posts
 
 ### Improved
 - comprehensive documentation overhaul across all docs to reflect actual codebase state

@@ -20,7 +20,7 @@ It does not just show what is moving. It helps users understand **whether it is 
 ## Key numbers
 - **10 research commands** — price, brief, token, signal, wallet, risk, audit, watchtoday, meme, careers
 - **8 API endpoints** — FastAPI REST service (v0.2.1) with security middleware
-- **7 diary series** — scheduled premium daily publishing engine
+- **1 premium nightly post** — scheduled daily publishing engine at 21:30 Asia/Phnom_Penh
 - **6 Binance Skills** — core evidence layer
 - **Mock and live modes** — offline development and real integration
 

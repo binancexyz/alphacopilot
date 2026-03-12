@@ -255,8 +255,8 @@ Users should be able to ask:
 - Concise Binance Square-ready post
 - Publish path via `square-post`
 - Premium scheduled daily post path centered on one strong post per day
-- 7 diary series: morning-diary, education, market, builder, ecosystem, motivation, night-diary
-- Anti-repetition tracking, CTA rotation, topic rotation, series-aware voice profiles
+- Active scheduled slot: `night-diary` at `21:30` Asia/Phnom_Penh
+- Context-aware nightly generation with diary / builder / market mode variation
 
 ---
 
@@ -345,8 +345,8 @@ Requirements:
 - Scheduled posting should prioritize one high-standard daily post over repetitive multi-slot volume
 - Scheduled post generation should adapt tone between diary / builder / market modes when context supports it
 - Anti-repetition state tracking across runs
-- CTA rotation and topic rotation for content freshness
-- Series labels and slot-specific voice profiles
+- Context-aware nightly topic selection weighted toward fresh real work
+- Distinct diary / builder / market night modes for less repetitive voice
 
 ---
 

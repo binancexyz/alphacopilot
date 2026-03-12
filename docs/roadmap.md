@@ -17,7 +17,7 @@
 - [x] Build FastAPI REST API (v0.2.1) with security middleware
 - [x] Build OpenClaw live bridge API (v0.2.0)
 - [x] Build Binance Square publishing with draft/publish support
-- [x] Build scheduled premium 1-post/day engine with 7 diary series
+- [x] Build scheduled premium 1-post/day engine centered on the nightly `night-diary` slot
 - [x] Add API security hardening (auth, rate limiting, SSRF, path traversal, headers)
 - [x] Keep scope research-first and human-supervised
 

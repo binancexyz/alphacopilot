@@ -28,13 +28,13 @@ This repo now includes Binance Square short-post drafting and publishing aligned
 python3 src/square_cli.py token BNB
 python3 src/square_cli.py signal DOGE
 python3 src/square_cli.py watchtoday
-python3 src/square_diary.py education --dry-run
+python3 src/square_diary.py night-diary --dry-run
 ```
 
 ## Publish a post
 ```bash
 python3 src/square_cli.py token BNB --publish
-python3 src/square_diary.py ecosystem --publish
+python3 src/square_diary.py night-diary --publish
 ```
 
 ## Scheduled content engine
@@ -53,15 +53,12 @@ bash scripts/install_square_diary_cron.sh
 
 ## Quality layer
 The scheduled engine now includes:
-- stronger rotating hooks by slot and hook type
-- slot-specific voice profiles
-- topic rotation memory
-- CTA / interaction endings
-- recurring series labels
+- stronger opening variation and less template-like nightly voice
+- context-aware topic selection weighted toward fresh repo/work context
+- diary / builder / market night-mode variation
 - a cringe/generic filter that can block weak posts before publish
 - performance logging in `tmp/square_post_log.jsonl`
 - weekly recap generation in `tmp/square_weekly_recap.md`
-- a stronger ecosystem intelligence pack for BNB Chain MCP, Binance Skills, bnbchain-skills, 8004scan, AI agents, and agent infrastructure
 
 Internal note: the code may still keep article-seed files for future writing workflows, but **article publishing is not a supported product path right now**. The confirmed live path is Binance Square text posts only.
 
@@ -87,5 +84,5 @@ Known important codes include:
 - this repo sends `clienttype: binanceSkill`
 - this repo parses `data.id` and constructs the final post URL when available
 - the scheduled content engine now focuses on a single daily `night-diary` publishing slot
-- the daily post is expected to blend diary voice with the strongest builder / market / ecosystem angle available that day
-- the scheduled engine keeps a lightweight local state file at `tmp/square_diary_state.json` to reduce repeated hooks, CTAs, and topics across recurring posts
+- the daily post is expected to lean into the strongest honest diary / builder / market angle available that day
+- the scheduled engine keeps a lightweight local state file at `tmp/square_diary_state.json` to reduce repeated hooks and topics across recurring posts
