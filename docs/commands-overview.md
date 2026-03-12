@@ -43,21 +43,23 @@
 ---
 
 ## `/wallet <address>`
-**Purpose:** Interpret wallet concentration, behavior, and exposure.
+**Purpose:** Read public posture from an external wallet.
 - Summarize whether the wallet is worth monitoring
 - Provide behavior-aware analysis (not just a holdings snapshot)
 - Follow verdict based on trading patterns
+- Best paired mentally with `/portfolio`, which reads private Binance Spot posture
 
 **Example:** `python3 src/main.py wallet 0x1234567890ab`
 
 ---
 
 ## `/portfolio`
-**Purpose:** Read your Binance Spot account in a safe, read-only way.
+**Purpose:** Read your private Binance Spot posture in a safe, read-only way.
 - Uses signed Binance API account-read endpoints
 - Estimates visible USD value from current spot prices
-- Summarizes top holdings, concentration, stablecoin share, and current posture
+- Summarizes top holdings, concentration, stablecoin share, current posture, and historical drift
 - Does not place trades or manage orders
+- Best paired mentally with `/wallet`, which reads public posture from an external address
 
 **Example:** `python3 src/main.py portfolio`
 

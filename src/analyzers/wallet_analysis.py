@@ -16,5 +16,7 @@ def analyze_wallet(address: str) -> AnalysisBrief:
         top = wallet_context.top_holdings[0]
         brief.risk_tags.insert(1, RiskTag(name="Lead Holding", level="Medium", note=f"{top.symbol} {top.weight_pct:.1f}%"))
         if wallet_context.holdings_count >= 5 and wallet_context.top_concentration_pct < 60 and wallet_context.follow_verdict == "Track":
-            brief.why_it_matters += f" The visible spread across {wallet_context.holdings_count} holdings makes this more useful for behavior study than a one-bet wallet."
+            brief.why_it_matters += f" The visible spread across {wallet_context.holdings_count} holdings makes this more useful for public posture study than a one-bet wallet."
+        if brief.beginner_note:
+            brief.beginner_note += " Think of /wallet as public posture, while /portfolio is your private Binance Spot posture."
     return brief

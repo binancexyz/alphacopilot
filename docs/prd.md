@@ -173,7 +173,7 @@ Users should be able to ask:
 ---
 
 ### C. `/wallet <address>`
-**Purpose:** Interpret wallet holdings, behavior, and follow worthiness.
+**Purpose:** Read public posture from an external wallet and judge whether it is worth following.
 
 **Inputs:** wallet holdings, optional token enrichment, optional trader/market context
 
@@ -182,11 +182,11 @@ Users should be able to ask:
 ---
 
 ### D. `/portfolio`
-**Purpose:** Read a user's own Binance Spot account in a private, read-only way.
+**Purpose:** Read a user's own Binance Spot posture in a private, read-only way.
 
-**Inputs:** signed Binance API account read, current spot prices
+**Inputs:** signed Binance API account read, current spot prices, local snapshot history
 
-**Output:** estimated visible portfolio value, top holdings, concentration context, major risks, what to watch next
+**Output:** estimated visible portfolio value, top holdings, concentration context, grouped exposure mix, posture drift, major risks, what to watch next
 
 ---
 

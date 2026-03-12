@@ -62,8 +62,8 @@ Bibipilot currently supports **11 research commands**:
 | `/brief <symbol>` | Fast market synthesis with exchange-native grounding |
 | `/token <symbol>` | Token setup and conviction read with audit and signal context |
 | `/signal <token>` | Smart-money signal timing and setup validation |
-| `/wallet <address>` | Wallet behavior interpretation with follow verdict |
-| `/portfolio` | Read-only Binance Spot account portfolio snapshot |
+| `/wallet <address>` | Public wallet posture / behavior interpretation with follow verdict |
+| `/portfolio` | Private Binance Spot posture snapshot with history-aware drift |
 | `/risk <symbol>` | Downside-first risk assessment |
 | `/audit <symbol>` | Security-first token audit card |
 | `/watchtoday` | Daily market board with trending narratives and live lanes |
@@ -75,7 +75,7 @@ Bibipilot currently supports **11 research commands**:
 Core surfaces are:
 - **Market intelligence** — `/brief`, `/price`, `/watchtoday`
 - **Asset judgment** — `/token`, `/signal`, `/risk`, `/audit`
-- **Position intelligence** — `/portfolio`, `/wallet`
+- **Position intelligence** — `/portfolio` (private Binance Spot posture), `/wallet` (public external-wallet posture)
 - **Publishing** — premium nightly Binance Square output
 
 It also supports:

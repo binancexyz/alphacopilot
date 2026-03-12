@@ -3,7 +3,7 @@
 Bibipilot is a **Binance-native market, posture, and publishing intelligence copilot** designed for the OpenClaw + Binance Skills Hub ecosystem.
 
 ## What it does
-- Analyzes market setups, token risk, wallets, and private Spot posture
+- Analyzes market setups, token risk, public wallet posture, and private Spot posture
 - Filters noise into conviction-driven research briefs
 - Assesses risk, security audits, and smart-money signals
 - Publishes insights to Binance Square
