@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from src.models.schemas import AnalysisBrief, RiskTag
+from src.models.schemas import AnalysisBrief, BriefSection, RiskTag
+from src.analyzers.meme_analysis import analyze_meme
 from src.services.factory import get_market_data_service
 
 
@@ -8,14 +9,14 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
     service = get_market_data_service()
     audit = service.get_audit_context(symbol)
 
-    display_symbol = str(audit.get("symbol") or symbol)
-    display_name = str(audit.get("display_name") or display_symbol)
-    audit_gate = str(audit.get("audit_gate") or "WARN")
-    blocked_reason = str(audit.get("blocked_reason") or "")
-    risk_level = str(audit.get("risk_level") or ("High" if audit_gate == "BLOCK" else "Medium" if audit_gate == "WARN" else "Low"))
-    audit_summary = str(audit.get("audit_summary") or blocked_reason or "Audit output is limited right now.")
-    audit_flags = [str(x) for x in audit.get("audit_flags", [])]
-    risks = [str(x) for x in audit.get("major_risks", [])]
+    display_symbol = str(audit.get("symbol") or symbol).replace("|", "/")
+    display_name = str(audit.get("display_name") or display_symbol).replace("|", "/")
+    audit_gate = str(audit.get("audit_gate") or "WARN").replace("|", "/")
+    blocked_reason = str(audit.get("blocked_reason") or "").replace("|", "/")
+    risk_level = str(audit.get("risk_level") or ("High" if audit_gate == "BLOCK" else "Medium" if audit_gate == "WARN" else "Low")).replace("|", "/")
+    audit_summary = str(audit.get("audit_summary") or blocked_reason or "Audit output is limited right now.").replace("|", " / ")
+    audit_flags = [str(x).replace("|", " / ") for x in audit.get("audit_flags", [])]
+    risks = [str(x).replace("|", " / ") for x in audit.get("major_risks", [])]
     audit_valid = bool(audit.get("has_result", audit.get("hasResult", False))) and bool(audit.get("is_supported", audit.get("isSupported", False)))
     audit_limited = not audit_valid or "limited" in audit_summary.lower() or "partial" in blocked_reason.lower() or "unavailable" in blocked_reason.lower()
 
@@ -49,6 +50,20 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
     elif audit_valid:
         tags.append(RiskTag(name="Audit Validity", level="Valid", note="Result is based on a supported audit payload."))
 
+    sections: list[BriefSection] = []
+    try:
+        meme_brief = analyze_meme(symbol)
+        meme_note = meme_brief.quick_verdict.strip()
+        meme_tags = []
+        for tag in meme_brief.risk_tags:
+            if tag.name in {"Participation Quality", "Lifecycle"}:
+                suffix = f": {tag.note}" if tag.note else ""
+                meme_tags.append(f"{tag.name}: {tag.level}{suffix}")
+        meme_lines = [meme_note] + meme_tags[:2]
+        sections.append(BriefSection(title="🧪 Meme Lens", content="\n".join(f"- {line}" for line in meme_lines if line)))
+    except Exception:
+        pass
+
     return AnalysisBrief(
         entity=f"Audit: {display_symbol}",
         quick_verdict=packed,
@@ -57,6 +72,7 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
         why_it_matters="",
         what_to_watch_next=[],
         risk_tags=tags,
+        sections=sections,
         conviction=None,
         beginner_note=None,
         audit_gate=audit_gate,

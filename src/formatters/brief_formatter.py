@@ -207,9 +207,14 @@ def _format_audit_card(brief: AnalysisBrief) -> str:
     if audit_summary:
         parts.extend(["", "**🔍 Summary**"])
         parts.extend(_tree_lines([audit_summary]))
+    if brief.sections:
+        for section in brief.sections[:2]:
+            if section.content:
+                parts.extend(["", f"**{section.title}**"])
+                parts.append(_treeify_block(section.content))
     if brief.risk_tags:
         parts.extend(["", "**🏷️ Context**"])
-        parts.extend(_tree_lines([_tag_line(tag) for tag in brief.risk_tags[:2]]))
+        parts.extend(_tree_lines([_tag_line(tag) for tag in brief.risk_tags[:3]]))
     parts.extend(["", "**📝 Disclaimer**"])
     parts.extend(_tree_lines(["This audit result is for reference only and does not constitute investment advice. Always conduct your own research."]))
     return "\n".join(parts).strip() + "\n"

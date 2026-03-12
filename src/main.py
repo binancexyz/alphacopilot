@@ -22,49 +22,67 @@ from src.utils.parsing import normalize_token_input, normalize_wallet_input
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Bibipilot scaffold CLI")
-    subparsers = parser.add_subparsers(dest="command", required=True)
+    parser = argparse.ArgumentParser(
+        description="Bibipilot CLI",
+        epilog="Canonical commands: brief <symbol>, signal <symbol>, holdings [address], watchtoday, audit <symbol>",
+    )
+    subparsers = parser.add_subparsers(
+        dest="command",
+        required=True,
+        metavar="{brief,signal,holdings,watchtoday,audit}",
+    )
 
-    token_parser = subparsers.add_parser("token")
-    token_parser.add_argument("symbol")
-
-    brief_parser = subparsers.add_parser("brief")
+    brief_parser = subparsers.add_parser("brief", help="fast default read; add 'deep' for fuller token judgment")
     brief_parser.add_argument("symbol")
+    brief_parser.add_argument("mode", nargs="?", choices=["deep"], help=argparse.SUPPRESS)
 
-    price_parser = subparsers.add_parser("price")
-    price_parser.add_argument("symbol")
-
-    risk_parser = subparsers.add_parser("risk")
-    risk_parser.add_argument("symbol")
-
-    audit_parser = subparsers.add_parser("audit")
-    audit_parser.add_argument("symbol")
-
-    meme_parser = subparsers.add_parser("meme")
-    meme_parser.add_argument("symbol")
-
-    wallet_parser = subparsers.add_parser("wallet")
-    wallet_parser.add_argument("address")
-
-    signal_parser = subparsers.add_parser("signal")
+    signal_parser = subparsers.add_parser("signal", help="setup, risk, and invalidation")
     signal_parser.add_argument("token")
 
-    subparsers.add_parser("portfolio")
+    holdings_parser = subparsers.add_parser("holdings", help="portfolio posture or external wallet behavior")
+    holdings_parser.add_argument("target", nargs="?", help="optional wallet address; omit for your Binance Spot posture")
 
-    watch_parser = subparsers.add_parser("watch")
+    subparsers.add_parser("watchtoday", help="daily market board")
+
+    audit_parser = subparsers.add_parser("audit", help="safety read with merged meme lens")
+    audit_parser.add_argument("symbol")
+
+    token_parser = subparsers.add_parser("token", help=argparse.SUPPRESS)
+    token_parser.add_argument("symbol")
+
+    price_parser = subparsers.add_parser("price", help=argparse.SUPPRESS)
+    price_parser.add_argument("symbol")
+
+    risk_parser = subparsers.add_parser("risk", help=argparse.SUPPRESS)
+    risk_parser.add_argument("symbol")
+
+    meme_parser = subparsers.add_parser("meme", help=argparse.SUPPRESS)
+    meme_parser.add_argument("symbol")
+
+    wallet_parser = subparsers.add_parser("wallet", help=argparse.SUPPRESS)
+    wallet_parser.add_argument("address")
+
+    subparsers.add_parser("portfolio", help=argparse.SUPPRESS)
+
+    watch_parser = subparsers.add_parser("watch", help=argparse.SUPPRESS)
     watch_parser.add_argument("scope", nargs="?", default="today")
 
-    subparsers.add_parser("watchtoday")
-    careers_parser = subparsers.add_parser("careers")
+    careers_parser = subparsers.add_parser("careers", help=argparse.SUPPRESS)
     careers_parser.add_argument("--limit", type=int, default=6)
     careers_parser.add_argument("--cache-only", action="store_true")
+
+    hidden_commands = {"token", "price", "risk", "meme", "wallet", "portfolio", "watch", "careers"}
+    subparsers._choices_actions = [
+        action for action in subparsers._choices_actions if getattr(action, "dest", None) not in hidden_commands
+    ]
 
     args = parser.parse_args()
 
     if args.command == "token":
         brief = analyze_token(normalize_token_input(args.symbol))
     elif args.command == "brief":
-        brief = analyze_brief(normalize_token_input(args.symbol))
+        symbol = normalize_token_input(args.symbol)
+        brief = analyze_token(symbol) if getattr(args, "mode", None) == "deep" else analyze_brief(symbol)
     elif args.command == "price":
         brief = analyze_price(normalize_token_input(args.symbol))
     elif args.command == "risk":
@@ -75,6 +93,9 @@ def main() -> None:
         brief = analyze_meme(normalize_token_input(args.symbol))
     elif args.command == "wallet":
         brief = analyze_wallet(normalize_wallet_input(args.address))
+    elif args.command == "holdings":
+        target = str(getattr(args, "target", "") or "").strip()
+        brief = analyze_wallet(normalize_wallet_input(target)) if target.startswith("0x") else analyze_portfolio()
     elif args.command == "signal":
         brief = analyze_signal(normalize_token_input(args.token))
     elif args.command == "portfolio":

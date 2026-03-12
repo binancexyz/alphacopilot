@@ -54,34 +54,31 @@ Bibipilot is designed for that gap. It does not try to be a full autonomous trad
 
 ## What it does
 
-Bibipilot currently supports **11 research commands**, but they are best understood in two layers:
+Bibipilot now has a cleaner **5-command canonical surface**:
 
-### Core commands
 | Command | Purpose |
 |---------|---------|
-| `/brief <symbol>` | Fast default market read with source/context framing |
-| `/token <symbol>` | Fuller token judgment with conviction, risk, and audit-aware context |
-| `/signal <token>` | Smart-money signal timing, setup validation, and invalidation framing |
-| `/portfolio` | Private Binance Spot posture snapshot with freshness and history-aware drift |
-| `/wallet <address>` | Public wallet behavior/posture read with follow verdict |
+| `/brief <symbol>` | Default asset read, with deeper judgment when data supports it |
+| `/signal <symbol>` | Setup quality, risk, and invalidation |
+| `/holdings [address]` | Private portfolio posture or external wallet behavior |
 | `/watchtoday` | Daily market board with prioritized live lanes |
+| `/audit <symbol>` | Security-first read with meme lens folded into findings/context |
 
-### Specialist commands
-| Command | Purpose |
-|---------|---------|
-| `/price <symbol>` | Premium market card with source/context-aware quote framing |
-| `/risk <symbol>` | Downside-first risk assessment |
-| `/audit <symbol>` | Security-first token audit card |
-| `/meme <symbol>` | First-pass meme token scan |
-| `careers` | Optional Binance hiring pulse for ecosystem context |
+Compatibility paths still exist behind the scenes, but the public product story is now:
+- **Asset judgment** — `/brief`
+- **Setup judgment** — `/signal`
+- **Ownership/posture** — `/holdings`
+- **Market board** — `/watchtoday`
+- **Safety** — `/audit`
 
-> **Alias:** `watch today` is accepted as an alternative to `watchtoday`.
+Older commands are being absorbed as follows:
+- `/token` → `/brief` deep mode
+- `/portfolio` + `/wallet` → `/holdings`
+- `/risk` → `/signal`
+- `/meme` → `/audit`
+- `/price` → hidden utility surface
 
-Product surfaces are:
-- **Core daily surfaces** — `/brief`, `/portfolio`, `/watchtoday`
-- **Deeper judgment surfaces** — `/token`, `/signal`, `/wallet`
-- **Specialist lenses** — `/price`, `/risk`, `/audit`, `/meme`, `careers`
-- **Publishing** — premium nightly Binance Square output
+Publishing remains a first-class product output through Binance Square.
 
 It also supports:
 - **Binance Square publishing** — live text posting with draft/publish support
