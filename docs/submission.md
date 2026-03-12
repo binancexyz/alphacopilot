@@ -44,20 +44,19 @@ It is a **research -> judgment -> publishing** product.
 
 ## Current Command Surface
 
-### Core
-- `/brief` — fast default market read
-- `/token` — token setup and conviction read
-- `/signal` — timing, setup validation, and invalidation
-- `/portfolio` — private Binance Spot posture
-- `/wallet` — wallet interpretation with follow verdict
+### Canonical
+- `/brief` — fast default asset read, with deeper judgment when data supports it
+- `/signal` — setup, risk, and invalidation
+- `/holdings` — portfolio posture or wallet behavior depending on argument
 - `/watchtoday` — daily market board with live lanes
+- `/audit` — security-first audit card with meme lens folded in
 
-### Specialist
-- `/price` — premium market card with source/context framing
-- `/risk` — downside-first risk read
-- `/audit` — security-first audit card
-- `/meme` — first-pass meme scan
-- `careers` — optional ecosystem context
+### Hidden compatibility
+- `/token` — deeper asset path now represented by `/brief ... deep`
+- `/portfolio` / `/wallet` — absorbed into `/holdings`
+- `/risk` — absorbed into `/signal`
+- `/meme` — absorbed into `/audit`
+- `/price` — hidden utility surface
 
 ## Skills Used
 ### Research core
@@ -93,11 +92,10 @@ The command surface is clear, chat-friendly, and demoable in a few minutes.
 ## Live Proof Points
 - live Binance Square posting works
 - a scheduled premium 1-post/day Binance Square engine is active
-- Binance Spot read-only grounding now strengthens `/price`, `/brief`, and `/watchtoday`
+- Binance Spot read-only grounding now strengthens `/brief` and `/watchtoday`
 - `/watchtoday` now renders live market lanes with an Exchange Board anchor
-- `/audit` is a first-class command
-- `/wallet` includes explicit follow verdicts and stronger behavior judgment
-- `/meme` exists as a first-pass command
+- `/audit` is a first-class command and now carries an embedded meme lens
+- `/holdings` supports both private portfolio posture and external wallet behavior
 - live runtime health diagnostics now exist via `/health`
 
 ## Why It Matters

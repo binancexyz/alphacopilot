@@ -55,28 +55,25 @@ Current posting posture:
 
 ## 3. Current command surface
 
-### Core commands
+### Canonical commands
 - `/brief`
-- `/token`
 - `/signal`
+- `/holdings`
+- `/watchtoday`
+- `/audit`
+
+### Hidden compatibility
+- `/token`
 - `/portfolio`
 - `/wallet`
-- `/watchtoday`
-
-### Specialist commands
-- `/price`
 - `/risk`
-- `/audit`
 - `/meme`
-- `careers`
-
-### Alias
-- `watch today`
+- `/price`
 
 ### What this proves
 - Bibipilot has a real product surface
 - commands are role-specific, not one generic prompt wrapper
-- the visible command story is now cleaner and easier to demo
+- the visible command story is now smaller, clearer, and easier to demo
 
 ---
 
@@ -93,15 +90,15 @@ What it proves:
 - output is structured into lanes, not one blended blob
 - the board now has a Binance Spot Exchange Board anchor and lane-coverage honesty
 
-### `/wallet`
+### `/holdings`
 What it proves:
 - Bibipilot includes judgment, not just balance display
-- explicit follow verdicts now exist
+- one command now covers private posture and external wallet behavior
+- explicit follow/posture reads exist under one clearer mental model
 
-### `/meme`
-What it proves:
-- Bibipilot is expanding into faster meme-style scan behavior
-- product surface is growing in the right direction
+### `/audit`
+Additional proof:
+- speculative meme/lifecycle context can now appear inside audit via the merged meme lens
 
 ---
 
@@ -125,14 +122,13 @@ What it proves:
 ## 6. Product logic proof
 
 Recent product improvements already implemented include:
-- audit gate surfaced in `/token` and `/signal`
-- standalone `/audit`
-- Binance Spot read-only grounding for `/price` and `/brief`
+- audit gate surfaced in deeper asset and signal reads
+- standalone `/audit` with merged meme lens
+- Binance Spot read-only grounding for `/brief`
 - live market-lane rendering in `/watchtoday`
 - Exchange Board anchoring + lane-coverage honesty in `/watchtoday`
 - more truthful fallback behavior when no matched live signal exists
-- stronger wallet follow verdict / behavior layer
-- first-pass `/meme`
+- stronger holdings posture / wallet-behavior framing
 - live runtime health diagnostics via `/health`
 
 ### What this proves
