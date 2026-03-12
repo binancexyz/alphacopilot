@@ -16,9 +16,10 @@
 - [`submission.md`](submission.md)
 - [`submission-short.md`](submission-short.md)
 - [`submission-medium.md`](submission-medium.md)
+- [`current-demo-guide.md`](current-demo-guide.md) — Consolidated current demo path and narration
 - [`demo-script.md`](demo-script.md)
-- [`demo-operator-sheet.md`](demo-operator-sheet.md)
 - [`demo-checklist.md`](demo-checklist.md)
+- [`demo-operator-sheet.md`](demo-operator-sheet.md)
 - [`challenge-package.md`](challenge-package.md)
 - [`judge-cheat-sheet.md`](judge-cheat-sheet.md)
 - [`judge-qa-prep.md`](judge-qa-prep.md)
