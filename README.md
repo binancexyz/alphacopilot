@@ -234,15 +234,19 @@ uvicorn src.api:app --host 0.0.0.0 --port 8000
 
 ### Endpoints
 
+Current note:
+- the **CLI/product surface** is now canonicalized to `brief`, `signal`, `holdings`, `watchtoday`, and `audit`
+- the **REST API** still exposes some older compatibility route names internally
+
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/health` | System status, version, config warnings |
 | GET | `/runtime/report` | Extended runtime diagnostics |
-| GET | `/brief/token?symbol=BNB` | Token analysis brief |
+| GET | `/brief/token?symbol=BNB` | Deeper asset brief (compatibility route; CLI equivalent: `brief BNB deep`) |
 | GET | `/brief/signal?token=DOGE` | Signal validation brief |
 | GET | `/brief/audit?symbol=BNB` | Security audit brief |
-| GET | `/brief/meme?symbol=DOGE` | Meme token brief |
-| GET | `/brief/wallet?address=0x...` | Wallet analysis brief |
+| GET | `/brief/meme?symbol=DOGE` | Specialist meme brief (compatibility route) |
+| GET | `/brief/wallet?address=0x...` | Wallet analysis brief (compatibility route; CLI equivalent: `holdings 0x...`) |
 | GET | `/brief/watchtoday` | Daily market board |
 
 ### Security middleware

@@ -25,15 +25,19 @@
 
 ## API Endpoints (v0.2.1)
 
+Current note:
+- canonical **CLI/product commands** are `brief`, `signal`, `holdings`, `watchtoday`, and `audit`
+- some API routes still use older compatibility naming
+
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/health` | System status, version, config warnings |
 | GET | `/runtime/report` | Extended runtime diagnostics |
-| GET | `/brief/token?symbol=BNB` | Token analysis brief |
+| GET | `/brief/token?symbol=BNB` | Deeper asset brief (compatibility route) |
 | GET | `/brief/signal?token=DOGE` | Signal validation brief |
 | GET | `/brief/audit?symbol=BNB` | Security audit brief |
-| GET | `/brief/meme?symbol=DOGE` | Meme token brief |
-| GET | `/brief/wallet?address=0x...` | Wallet analysis brief |
+| GET | `/brief/meme?symbol=DOGE` | Specialist meme brief (compatibility route) |
+| GET | `/brief/wallet?address=0x...` | Wallet analysis brief (compatibility route; CLI uses `holdings`) |
 | GET | `/brief/watchtoday` | Daily market board |
 
 ## Product promise

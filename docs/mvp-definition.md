@@ -3,19 +3,16 @@
 ## Product promise
 Bibipilot helps users understand not just what is moving, but whether it is actually worth attention.
 
-## Current command surface (10 commands)
-| Command | Purpose |
+## Current command surface
+| Canonical Command | Purpose |
 |---------|---------|
-| `/price <symbol>` | Compact market card with Binance Spot data |
-| `/brief <symbol>` | Fast market synthesis with exchange grounding |
-| `/token <symbol>` | Token setup and conviction read |
-| `/signal <token>` | Smart-money signal timing validation |
-| `/wallet <address>` | Wallet behavior and follow verdict |
-| `/risk <symbol>` | Downside-first risk assessment |
-| `/audit <symbol>` | Security-first token audit |
+| `/brief <symbol>` | Fast asset synthesis with exchange grounding; can go deeper when needed |
+| `/signal <token>` | Smart-money signal timing, risk, and invalidation |
+| `/holdings [address]` | Private portfolio posture or external wallet behavior |
+| `/audit <symbol>` | Security-first token audit with meme lens folded in |
 | `/watchtoday` | Daily market board with live lanes |
-| `/meme <symbol>` | First-pass meme token scan |
-| `careers` | Binance ecosystem intelligence |
+
+Hidden compatibility/API surfaces still exist internally for older token, wallet, meme, and utility paths.
 
 ## Output shape
 - Quick Verdict

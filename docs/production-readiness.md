@@ -21,9 +21,9 @@ make api
 Endpoints:
 - `GET /health`
 - `GET /runtime/report`
-- `GET /brief/token?symbol=BNB`
+- `GET /brief/token?symbol=BNB` (compatibility route; CLI equivalent: `brief BNB deep`)
 - `GET /brief/signal?token=DOGE`
-- `GET /brief/wallet?address=0x1234567890ab`
+- `GET /brief/wallet?address=0x1234567890ab` (compatibility route; CLI equivalent: `holdings 0x1234567890ab`)
 - `GET /brief/watchtoday`
 
 ## Mock mode
