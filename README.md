@@ -54,29 +54,24 @@ Bibipilot is designed for that gap. It does not try to be a full autonomous trad
 
 ## What it does
 
-Bibipilot now has a cleaner **5-command canonical surface**:
+Bibipilot now has a clean **5-command canonical surface**:
 
-| Command | Purpose |
-|---------|---------|
-| `/brief <symbol>` | Default asset read, with deeper judgment when data supports it |
-| `/signal <symbol>` | Setup quality, risk, and invalidation |
-| `/holdings [address]` | Private portfolio posture or external wallet behavior |
-| `/watchtoday` | Daily market board with prioritized live lanes |
-| `/audit <symbol>` | Security-first read with meme lens folded into findings/context |
+| Command | What it answers |
+|---------|------------------|
+| `/brief <symbol>` | What matters about this asset right now? |
+| `/signal <symbol>` | Is this setup real, risky, or breaking down? |
+| `/holdings [address]` | What is this posture telling me? |
+| `/watchtoday` | What deserves attention across the market today? |
+| `/audit <symbol>` | Is this structurally safe enough to trust? |
 
-Compatibility paths still exist behind the scenes, but the public product story is now:
-- **Asset judgment** — `/brief`
-- **Setup judgment** — `/signal`
-- **Ownership/posture** — `/holdings`
-- **Market board** — `/watchtoday`
-- **Safety** — `/audit`
+That gives Bibipilot a very simple product story:
+- **`/brief`** = flagship default read
+- **`/signal`** = setup + risk + invalidation
+- **`/holdings`** = private posture or external wallet behavior
+- **`/watchtoday`** = market board
+- **`/audit`** = safety read
 
-Older commands are being absorbed as follows:
-- `/token` → `/brief` deep mode
-- `/portfolio` + `/wallet` → `/holdings`
-- `/risk` → `/signal`
-- `/meme` → `/audit`
-- `/price` → hidden utility surface
+`/brief <symbol> deep` is the richer asset-judgment path when you want more than the compact default answer.
 
 Publishing remains a first-class product output through Binance Square.
 
@@ -109,18 +104,24 @@ API authentication (HMAC timing-safe), rate limiting, SSRF protection, path trav
 
 ## Architecture
 
-Bibipilot separates concerns into independent layers:
+Bibipilot separates concerns into a few simple layers:
 
 ```
 User (CLI / API / OpenClaw)
-  → Parser (normalize token symbols, wallet addresses)
-  → Service Factory (select mock or live mode)
-  → Market Data Service (Binance Skills Hub / Binance Spot / mock)
-  → Normalizers (standardize payload structure)
-  → Analyzers (build AnalysisBrief with conviction and risk assessment)
-  → Formatters (render to terminal with rich styling)
-  → Output (console / Binance Square post / API response)
+  → Parsing / validation
+  → Data collection (mock or live)
+  → Normalization
+  → Analysis / judgment
+  → Formatting
+  → Output (terminal / API / Binance Square)
 ```
+
+In practical terms:
+- **OpenClaw / CLI / API** receives the request
+- **services/** fetches or loads data
+- **normalizers/extractors** make the payload shape consistent
+- **analyzers/** decide what matters
+- **formatters/** turn that into the final product voice
 
 ### Evidence layer — Binance Skills Hub
 | Skill | Purpose |
@@ -158,7 +159,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. CLI usage
+### 2. Try the product surface
 ```bash
 python3 src/main.py brief BTC
 python3 src/main.py brief BNB deep
@@ -174,6 +175,12 @@ python3 src/main.py watchtoday
 make check   # compile checks
 make test    # test suite
 ```
+
+### 4. Best first read if you want to collaborate
+- `README.md`
+- `docs/maintainer-summary.md`
+- `docs/quick-reference.md`
+- `docs/developer-flow.md`
 
 ---
 
@@ -356,15 +363,16 @@ The careers pulse is deliberately separate from token/signal logic — treat it 
 - Live Binance Square posting with scheduled daily engine
 - API security hardening (auth, rate limiting, SSRF protection, path traversal prevention, security headers)
 
-### Surface priority
-- **Canonical:** `/brief`, `/signal`, `/holdings`, `/watchtoday`, `/audit`
-- **Hidden compatibility:** `/token`, `/portfolio`, `/wallet`, `/risk`, `/meme`, `/price`
+### Where collaborators should focus next
+- improve live/runtime depth
+- improve external-wallet evidence quality inside `/holdings`
+- improve speculative/meme-style context where it strengthens `/audit`
+- keep sharpening `/brief` and `/watchtoday` from real usage
 
-### What is still evolving
-- `/brief` should keep getting sharper as the premium default asset read
-- Live bridge coverage is strongest for `token`, `signal`, `audit`, and `watchtoday`
-- `wallet` and `meme` depth still depend on thinner live runtime context beneath the new `holdings` / `audit` surface
-- This is a public alpha research copilot, not a finished autonomous trading system
+### What this is not
+- not an autonomous trading bot
+- not a giant dashboard product
+- not feature-complete yet
 
 ---
 
@@ -389,30 +397,34 @@ See also: [`SECURITY.md`](SECURITY.md) and [`SECURITY-CHECKLIST.md`](SECURITY-CH
 
 ## Documentation
 
+### If you are new here
+Start in this order:
+1. `README.md`
+2. `docs/maintainer-summary.md`
+3. `docs/quick-reference.md`
+4. `docs/developer-flow.md`
+5. `docs/INDEX.md`
+
 ### Project layout
 ```
 bibipilot/
 ├── src/
-│   ├── main.py              # CLI entry point
-│   ├── api.py               # FastAPI REST service (v0.2.1)
-│   ├── bridge_api.py        # OpenClaw runtime bridge (v0.2.0)
-│   ├── config.py            # Configuration and environment
-│   ├── square_cli.py        # Binance Square publishing CLI
-│   ├── square_diary.py      # Scheduled daily posting engine
-│   ├── analyzers/           # Command-specific analysis logic
-│   ├── formatters/          # Output formatting and heuristics
-│   ├── models/              # Data models and Pydantic schemas
-│   ├── services/            # Business logic and integrations
+│   ├── main.py              # Canonical CLI entry point
+│   ├── api.py               # Canonical REST API
+│   ├── bridge_api.py        # OpenClaw runtime bridge
+│   ├── analyzers/           # Product judgment logic
+│   ├── formatters/          # Final output rendering
+│   ├── models/              # Shared schemas
+│   ├── services/            # Data loading + integrations
 │   └── utils/               # Parsing, validation, helpers
-├── tests/                   # 33 test files
-├── docs/                    # 123 documentation files
-├── examples/                # Payload examples and output samples
+├── tests/                   # Regression and API tests
+├── docs/                    # Product, runtime, and handoff docs
+├── examples/                # Output examples and payload samples
 ├── agent/                   # Agent identity and operating files
-├── config/                  # Runtime configuration
 ├── scripts/                 # Deployment and utility scripts
 ├── Dockerfile               # Python 3.12-slim, non-root container
-├── Makefile                 # 15 development targets
-└── pyproject.toml           # Package metadata (v0.1.0)
+├── Makefile                 # Common development targets
+└── pyproject.toml           # Package metadata
 ```
 
 ### Start here

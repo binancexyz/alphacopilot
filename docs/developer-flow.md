@@ -13,9 +13,9 @@
 6. Commit in small, understandable units
 
 ## Best engineering priority now
-1. `/token` live wiring
+1. `/brief ... deep` live wiring
 2. `/signal` live wiring
-3. `/wallet` live wiring
+3. `/holdings <address>` live wiring
 4. `/watchtoday` live wiring
 
 ## Best product priority now
