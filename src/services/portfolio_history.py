@@ -76,12 +76,31 @@ def describe_delta(previous: dict[str, Any] | None, current: dict[str, Any]) -> 
         changes.append(f"New priced assets since the last snapshot: {', '.join(new_assets[:3])}.")
     if removed_assets:
         changes.append(f"Assets no longer priced in the snapshot: {', '.join(removed_assets[:3])}.")
+
+    shared = []
+    for asset, cur_value in cur_assets.items():
+        if asset in prev_assets:
+            delta = cur_value - prev_assets[asset]
+            if abs(delta) >= 10:
+                shared.append((asset, delta))
+    if shared:
+        shared.sort(key=lambda item: item[1], reverse=True)
+        biggest_up = shared[0]
+        biggest_down = min(shared, key=lambda item: item[1])
+        if biggest_up[1] > 0:
+            changes.append(f"Biggest increase: {biggest_up[0]} +${biggest_up[1]:,.2f}.")
+        if biggest_down[1] < 0:
+            changes.append(f"Biggest decrease: {biggest_down[0]} -${abs(biggest_down[1]):,.2f}.")
+
+    posture_shift = []
     if abs(stable_delta) >= 2:
-        direction = "higher" if stable_delta > 0 else "lower"
-        changes.append(f"Stablecoin share is {direction} by {abs(stable_delta):.1f} points.")
+        direction = "more defensive" if stable_delta > 0 else "more deployed"
+        posture_shift.append(f"posture looks {direction} by {abs(stable_delta):.1f} stable-share points")
     if abs(conc_delta) >= 2:
-        direction = "higher" if conc_delta > 0 else "lower"
-        changes.append(f"Top concentration is {direction} by {abs(conc_delta):.1f} points.")
+        direction = "more concentrated" if conc_delta > 0 else "less concentrated"
+        posture_shift.append(f"top exposure is {direction} by {abs(conc_delta):.1f} points")
+    if posture_shift:
+        changes.append(f"Posture drift: {'; '.join(posture_shift)}.")
 
     summary = " ".join(changes[:2])
-    return summary, changes[:3]
+    return summary, changes[:5]

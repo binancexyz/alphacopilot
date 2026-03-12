@@ -25,8 +25,9 @@ def test_describe_delta_detects_material_changes():
     }
     summary, changes = portfolio_history.describe_delta(previous, current)
     assert 'Estimated visible value is up' in summary
-    assert any('Stablecoin share is higher' in item for item in changes)
     assert any('New priced assets' in item for item in changes)
+    assert any('Biggest increase' in item for item in changes)
+    assert any('Posture drift' in item for item in changes)
 
 
 def test_append_and_load_history(tmp_path: Path):
