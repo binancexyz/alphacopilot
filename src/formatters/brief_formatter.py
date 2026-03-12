@@ -37,6 +37,15 @@ def _human_money(value: float) -> str:
     return f"${value:,.2f}"
 
 
+def _tree_lines(items: list[str]) -> list[str]:
+    cleaned = [item.strip() for item in items if item and item.strip()]
+    lines: list[str] = []
+    for index, item in enumerate(cleaned):
+        branch = "┗" if index == len(cleaned) - 1 else "┣"
+        lines.append(f"{branch} {item}")
+    return lines
+
+
 def _format_price_card(brief: AnalysisBrief) -> str:
     name, symbol, link, rank = (brief.quick_verdict.split("|", 3) + ["", "", "", "0"])[:4]
     price, change_24h, high_24h, low_24h, market_cap, volume_24h, arrow = (brief.why_it_matters.split("|", 6) + ["0", "0", "0", "0", "0", "0", "➖"])[:7]
@@ -175,18 +184,20 @@ def _format_token_card(brief: AnalysisBrief) -> str:
     if brief.top_risks:
         parts.append("")
         parts.append("**⚠️ Risks**")
-        parts.extend([f"- {item}" for item in brief.top_risks[:2]])
+        parts.extend(_tree_lines(brief.top_risks[:2]))
     if brief.what_to_watch_next:
         parts.append("")
         parts.append("**👀 Watch**")
-        parts.extend([f"- {item}" for item in brief.what_to_watch_next[:2]])
+        parts.extend(_tree_lines(brief.what_to_watch_next[:2]))
     if brief.risk_tags:
         parts.append("")
         parts.append("**🏷️ Tags**")
         limit = 4 if any(tag.name == "Binance Spot" for tag in brief.risk_tags) else 3
+        tag_lines = []
         for tag in brief.risk_tags[:limit]:
             suffix = f" — {tag.note}" if tag.note else ""
-            parts.append(f"- {tag.name}: {tag.level}{suffix}")
+            tag_lines.append(f"{tag.name}: {tag.level}{suffix}")
+        parts.extend(_tree_lines(tag_lines))
     return "\n".join(parts).strip() + "\n"
 
 
@@ -211,18 +222,20 @@ def _format_signal_card(brief: AnalysisBrief) -> str:
     if brief.what_to_watch_next:
         parts.append("")
         parts.append("**👀 Watch**")
-        parts.extend([f"- {item}" for item in brief.what_to_watch_next[:2]])
+        parts.extend(_tree_lines(brief.what_to_watch_next[:2]))
     if brief.top_risks:
         parts.append("")
         parts.append("**⚠️ Risks**")
-        parts.extend([f"- {item}" for item in brief.top_risks[:2]])
+        parts.extend(_tree_lines(brief.top_risks[:2]))
     if brief.risk_tags:
         parts.append("")
         parts.append("**🏷️ Tags**")
         limit = 4 if any(tag.name == "Binance Spot" for tag in brief.risk_tags) else 3
+        tag_lines = []
         for tag in brief.risk_tags[:limit]:
             suffix = f" — {tag.note}" if tag.note else ""
-            parts.append(f"- {tag.name}: {tag.level}{suffix}")
+            tag_lines.append(f"{tag.name}: {tag.level}{suffix}")
+        parts.extend(_tree_lines(tag_lines))
     return "\n".join(parts).strip() + "\n"
 
 
@@ -240,11 +253,11 @@ def _format_wallet_card(brief: AnalysisBrief) -> str:
     if brief.top_risks:
         parts.append("")
         parts.append("**⚠️ Risks**")
-        parts.extend([f"- {item}" for item in brief.top_risks[:2]])
+        parts.extend(_tree_lines(brief.top_risks[:2]))
     if brief.what_to_watch_next:
         parts.append("")
         parts.append("**👀 Watch**")
-        parts.extend([f"- {item}" for item in brief.what_to_watch_next[:2]])
+        parts.extend(_tree_lines(brief.what_to_watch_next[:2]))
     return "\n".join(parts).strip() + "\n"
 
 
@@ -271,11 +284,11 @@ def _format_watchtoday_card(brief: AnalysisBrief) -> str:
     if brief.what_to_watch_next:
         parts.append("")
         parts.append("**👀 Focus**")
-        parts.extend([f"- {item}" for item in brief.what_to_watch_next[:3]])
+        parts.extend(_tree_lines(brief.what_to_watch_next[:3]))
     if brief.top_risks:
         parts.append("")
         parts.append("**⚠️ Risks**")
-        parts.extend([f"- {item}" for item in brief.top_risks[:2]])
+        parts.extend(_tree_lines(brief.top_risks[:2]))
     return "\n".join(parts).strip() + "\n"
 
 
@@ -290,21 +303,23 @@ def _format_portfolio_card(brief: AnalysisBrief) -> str:
     if brief.beginner_note:
         parts.append("")
         parts.append("**💼 Top Holdings**")
-        parts.extend([f"- {line}" for line in brief.beginner_note.splitlines()[:5] if line.strip()])
+        parts.extend(_tree_lines(brief.beginner_note.splitlines()[:5]))
     if brief.top_risks:
         parts.append("")
         parts.append("**⚠️ Risks**")
-        parts.extend([f"- {item}" for item in brief.top_risks[:3]])
+        parts.extend(_tree_lines(brief.top_risks[:3]))
     if brief.what_to_watch_next:
         parts.append("")
         parts.append("**👀 Watch**")
-        parts.extend([f"- {item}" for item in brief.what_to_watch_next[:2]])
+        parts.extend(_tree_lines(brief.what_to_watch_next[:2]))
     if brief.risk_tags:
         parts.append("")
         parts.append("**🏷️ Tags**")
+        tag_lines = []
         for tag in brief.risk_tags[:4]:
             suffix = f" — {tag.note}" if tag.note else ""
-            parts.append(f"- {tag.name}: {tag.level}{suffix}")
+            tag_lines.append(f"{tag.name}: {tag.level}{suffix}")
+        parts.extend(_tree_lines(tag_lines))
     return "\n".join(parts).strip() + "\n"
 
 
