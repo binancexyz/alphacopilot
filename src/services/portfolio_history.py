@@ -34,6 +34,33 @@ def earlier_snapshot(steps_back: int = 3) -> dict[str, Any] | None:
     return history[-(steps_back + 1)]
 
 
+def describe_snapshot_age(snapshot: dict[str, Any] | None) -> str:
+    if not snapshot:
+        return ""
+    saved_at = str(snapshot.get("saved_at") or "").strip()
+    if not saved_at:
+        return ""
+    try:
+        stamp = datetime.fromisoformat(saved_at.replace("Z", "+00:00"))
+    except Exception:
+        return ""
+    now = datetime.now(UTC)
+    if stamp.tzinfo is None:
+        stamp = stamp.replace(tzinfo=UTC)
+    delta = now - stamp.astimezone(UTC)
+    seconds = max(int(delta.total_seconds()), 0)
+    if seconds < 60:
+        return "saved just now"
+    minutes = seconds // 60
+    if minutes < 60:
+        return f"saved {minutes}m ago"
+    hours = minutes // 60
+    if hours < 48:
+        return f"saved {hours}h ago"
+    days = hours // 24
+    return f"saved {days}d ago"
+
+
 def _json_safe(value: Any) -> Any:
     if is_dataclass(value):
         return {k: _json_safe(v) for k, v in asdict(value).items()}
@@ -109,7 +136,7 @@ def describe_delta(previous: dict[str, Any] | None, current: dict[str, Any]) -> 
     if posture_shift:
         changes.append(f"Posture drift: {'; '.join(posture_shift)}.")
 
-    summary = " ".join(changes[:2])
+    summary = " ".join(changes[:3])
     return summary, changes[:5]
 
 

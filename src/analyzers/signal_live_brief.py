@@ -31,7 +31,7 @@ def _signal_evidence_level(ctx: SignalContext) -> tuple[str, str]:
         return "High", "The signal has enough live context to support a more serious setup read."
     if score >= 3:
         return "Medium", "The signal read is usable, but some live timing or confirmation context is still incomplete."
-    return "Low", "The signal read is provisional because confirmation context is still thin or unmatched."
+    return "Low", "The signal read is provisional because confirmation context is still early or unmatched."
 
 
 def _signal_why_it_matters(ctx: SignalContext) -> str:
@@ -110,7 +110,7 @@ def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
         quality = "Blocked"
         conviction = "Low"
     elif evidence_level == "Low":
-        quick_verdict = f"{ctx.token} is still a provisional signal read because the live setup evidence is too thin or unmatched to trust aggressively."
+        quick_verdict = f"{ctx.token} is still a provisional signal read because the live setup evidence is too early or unmatched to trust aggressively."
         conviction = "Low"
     elif ctx.signal_status == "unmatched":
         quick_verdict = f"{ctx.token} does not currently have a matched live smart-money signal on the board, so this should be treated as a watchlist check rather than a true setup call."

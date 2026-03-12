@@ -25,8 +25,8 @@ def _token_evidence_level(ctx: TokenContext) -> tuple[str, str]:
     if score >= 5:
         return "High", "The token has enough live structure to support a more serious read."
     if score >= 3:
-        return "Medium", "The token read is usable, but some important live context is still missing or thin."
-    return "Low", "The token read is provisional because too much of the live context is still thin or missing."
+        return "Medium", "The token read is usable, but some important live context is still incomplete."
+    return "Low", "The token read is provisional because too much of the live context is still incomplete or unmatched."
 
 
 def _token_price_line(ctx: TokenContext) -> str:
@@ -102,7 +102,7 @@ def build_token_brief(ctx: TokenContext) -> AnalysisBrief:
         quality = "Blocked"
         conviction = "Low"
     elif evidence_level == "Low":
-        quick_verdict = f"{ctx.display_name} is still a provisional read right now because too much live context is missing, thin, or unmatched."
+        quick_verdict = f"{ctx.display_name} is still a provisional read right now because too much live context is incomplete, early, or unmatched."
         conviction = "Low"
     elif ctx.signal_status == "unmatched":
         quick_verdict = f"{ctx.display_name} has enough market structure to monitor, but there is no matched live smart-money signal on the current board yet."

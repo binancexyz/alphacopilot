@@ -90,9 +90,9 @@ def _watch_sections(ctx: WatchTodayContext) -> list[BriefSection]:
         sections.append(BriefSection(title="🧠 Smart Money Flow", content="\n".join(f"- {item}" for item in ctx.smart_money_flow[:3])))
     if ctx.exchange_board:
         sections.append(BriefSection(title="🏦 Exchange Board", content="\n".join(f"- {item}" for item in ctx.exchange_board[:3])))
-    if ctx.social_hype:
+    if len(ctx.social_hype) >= 2 or (ctx.social_hype and not ctx.trending_now):
         sections.append(BriefSection(title="📣 Social Hype", content="\n".join(f"- {item}" for item in ctx.social_hype[:2])))
-    if ctx.meme_watch:
+    if len(ctx.meme_watch) >= 2 or (ctx.meme_watch and not ctx.top_narratives):
         sections.append(BriefSection(title="🚀 Meme Watch", content="\n".join(f"- {item}" for item in ctx.meme_watch[:3])))
     if ctx.top_narratives:
         sections.append(BriefSection(title="🌊 Narrative", content="\n".join(f"- {item}" for item in ctx.top_narratives[:3])))
@@ -100,7 +100,7 @@ def _watch_sections(ctx: WatchTodayContext) -> list[BriefSection]:
         sections.append(BriefSection(title="👀 Today's Top 3", content="\n".join(f"- {item}" for item in ctx.top_picks[:3])))
 
     populated, sparse = _watch_lane_summary(ctx)
-    if sparse:
+    if len(sparse) >= 2:
         sections.append(BriefSection(title="🧩 Lane Coverage", content=f"- Ready: {', '.join(populated[:4]) or 'none yet'}\n- Sparse: {', '.join(sparse[:4])}"))
     return sections
 
