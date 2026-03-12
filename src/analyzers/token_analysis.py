@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.analyzers.posture_context import load_portfolio_posture, posture_risk_note
+from src.analyzers.judgment_helpers import append_posture_note_to_brief
 from src.analyzers.price_analysis import _fetch_market_quote
 from src.analyzers.token_live_brief import build_token_brief
 from src.models.schemas import AnalysisBrief, RiskTag
@@ -34,11 +34,6 @@ def analyze_token(symbol: str) -> AnalysisBrief:
         elif brief.why_it_matters:
             brief.why_it_matters += f" Binance Spot confirms active pricing on {pair} with a {change:+.2f}% 24h move."
 
-    portfolio = load_portfolio_posture()
-    portfolio_note = posture_risk_note(portfolio, token_context.symbol)
-    if portfolio_note:
-        brief.top_risks.append(portfolio_note)
-        if brief.why_it_matters:
-            brief.why_it_matters += f" {portfolio_note}"
+    append_posture_note_to_brief(brief, token_context.symbol)
 
     return brief

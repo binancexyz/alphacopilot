@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.analyzers.posture_context import load_portfolio_posture, posture_risk_note
+from src.analyzers.judgment_helpers import portfolio_note_for
 from src.analyzers.price_analysis import _fetch_cmc_quote
 from src.services.factory import get_market_data_service
 from src.services.normalizers import normalize_signal_context, normalize_token_context
@@ -44,8 +44,7 @@ def analyze_risk(symbol: str) -> AnalysisBrief:
         risk_level = "Medium"
         verdict = "Risk is present but looks more manageable than catastrophic right now."
 
-    portfolio = load_portfolio_posture()
-    portfolio_note = posture_risk_note(portfolio, display_symbol)
+    portfolio_note = portfolio_note_for(display_symbol)
     if portfolio_note:
         if second_risk:
             second_risk = f"{second_risk} {portfolio_note}"

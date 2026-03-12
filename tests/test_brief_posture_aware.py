@@ -25,7 +25,7 @@ class DummyService:
 def test_analyze_brief_adds_portfolio_posture_note():
     old_service = brief_analysis.get_market_data_service
     old_fetch = brief_analysis._fetch_market_quote
-    old_loader = brief_analysis.load_portfolio_posture
+    old_note = brief_analysis.portfolio_note_for
     brief_analysis.get_market_data_service = lambda: DummyService()
     brief_analysis._fetch_market_quote = lambda symbol: ({
         'name': 'BNB',
@@ -37,12 +37,12 @@ def test_analyze_brief_adds_portfolio_posture_note():
         'exchange_symbol': 'BNBUSDT',
         'source': 'Binance Spot',
     }, 'Binance Spot')
-    brief_analysis.load_portfolio_posture = lambda: {'stable_pct': 70.0, 'concentration': 10.0, 'posture': 'defensive'}
+    brief_analysis.portfolio_note_for = lambda symbol: 'Current posture is fairly defensive, so higher-beta ideas should earn their place instead of being chased by default.'
     try:
         brief = brief_analysis.analyze_brief('BNB')
     finally:
         brief_analysis.get_market_data_service = old_service
         brief_analysis._fetch_market_quote = old_fetch
-        brief_analysis.load_portfolio_posture = old_loader
+        brief_analysis.portfolio_note_for = old_note
 
     assert 'Current posture is fairly defensive' in brief.quick_verdict

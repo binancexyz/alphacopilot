@@ -26,16 +26,16 @@ class DummyService:
 def test_token_adds_portfolio_posture_note():
     old_service = token_analysis.get_market_data_service
     old_fetch = token_analysis._fetch_market_quote
-    old_loader = token_analysis.load_portfolio_posture
+    old_append = token_analysis.append_posture_note_to_brief
     token_analysis.get_market_data_service = lambda: DummyService()
     token_analysis._fetch_market_quote = lambda symbol: ({'exchange_symbol': f'{symbol}USDT', 'spread_pct': 0.1, 'percent_change_24h': 2.0}, 'Binance Spot')
-    token_analysis.load_portfolio_posture = lambda: {'stable_pct': 70.0, 'concentration': 15.0, 'posture': 'defensive'}
+    token_analysis.append_posture_note_to_brief = lambda brief, symbol: brief.top_risks.append('Current posture is fairly defensive, so higher-beta ideas should earn their place instead of being chased by default.')
     try:
         brief = token_analysis.analyze_token('BNB')
     finally:
         token_analysis.get_market_data_service = old_service
         token_analysis._fetch_market_quote = old_fetch
-        token_analysis.load_portfolio_posture = old_loader
+        token_analysis.append_posture_note_to_brief = old_append
 
     joined = ' '.join(brief.top_risks + [brief.why_it_matters])
     assert 'Current posture is fairly defensive' in joined

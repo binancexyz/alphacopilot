@@ -49,16 +49,16 @@ def test_watchtoday_adds_portfolio_posture_note():
 
 def test_risk_adds_portfolio_note():
     old_service = risk_analysis.get_market_data_service
-    old_loader = risk_analysis.load_portfolio_posture
+    old_note = risk_analysis.portfolio_note_for
     old_cmc = risk_analysis._fetch_cmc_quote
     risk_analysis.get_market_data_service = lambda: DummyRiskService()
-    risk_analysis.load_portfolio_posture = lambda: {'stable_pct': 70.0, 'concentration': 10.0, 'posture': 'defensive'}
+    risk_analysis.portfolio_note_for = lambda symbol: 'Current posture is fairly defensive, so higher-beta ideas should earn their place instead of being chased by default.'
     risk_analysis._fetch_cmc_quote = lambda symbol: None
     try:
         brief = risk_analysis.analyze_risk('BNB')
     finally:
         risk_analysis.get_market_data_service = old_service
-        risk_analysis.load_portfolio_posture = old_loader
+        risk_analysis.portfolio_note_for = old_note
         risk_analysis._fetch_cmc_quote = old_cmc
 
     assert 'Current posture is fairly defensive' in brief.quick_verdict
