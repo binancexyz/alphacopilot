@@ -87,35 +87,26 @@ Future options:
 
 ## Command Map
 
-### `/price <symbol>`
-Input → Binance Spot read-only data → premium market card with source/context framing
-
 ### `/brief <symbol>`
 Input → token info + signal + market context + Spot → fast market synthesis
 
-### `/token <symbol>`
-Input → token info + market rank + trading signal + token audit + Spot → structured brief with conviction
+### `/brief <symbol> deep`
+Input → token info + market rank + trading signal + token audit + Spot → structured deeper asset brief with conviction
 
 ### `/signal <token>`
-Input → trading signal + token context + audit + Spot → signal quality + confirmation conditions
+Input → trading signal + token context + audit + Spot → signal quality + confirmation conditions + invalidation
 
-### `/wallet <address>`
+### `/holdings`
+Input → signed Binance account read + live price map + local snapshot history → private posture summary
+
+### `/holdings <address>`
 Input → address info + optional token enrichment + optional trader context → behavior summary + risk posture
 
-### `/risk <symbol>`
-Input → token info + audit + signal + market → downside risk assessment
-
 ### `/audit <symbol>`
-Input → token audit + token info → security audit card
+Input → token audit + token info + merged meme lens when relevant → security audit card
 
 ### `/watchtoday`
 Input → market rank + meme rush + trading signals + Spot → top narratives + smart-money context + risk zones
-
-### `/meme <symbol>`
-Input → meme rush + token info → lifecycle status + holder risk + trend assessment
-
-### `careers`
-Input → Binance Careers API → ecosystem hiring pulse
 
 ## Migration Strategy
 To make runtime migration easy:

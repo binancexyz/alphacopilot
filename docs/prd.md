@@ -154,52 +154,7 @@ Users should be able to ask:
 
 ## 9. Main Product Surfaces
 
-### A. `/token <symbol>`
-**Purpose:** Provide a concise token brief with conviction assessment.
-
-**Inputs:** token info, market rank, trading signal, token audit, Binance Spot (optional)
-
-**Output:** Quick Verdict, Signal Quality, Top Risks, Why It Matters, What To Watch Next, Risk Tags, Conviction
-
----
-
-### B. `/signal <token>`
-**Purpose:** Evaluate whether a smart-money signal deserves attention.
-
-**Inputs:** trading signal, token info, token audit, Binance Spot (optional)
-
-**Output:** Signal status, signal quality, fragility/confirmation conditions, risk context, what to watch next
-
----
-
-### C. `/wallet <address>`
-**Purpose:** Read public posture from an external wallet and judge whether it is worth following.
-
-**Inputs:** wallet holdings, optional token enrichment, optional trader/market context
-
-**Output:** Wallet behavior summary, concentration context, exposures, major risks, what to watch next
-
----
-
-### D. `/portfolio`
-**Purpose:** Read a user's own Binance Spot posture in a private, read-only way.
-
-**Inputs:** signed Binance API account read, current spot prices, local snapshot history
-
-**Output:** estimated visible portfolio value, top holdings, concentration context, grouped exposure mix, posture drift, major risks, what to watch next
-
----
-
-### E. `/price <symbol>`
-**Purpose:** Show a premium market card with exchange-native data.
-
-**Inputs:** Binance Spot read-only data (preferred), token info fallback
-
-**Output:** Current price, 24h change, bid-ask spread, exchange-pair context
-
----
-
-### F. `/brief <symbol>`
+### A. `/brief <symbol>`
 **Purpose:** Premium default market read with exchange-native grounding.
 
 **Inputs:** token info, trading signal, market context, Binance Spot (optional), current posture context when available
@@ -208,30 +163,55 @@ Users should be able to ask:
 
 ---
 
-### G. `/risk <symbol>`
-**Purpose:** Downside-first risk assessment.
+### B. `/brief <symbol> deep`
+**Purpose:** Richer asset judgment path under the same flagship command.
 
-**Inputs:** token info, audit data, signal context, market data
+**Inputs:** token info, market rank, trading signal, token audit, Binance Spot (optional)
 
-**Output:** Risk severity, top risk factors, downside scenarios, risk tags
+**Output:** Deeper asset brief with conviction, risk, watch items, and audit-aware context
 
 ---
 
-### H. `/audit <symbol>`
-**Purpose:** Security-first token audit card.
+### C. `/signal <token>`
+**Purpose:** Evaluate whether a smart-money signal deserves attention.
 
-**Inputs:** token audit, token info
+**Inputs:** trading signal, token info, token audit, Binance Spot (optional)
 
-**Output:** Security status, scam/vulnerability flags, contract risk assessment, audit verdict
+**Output:** Signal status, signal quality, fragility/confirmation conditions, risk context, invalidation, what to watch next
+
+---
+
+### D. `/holdings`
+**Purpose:** Read a user's own Binance Spot posture in a private, read-only way.
+
+**Inputs:** signed Binance API account read, current spot prices, local snapshot history
+
+**Output:** estimated visible portfolio value, top holdings, concentration context, grouped exposure mix, posture drift, major risks, what to watch next
+
+---
+
+### E. `/holdings <address>`
+**Purpose:** Read public posture from an external wallet and judge whether it is worth following.
+
+**Inputs:** wallet holdings, optional token enrichment, optional trader/market context
+
+**Output:** Wallet behavior summary, concentration context, exposures, major risks, what to watch next
+
+---
+
+### F. `/audit <symbol>`
+**Purpose:** Security-first token audit card with merged meme lens when relevant.
+
+**Inputs:** token audit, token info, meme-style participation/lifecycle context when relevant
+
+**Output:** Security status, scam/vulnerability flags, contract risk assessment, audit verdict, and meme lens context
 
 **Important rule:** Audit output is only valid when `hasResult=true` and `isSupported=true`.
 
 ---
 
-### I. `/watchtoday`
+### G. `/watchtoday`
 **Purpose:** Summarize what matters today across the market.
-
-**Alias:** `watch today` is accepted as an alternative.
 
 **Inputs:** crypto-market-rank, meme-rush, trading-signal, Binance Spot (optional), current posture context when available
 
@@ -239,25 +219,7 @@ Users should be able to ask:
 
 ---
 
-### J. `/meme <symbol>`
-**Purpose:** First-pass meme token scan.
-
-**Inputs:** meme-rush, token info
-
-**Output:** Meme lifecycle status, holder distribution, launch status, risk assessment
-
----
-
-### K. `careers`
-**Purpose:** Optional Binance ecosystem intelligence through hiring data.
-
-**Inputs:** Binance Careers API
-
-**Output:** Active hiring areas, team growth signals, ecosystem priority context
-
----
-
-### K. Binance Square output
+### H. Binance Square output
 **Purpose:** Convert insights into public-ready short posts.
 
 **Inputs:** Research brief, Square post formatting rules, market context
@@ -279,26 +241,27 @@ Users should be able to ask:
 
 ---
 
-### L. REST API (v0.2.1)
-**Purpose:** Programmatic access to all research briefs.
+### I. REST API (v0.2.1)
+**Purpose:** Programmatic access to the canonical research briefs.
 
 **Endpoints:**
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/health` | System status, version, config warnings |
 | GET | `/runtime/report` | Extended runtime diagnostics |
-| GET | `/brief/token?symbol=BNB` | Token analysis brief |
-| GET | `/brief/signal?token=DOGE` | Signal validation brief |
-| GET | `/brief/audit?symbol=BNB` | Security audit brief |
-| GET | `/brief/meme?symbol=DOGE` | Meme token brief |
-| GET | `/brief/wallet?address=0x...` | Wallet analysis brief |
-| GET | `/brief/watchtoday` | Daily market board |
+| GET | `/brief?symbol=BNB` | Default asset brief |
+| GET | `/brief?symbol=BNB&deep=true` | Deeper asset brief |
+| GET | `/signal?token=DOGE` | Signal validation brief |
+| GET | `/audit?symbol=BNB` | Security audit brief |
+| GET | `/holdings` | Private portfolio posture |
+| GET | `/holdings?address=0x...` | Wallet analysis brief |
+| GET | `/watchtoday` | Daily market board |
 
 **Security:** Optional API key auth (HMAC timing-safe), rate limiting, security headers, CORS (disabled by default)
 
 ---
 
-### M. OpenClaw Bridge (v0.2.0)
+### J. OpenClaw Bridge (v0.2.0)
 **Purpose:** Live bridge for OpenClaw runtime integration.
 
 **Architecture:** Single generic `/runtime` endpoint dispatches to command-specific skill sets via `command` and `entity` query parameters, rather than separate per-command endpoints.

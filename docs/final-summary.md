@@ -21,12 +21,12 @@
 
 ## Latest product/command update
 The newest product understanding is:
-- Bibipilot should present a cleaner visible command surface
-- core commands are `/brief`, `/token`, `/signal`, `/portfolio`, `/wallet`, `/watchtoday`
-- specialist commands are `/price`, `/risk`, `/audit`, `/meme`, and `careers`
-- `watch today` should remain an alias, not a separately promoted command
-- `/brief` should be treated as the main default market read
-- `/portfolio` and `/watchtoday` are among the strongest product-defining surfaces
+- Bibipilot should present a much smaller visible command surface
+- canonical commands are `/brief`, `/signal`, `/holdings`, `/watchtoday`, and `/audit`
+- `/brief` should be treated as the main default market read, with `deep` as the richer asset path
+- `/holdings` unifies private portfolio posture and external wallet behavior
+- `/watchtoday` remains one of the strongest product-defining surfaces
+- safety remains first-class through `/audit`, now with meme-lens context folded in
 
 ## What remains to become stronger
 - richer live-data depth and runtime robustness

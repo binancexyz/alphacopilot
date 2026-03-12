@@ -164,7 +164,7 @@ If no matched signal exists, that is still a useful truth.
 
 **Judge takeaway:** the product distinguishes between weak evidence and no evidence.
 
-#### 5. `/wallet <address>`
+#### 5. `/holdings <address>`
 **Why fifth:** show opinionated judgment.
 
 **Judge takeaway:** Bibipilot can interpret behavior, not just list holdings.
@@ -241,11 +241,10 @@ Recommended main line:
 
 - live Binance Square posting works
 - scheduled premium 1-post/day Square engine works
-- command surface includes `/token`, `/brief`, `/price`, `/risk`, `/signal`, `/wallet`, `/watchtoday`, `/audit`, `/meme`
+- command surface is now built around `/brief`, `/signal`, `/holdings`, `/watchtoday`, and `/audit`
 - `/watchtoday` now renders live market lanes
-- `/audit` is a first-class command
-- `/wallet` now has explicit follow verdicts
-- `/meme` exists as a first-pass meme scan
+- `/audit` is a first-class command with merged meme-lens context
+- `/holdings` now covers explicit portfolio posture and wallet behavior reads
 
 ---
 
