@@ -3,6 +3,8 @@
 These are current example outputs from the CLI in the repo workspace.
 They are useful for demos, README screenshots, and judge-facing proof that the product surface is real.
 
+Note: output formatting was tightened toward a cleaner premium shape. Prefer these examples as directional/current shape references, not frozen exact strings.
+
 The public product surface is now built around:
 - `/brief`
 - `/signal`

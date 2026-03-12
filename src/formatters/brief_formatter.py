@@ -316,7 +316,7 @@ def _format_token_card(brief: AnalysisBrief) -> str:
         f"Trend: {trend}",
         f"Liquidity: {liquidity_text}",
     ]))
-    if brief.beginner_note:
+    if brief.beginner_note and "research summary" not in brief.beginner_note.lower():
         parts.extend(["", "**💼 Top Holdings**"])
         parts.extend(_tree_lines(brief.beginner_note.splitlines()[:3]))
     verdict_text = brief.quick_verdict
@@ -396,7 +396,15 @@ def _format_watchtoday_card(brief: AnalysisBrief) -> str:
         parts.extend(["", "**🔥 Attention**"])
         parts.append(_treeify_block(attention.content))
 
-    parts.extend(["", f"**🧠 Board {_dots(brief.signal_quality)}**\n{brief.quick_verdict}"])
+    board_verdict = brief.quick_verdict
+    lower_board = board_verdict.lower()
+    if "opportunity exists" in lower_board and "selectivity matters" in lower_board:
+        board_verdict = "Opportunity visible. Be selective."
+    elif "selective rather than defensive" in lower_board or "selectively instead of defensively" in lower_board:
+        board_verdict = "Opportunity visible. Stay selective."
+    elif len(board_verdict) > 90:
+        board_verdict = board_verdict.split(". ", 1)[0].rstrip(".") + "."
+    parts.extend(["", f"**🧠 Board {_dots(brief.signal_quality)}**\n{board_verdict}"])
     risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Attention ≠ signal"]
     if attention and signals:
         risk_bits.insert(0, "Attention ≠ signal")
