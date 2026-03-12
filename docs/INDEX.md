@@ -10,6 +10,7 @@
 - [`quick-reference.md`](quick-reference.md) — Command reference and output shape
 - [`commands-overview.md`](commands-overview.md) — Detailed command documentation
 - [`command-architecture.md`](command-architecture.md) — Core vs specialist command recommendation
+- [`cleanup-audit.md`](cleanup-audit.md) — Keep / merge / archive / delete-candidate cleanup plan
 
 ## Submission and Demo
 - [`submission.md`](submission.md)
