@@ -160,19 +160,19 @@ def get_portfolio_snapshot() -> dict[str, Any]:
 
     concentration = top_weights[0] if top_weights else 0.0
     if total_value <= 0:
-        verdict = "The account read worked, but there is no visible Spot balance value to summarize yet."
+        verdict = "Thin snapshot. No visible balance value."
         quality = "Thin"
     elif concentration >= 70:
-        verdict = "This read-only Spot snapshot is highly concentrated, so one position is dominating the account posture."
+        verdict = "Highly concentrated. One position dominates."
         quality = "Concentrated"
     elif stable_pct >= 55 and concentration < 40:
-        verdict = "This read-only Spot snapshot looks defensive, with meaningful stablecoin dry powder and no extreme single-asset concentration."
+        verdict = "Defensive. Dry powder ready. No overconcentration."
         quality = "Defensive"
     elif concentration >= 40:
-        verdict = "This read-only Spot snapshot has a clear lead position, with some diversification underneath it."
+        verdict = "Lead position clear. Diversification still present."
         quality = "Moderate"
     else:
-        verdict = "This read-only Spot snapshot looks more balanced than single-bet, with value spread across multiple assets."
+        verdict = "Balanced posture. No dominant single bet."
         quality = "Balanced"
 
     available_assets = len(priced_assets)

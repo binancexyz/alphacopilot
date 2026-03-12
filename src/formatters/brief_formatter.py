@@ -124,14 +124,16 @@ def _short_risk(text: str) -> str:
 
 def _brief_header(symbol: str, price: float, change: float, rank: int) -> str:
     price_text = f"${price:,.2f}" if price > 0 else "—"
+    move_text = f" {change:+.2f}% {_arrow(change)}" if price > 0 else ""
     rank_text = f" #{rank}" if rank > 0 else ""
-    return f"**🧩 {symbol} {price_text} {change:+.2f}% {_arrow(change)}{rank_text}**"
+    return f"**🧩 {symbol} {price_text}{move_text}{rank_text}**"
 
 
 def _signal_header(symbol: str, price: float, change: float, rank: int) -> str:
     price_text = f"${price:,.2f}" if price > 0 else "—"
+    move_text = f" {change:+.2f}% {_arrow(change)}" if price > 0 else ""
     rank_text = f" #{rank}" if rank > 0 else ""
-    return f"**📡 {symbol} {price_text} {change:+.2f}% {_arrow(change)}{rank_text}**"
+    return f"**📡 {symbol} {price_text}{move_text}{rank_text}**"
 
 
 def _strength_word(value: str) -> str:
@@ -229,7 +231,13 @@ def _format_compact_brief_card(brief: AnalysisBrief) -> str:
         f"Liquidity: {liquidity_text}",
     ]))
     parts.extend(["", f"**🧠 Verdict {_dots(confidence)}**\n{verdict or 'Monitor only. No conviction setup visible.'}"])
-    parts.extend(["", f"**⚠️ {_short_risk(top_risk or 'Secondary data')}**"])
+    footer_bits = [_short_risk(top_risk or 'Secondary data')]
+    source_tag = next((tag for tag in brief.risk_tags if tag.name == 'Source' and tag.note), None)
+    if source_tag and source_tag.note == 'Secondary market data':
+        footer_bits.append('Thin context' if price_f <= 0 or liquidity_f <= 0 else 'Market-only read')
+    elif liquidity_f <= 0:
+        footer_bits.append('Thin liquidity')
+    parts.extend(["", f"**⚠️ {' · '.join(list(dict.fromkeys(footer_bits))[:2])}**"])
     return "\n".join(parts).strip() + "\n"
 
 
@@ -264,10 +272,10 @@ def _format_risk_card(brief: AnalysisBrief) -> str:
 
 
 def _format_audit_card(brief: AnalysisBrief) -> str:
-    name, symbol, risk_level, audit_summary, top_flag, second_flag, _liquidity, gate_status, verdict = (brief.quick_verdict.split("|", 8) + ["", "", "Medium", "", "", "", "0", "warn", ""])[:9]
+    name, symbol, risk_level, audit_summary, top_flag, second_flag, third_flag, gate_status, verdict = (brief.quick_verdict.split("|", 8) + ["", "", "Medium", "", "", "", "", "warn", ""])[:9]
     gate = (brief.audit_gate or gate_status.upper() or "WARN").upper()
     gate_word = "Avoid" if gate == "BLOCK" else "Warn" if gate == "WARN" else "Allow"
-    findings = [item for item in [top_flag, second_flag] if item][:3]
+    findings = [item for item in [top_flag, second_flag, third_flag] if item][:3]
     if not findings:
         findings = ["Contract: No red flags", "Liquidity: Adequate", "Structure: Stable"]
 
@@ -309,7 +317,7 @@ def _format_token_card(brief: AnalysisBrief) -> str:
     if liquidity_tag and liquidity_tag.note and "spread" in liquidity_tag.note.lower():
         liquidity_text = liquidity_tag.note.split("|")[0].strip()
 
-    parts = [f"**🧩 {symbol} {'$'+format(price_f, ',.2f') if price_f > 0 else '—'} {change_f:+.2f}% {_arrow(change_f)}{' #' + str(rank_i) if rank_i > 0 else ''}**"]
+    parts = [_brief_header(symbol, price_f, change_f, rank_i)]
     parts.extend(["", "**⚡ Snapshot**"])
     parts.extend(_tree_lines([
         f"Signal: {signal_word}",
@@ -338,7 +346,7 @@ def _format_signal_card(brief: AnalysisBrief) -> str:
     parts.extend(_tree_lines([
         f"Audit: {'🔴' if gate.lower() == 'block' else '🟠' if gate.lower() == 'warn' else '🟢'} {gate}",
         f"Strength: {_strength_word(brief.signal_quality)}",
-        f"Invalidation: {invalidation}",
+        f"Invalidation: {_short_risk(invalidation)}",
     ]))
     parts.extend(["", f"**🧠 Verdict {_dots(brief.signal_quality)}**\n{brief.quick_verdict}"])
     risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Thin payload"]

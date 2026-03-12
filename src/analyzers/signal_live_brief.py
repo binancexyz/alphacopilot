@@ -106,20 +106,20 @@ def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
         risk_tags.append(RiskTag(name="Exit Pressure", level="High" if ctx.exit_rate >= 70 else "Medium" if ctx.exit_rate >= 40 else "Low", note=f"Exit rate {ctx.exit_rate:.0f}%"))
 
     if ctx.audit_gate == "BLOCK":
-        quick_verdict = f"{ctx.token} is blocked for bullish signal treatment because the audit layer is too dangerous to ignore."
+        quick_verdict = "Blocked. Audit risk too high."
         quality = "Blocked"
         conviction = "Low"
     elif evidence_level == "Low":
-        quick_verdict = f"{ctx.token} is still a provisional signal read because the live setup evidence is too early or unmatched to trust aggressively."
+        quick_verdict = "Watchlist only. Needs confirmation."
         conviction = "Low"
     elif ctx.signal_status == "unmatched":
-        quick_verdict = f"{ctx.token} does not currently have a matched live smart-money signal on the board, so this should be treated as a watchlist check rather than a true setup call."
+        quick_verdict = "Watchlist only. No signal match."
     elif quality == "High":
-        quick_verdict = f"{ctx.token} has a stronger signal than most watchlist noise, but it still needs follow-through to justify real conviction."
+        quick_verdict = "Live setup. Needs follow-through."
     elif quality == "Medium":
-        quick_verdict = f"{ctx.token} has a usable signal setup, but it still looks fragile enough that weak confirmation could ruin it quickly."
+        quick_verdict = "Usable setup. Still fragile."
     else:
-        quick_verdict = f"{ctx.token} looks more like a headline signal than a strong setup right now; too much still depends on better confirmation or lower risk."
+        quick_verdict = "Weak setup. Better confirmation needed."
 
     top_risks = list(ctx.major_risks)
     if ctx.audit_gate == "BLOCK" and ctx.blocked_reason:

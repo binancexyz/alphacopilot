@@ -98,22 +98,22 @@ def build_token_brief(ctx: TokenContext) -> AnalysisBrief:
         risk_tags.append(RiskTag(name="Exit Pressure", level="High" if ctx.exit_rate >= 70 else "Medium" if ctx.exit_rate >= 40 else "Low", note=exit_note))
 
     if ctx.audit_gate == "BLOCK":
-        quick_verdict = f"{ctx.display_name} is blocked for bullish follow-through right now because the audit picture is too dangerous to treat as a clean setup."
+        quick_verdict = "Blocked. Audit risk too high."
         quality = "Blocked"
         conviction = "Low"
     elif evidence_level == "Low":
-        quick_verdict = f"{ctx.display_name} is still a provisional read right now because too much live context is incomplete, early, or unmatched."
+        quick_verdict = "Thin read. No conviction yet."
         conviction = "Low"
     elif ctx.signal_status == "unmatched":
-        quick_verdict = f"{ctx.display_name} has enough market structure to monitor, but there is no matched live smart-money signal on the current board yet."
+        quick_verdict = "Monitor only. No signal match."
     elif quality == "High" and conviction == "High":
-        quick_verdict = f"{ctx.display_name} has a relatively clean token setup right now: signal quality is strong, basic liquidity context exists, and the risk stack is still manageable."
+        quick_verdict = "Strong setup. Risk still matters."
     elif quality == "High":
-        quick_verdict = f"{ctx.display_name} has enough structure to take seriously, but conviction is still capped until the risk picture and follow-through get cleaner."
+        quick_verdict = "Serious setup. Needs cleaner follow-through."
     elif quality == "Medium":
-        quick_verdict = f"{ctx.display_name} is credible enough to keep on the screen, but it still looks like a conditional setup rather than a high-conviction one."
+        quick_verdict = "Watch closely. Still conditional."
     else:
-        quick_verdict = f"{ctx.display_name} currently looks thin on structure: too much still depends on missing context, weak signal quality, or elevated risk flags."
+        quick_verdict = "Thin structure. Confirmation needed."
 
     top_risks = list(ctx.major_risks)
     if ctx.audit_gate == "BLOCK" and ctx.blocked_reason:

@@ -21,16 +21,40 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
     audit_limited = not audit_valid or "limited" in audit_summary.lower() or "partial" in blocked_reason.lower() or "unavailable" in blocked_reason.lower()
 
     if audit_gate == "BLOCK":
-        verdict = f"{display_name} fails the current audit gate, so it should be treated as blocked until the security picture changes."
+        verdict = "Avoid until live context improves."
     elif audit_limited:
-        verdict = f"{display_name} has only limited audit visibility right now, so security conclusions should stay cautious."
+        verdict = "Partial read. Stay cautious."
     elif audit_gate == "WARN":
-        verdict = f"{display_name} has a usable audit read, but caution flags mean it should not be treated as clean."
+        verdict = "Caution flags visible. Not clean yet."
     else:
-        verdict = f"{display_name} passes the current audit gate more cleanly than most risky edge cases, but it still deserves normal caution."
+        verdict = "Clean audit. Normal caution still applies."
 
-    primary = blocked_reason or (audit_flags[0] if audit_flags else (risks[0] if risks else "No major security issue surfaced in the current audit payload."))
-    secondary = audit_flags[1] if len(audit_flags) > 1 else (risks[1] if len(risks) > 1 else "")
+    if blocked_reason:
+        primary = f"Contract: {blocked_reason}"
+    elif audit_flags:
+        primary = f"Contract: {audit_flags[0]}"
+    elif risks:
+        primary = f"Contract: {risks[0]}"
+    else:
+        primary = "Contract: No red flags"
+
+    if len(audit_flags) > 1:
+        secondary = f"Liquidity: {audit_flags[1]}"
+    elif len(risks) > 1:
+        secondary = f"Liquidity: {risks[1]}"
+    elif audit_limited:
+        secondary = "Liquidity: Partial visibility ⚠️"
+    else:
+        secondary = "Liquidity: Adequate"
+
+    if audit_gate == "BLOCK":
+        tertiary = "Structure: Weak"
+    elif audit_limited:
+        tertiary = "Structure: Partial"
+    elif risk_level.lower() == "low":
+        tertiary = "Structure: Stable"
+    else:
+        tertiary = f"Structure: {risk_level} risk"
 
     packed = "|".join([
         display_name,
@@ -39,7 +63,7 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
         audit_summary,
         primary,
         secondary,
-        "0",
+        tertiary,
         audit_gate.lower(),
         verdict,
     ])
