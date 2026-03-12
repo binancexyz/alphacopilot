@@ -200,9 +200,9 @@ Users should be able to ask:
 ---
 
 ### F. `/brief <symbol>`
-**Purpose:** Fast market synthesis with exchange-native grounding.
+**Purpose:** Premium default market read with exchange-native grounding.
 
-**Inputs:** token info, trading signal, market context, Binance Spot (optional)
+**Inputs:** token info, trading signal, market context, Binance Spot (optional), current posture context when available
 
 **Output:** Compressed market synthesis with conviction and key risks
 
@@ -233,7 +233,7 @@ Users should be able to ask:
 
 **Alias:** `watch today` is accepted as an alternative.
 
-**Inputs:** crypto-market-rank, meme-rush, trading-signal, Binance Spot (optional)
+**Inputs:** crypto-market-rank, meme-rush, trading-signal, Binance Spot (optional), current posture context when available
 
 **Output:** Top narratives, strongest signals, smart-money context, main risk zones, market takeaway
 
@@ -249,7 +249,7 @@ Users should be able to ask:
 ---
 
 ### K. `careers`
-**Purpose:** Binance ecosystem intelligence through hiring data.
+**Purpose:** Optional Binance ecosystem intelligence through hiring data.
 
 **Inputs:** Binance Careers API
 

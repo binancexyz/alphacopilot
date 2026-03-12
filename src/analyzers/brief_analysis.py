@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from src.analyzers.posture_context import load_portfolio_posture, posture_risk_note
 from src.analyzers.price_analysis import _fetch_market_quote
 from src.services.factory import get_market_data_service
 from src.services.normalizers import normalize_signal_context, normalize_token_context
@@ -67,6 +68,11 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
         verdict = "Worth watching, but not clean enough to trust blindly."
     else:
         verdict = "More of a monitor than a conviction setup right now."
+
+    portfolio = load_portfolio_posture()
+    portfolio_note = posture_risk_note(portfolio, display_symbol)
+    if portfolio_note:
+        top_risk = f"{top_risk} {portfolio_note}".strip()
 
     why = f"{display_name}|{display_symbol}|{price}|{change}|{rank}|{signal.signal_status}|{token.liquidity}|{top_risk}|{verdict}"
 

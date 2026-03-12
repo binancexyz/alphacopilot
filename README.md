@@ -348,18 +348,25 @@ The careers pulse is deliberately separate from token/signal logic — treat it 
 ## Current status
 
 ### What works well
-- 10 research commands with structured output (verdict, conviction, risks, what to watch)
+- 11 research commands with structured output (verdict, conviction, risks, what to watch)
 - Trust and evidence honesty across core commands
 - Binance Spot read-only grounding for `price`, `brief`, `watchtoday`, and supporting confirmation in `token` / `signal`
-- Behavior-aware wallet analysis
+- Read-only private Spot posture via `/portfolio`
+- Portfolio-aware reasoning now appears in `/portfolio`, `/watchtoday`, `/risk`, and `/token`
 - Runtime health diagnostics via `/health`
 - Live Binance Square posting with scheduled daily engine
 - API security hardening (auth, rate limiting, SSRF protection, path traversal prevention, security headers)
 
+### Surface priority
+- **Primary:** `/brief`, `/watchtoday`, `/portfolio`, `/risk`, `/token`
+- **Secondary:** `/price`, `/signal`, `/audit`, `/wallet`
+- **Optional:** `/meme`, `careers`
+
 ### What is still evolving
+- `/brief` should keep getting sharper as the premium default market read
 - Live bridge coverage is strongest for `token`, `signal`, `audit`, and `watchtoday`
 - `wallet` and `meme` depend on thinner live runtime context
-- Binance Careers is an adjacent ecosystem-intelligence lane
+- Binance Careers is intentionally treated as adjacent ecosystem context, not a core trading surface
 - This is a public alpha research copilot, not a finished autonomous trading system
 
 ---

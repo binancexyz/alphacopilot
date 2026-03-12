@@ -18,7 +18,7 @@ It does not just show what is moving. It helps users understand **what matters i
 3. **Publishing** — share results to Binance Square with a premium daily posting engine
 
 ## Key numbers
-- **11 research commands** — price, brief, token, signal, wallet, portfolio, risk, audit, watchtoday, meme, careers
+- **11 research commands** — with primary focus on brief, watchtoday, portfolio, risk, and token
 - **8 API endpoints** — FastAPI REST service (v0.2.1) with security middleware
 - **1 premium nightly post** — scheduled daily publishing engine at 21:30 Asia/Phnom_Penh
 - **6 Binance Skills** — core evidence layer
