@@ -55,21 +55,28 @@ Current posting posture:
 
 ## 3. Current command surface
 
-Current commands:
-- `/token`
+### Core commands
 - `/brief`
-- `/price`
-- `/risk`
+- `/token`
 - `/signal`
+- `/portfolio`
 - `/wallet`
 - `/watchtoday`
-- `watch today`
+
+### Specialist commands
+- `/price`
+- `/risk`
 - `/audit`
 - `/meme`
+- `careers`
+
+### Alias
+- `watch today`
 
 ### What this proves
 - Bibipilot has a real product surface
 - commands are role-specific, not one generic prompt wrapper
+- the visible command story is now cleaner and easier to demo
 
 ---
 

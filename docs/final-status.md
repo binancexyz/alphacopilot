@@ -15,7 +15,7 @@
 - `/token BNB` live matching fix across bridge and extractor layers
 - live Binance Square draft/publish flow
 - scheduled Binance Square autoposting with a verified quality-focused premium 1-post/day Asia/Phnom_Penh cron engine
-- broader slash-command layer: `/token`, `/brief`, `/price`, `/risk`, `/signal`, `/wallet`, `/watchtoday`, `watch today`, `/audit`, and `/meme`
+- broader slash-command layer refined into core commands (`/brief`, `/token`, `/signal`, `/portfolio`, `/wallet`, `/watchtoday`) and specialist commands (`/price`, `/risk`, `/audit`, `/meme`, `careers`), with `watch today` kept as an alias
 - upgraded premium `/brief`, `/price`, and `/risk` command layer
 - command-specific layouts for `/token`, `/signal`, `/wallet`, `/watchtoday`, `/portfolio`, and `/audit`
 - secondary-market fallback framing for `/price` and `/brief` without leaking provider-specific wording

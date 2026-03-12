@@ -3,8 +3,7 @@
 ## What exists now
 - strong product positioning
 - submission copy
-- quote posts
-- demo script
+- demo script and refreshed examples
 - agent files
 - Python scaffold
 - mock/live service split
@@ -15,22 +14,25 @@
 - API surface and deployment notes
 - Binance Square live draft/publish flow
 - scheduled Binance Square premium 1-post/day content engine with stronger quality guardrails, context-aware generation, and performance logging
+- a refined command surface with clear core vs specialist roles
+- upgraded premium slash-output formatting across the main command family
+- stronger trust framing for source context, signal invalidation, and audit validity
 - local setup/env helper scripts
 
-## Latest Binance Skills update
-The newest project understanding is:
-- Bibipilot should follow the **Binance Skills/runtime model**
-- primary research skills are `query-token-info`, `query-address-info`, `crypto-market-rank`, `trading-signal`, `query-token-audit`, and `meme-rush`
-- `square-post` is a required product output/publishing skill
-- `spot` should be treated as a deferred higher-risk execution skill
-- `docs/binance-skills-architecture-summary.md` now captures the cleanest current skills model
+## Latest product/command update
+The newest product understanding is:
+- Bibipilot should present a cleaner visible command surface
+- core commands are `/brief`, `/token`, `/signal`, `/portfolio`, `/wallet`, `/watchtoday`
+- specialist commands are `/price`, `/risk`, `/audit`, `/meme`, and `careers`
+- `watch today` should remain an alias, not a separately promoted command
+- `/brief` should be treated as the main default market read
+- `/portfolio` and `/watchtoday` are among the strongest product-defining surfaces
 
-## What remains to become fully live
-- actual Binance Skills tool invocation wiring in the runtime environment
-- OpenClaw runtime bridge implementation against real Binance Skills responses
-- validation against real skill schemas/examples
-- real signal/risk heuristics tuned from live outputs
-- final demo capture and submission
+## What remains to become stronger
+- richer live-data depth and runtime robustness
+- more iterative refinement from real usage
+- better demo/media assets if needed publicly
+- future judgment improvements tuned from real outputs and user behavior
 
 ## Project state
-This is now a serious implementation scaffold with clearer live-direction assumptions, not just an idea draft.
+This is now a serious working product surface with a clearer command architecture, stronger trust framing, and a much more coherent output system than the earlier scaffold phase.

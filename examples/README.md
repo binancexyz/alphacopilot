@@ -3,9 +3,10 @@
 Recommended first file:
 - `current-output-examples.md` — fresh CLI examples for demo/screenshots
 
-This folder contains example outputs for the four core commands.
+This folder contains example outputs for the current core command family plus refreshed current-output snapshots.
 
 ## Files
+- `current-output-examples.md`
 - `token-example.md`
 - `signal-example.md`
 - `wallet-example.md`

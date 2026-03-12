@@ -10,20 +10,23 @@ If you come back later and want the shortest summary possible:
 
 ## Current repo quality
 - scaffold is real and runnable
-- slash layer is broader now: `/token`, `/brief`, `/price`, `/risk`, `/signal`, `/wallet`, `/watchtoday`, `watch today`, `/audit`, and `/meme`
-- `/price`, `/brief`, and `/risk` have compact purpose-specific layouts
-- `/token`, `/signal`, `/wallet`, and `/watchtoday` now use command-specific layouts instead of one generic long-form template
-- explicit audit-gate logic is surfaced in `/token` and `/signal`
+- command surface is now intentionally split into **core** and **specialist** commands
+- core commands: `/brief`, `/token`, `/signal`, `/portfolio`, `/wallet`, `/watchtoday`
+- specialist commands: `/price`, `/risk`, `/audit`, `/meme`, `careers`
+- `watch today` is kept as an alias for `/watchtoday`
+- slash outputs now use a more premium tree-style presentation across the main command family
+- `/price`, `/brief`, `/risk`, and `/audit` were upgraded from flatter utility output into cleaner structured cards
+- `/signal` now includes explicit invalidation framing
+- `/portfolio` now includes freshness/history-aware drift and more visible change context
+- `/audit` now surfaces audit-validity limits more honestly when live audit visibility is partial
+- `/watchtoday` now renders live market lanes plus an Exchange Board anchor with more selective section logic
+- `/wallet` now includes stronger follow verdict / behavior-profile framing
+- `/meme` now includes clearer participation-quality judgment
 - Binance Spot read-only grounding now strengthens `/price`, `/brief`, and `/watchtoday`
-- `/watchtoday` now renders live market lanes plus an Exchange Board anchor
-- `/wallet` now includes a stronger follow verdict / behavior-judgment layer
-- `/audit` exists as a first-class command
-- `/meme` exists as a first-pass command
-- `/token BNB` live matching has been fixed end-to-end
+- user-facing fallback wording no longer leaks provider-specific quote-source labels
 - live Binance Square publishing works
 - the repo now has a cron-driven premium 1-post/day Square content engine with stronger quality guardrails, context-aware topic selection, mode variation, performance logging, and a cleaner nightly publishing standard
-- challenge/campaign docs are updated
-- public-alpha README/release docs are updated
+- high-visibility docs, examples, and command architecture guidance are now aligned with the current product surface
 - GitHub repo is already pushed
 
 ## Best next engineering move

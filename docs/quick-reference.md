@@ -2,16 +2,22 @@
 
 ## Commands
 
+### Core
 | Command | Purpose |
 |---------|---------|
-| `/price <symbol>` | Compact market card, prefers Binance Spot read-only data when available |
-| `/brief <symbol>` | Fast synthesis with exchange-native market grounding when available |
+| `/brief <symbol>` | Fast default market read with source/context framing |
 | `/token <symbol>` | Token setup / conviction read with Spot as supporting confirmation |
-| `/signal <token>` | Setup validation that separates exchange price from matched signal quality |
+| `/signal <token>` | Setup validation with invalidation and matched-signal separation |
+| `/portfolio` | Private Binance Spot posture with freshness/history-aware drift |
 | `/wallet <address>` | Wallet behavior / follow verdict |
+| `/watchtoday` | Daily board with Exchange Board + signal / narrative lanes |
+
+### Specialist
+| Command | Purpose |
+|---------|---------|
+| `/price <symbol>` | Premium market utility card |
 | `/risk <symbol>` | Downside-first risk assessment |
 | `/audit <symbol>` | Security-first token audit card |
-| `/watchtoday` | Daily board with Exchange Board + signal / narrative lanes |
 | `/meme <symbol>` | First-pass meme read |
 | `careers` | Binance ecosystem/company-priority pulse |
 
@@ -41,12 +47,11 @@
 - Security-hardened API (auth, rate limiting, SSRF protection, path traversal prevention)
 
 ## Output shape
-- Quick Verdict
-- Signal Quality / Conviction
-- Top Risks
-- Why It Matters
-- What To Watch Next
-- Risk Tags / lane coverage when relevant
+- Structured section-based layout
+- Read / Verdict / Risks / Watch blocks where appropriate
+- Context / Source / Validity tags when relevant
+- Command-specific additions like `Invalidation` for `/signal`
+- Premium tree-style hierarchy for grouped outputs
 
 ## Publishing commands
 ```bash

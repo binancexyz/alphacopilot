@@ -43,15 +43,21 @@ So Bibipilot is not just an AI that summarizes crypto.
 It is a **research -> judgment -> publishing** product.
 
 ## Current Command Surface
-- `/price` — premium market card with source/context framing
-- `/brief` — fast synthesis
-- `/risk` — downside-first risk read
-- `/audit` — security-first audit card
+
+### Core
+- `/brief` — fast default market read
 - `/token` — token setup and conviction read
-- `/signal` — timing and setup validation
+- `/signal` — timing, setup validation, and invalidation
+- `/portfolio` — private Binance Spot posture
 - `/wallet` — wallet interpretation with follow verdict
 - `/watchtoday` — daily market board with live lanes
+
+### Specialist
+- `/price` — premium market card with source/context framing
+- `/risk` — downside-first risk read
+- `/audit` — security-first audit card
 - `/meme` — first-pass meme scan
+- `careers` — optional ecosystem context
 
 ## Skills Used
 ### Research core
