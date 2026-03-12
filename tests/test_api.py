@@ -49,17 +49,6 @@ def test_brief_deep_endpoint():
     assert "Token: BNB" in payload["rendered"]
 
 
-def test_token_compatibility_endpoint():
-    response = client.get("/brief/token", params={"symbol": "BNB"})
-    assert response.status_code == 200
-    payload = response.json()
-    assert payload["command"] == "token"
-    assert payload["entity"] == "BNB"
-    assert payload["mode"] in {"mock", "live"}
-    assert payload["runtime_state"] in {"mock", "live_ok", "live_degraded", None}
-    assert "Token: BNB" in payload["rendered"]
-
-
 def test_watchtoday_endpoint():
     response = client.get("/watchtoday")
     assert response.status_code == 200
@@ -84,6 +73,3 @@ def test_wallet_endpoint_rejects_bad_address():
     assert response.status_code == 400
 
 
-def test_wallet_compatibility_endpoint_rejects_bad_address():
-    response = client.get("/brief/wallet", params={"address": "not-a-wallet"})
-    assert response.status_code == 400

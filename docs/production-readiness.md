@@ -29,8 +29,6 @@ Endpoints:
 - `GET /holdings?address=0x1234567890ab`
 - `GET /watchtoday`
 
-Compatibility routes remain available for older `/brief/*` consumers.
-
 ## Mock mode
 Default mode for safe demos:
 ```bash

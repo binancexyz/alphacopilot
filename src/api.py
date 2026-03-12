@@ -153,43 +153,6 @@ def watchtoday(request: Request, _: None = Depends(enforce_api_guard)) -> BriefR
     return _brief_response("watchtoday", "market", watch_today())
 
 
-@app.get("/brief/token", response_model=BriefResponse)
-def brief_token(request: Request, _: None = Depends(enforce_api_guard), symbol: str = Query(..., min_length=1, max_length=20, description="Token symbol, e.g. BNB")) -> BriefResponse:
-    normalized = normalize_token_input(symbol)
-    return _brief_response("token", normalized, analyze_token(normalized))
-
-
-@app.get("/brief/signal", response_model=BriefResponse)
-def brief_signal(request: Request, _: None = Depends(enforce_api_guard), token: str = Query(..., min_length=1, max_length=20, description="Token symbol, e.g. DOGE")) -> BriefResponse:
-    normalized = normalize_token_input(token)
-    return _brief_response("signal", normalized, analyze_signal(normalized))
-
-
-@app.get("/brief/audit", response_model=BriefResponse)
-def brief_audit(request: Request, _: None = Depends(enforce_api_guard), symbol: str = Query(..., min_length=1, max_length=20, description="Token symbol, e.g. BNB")) -> BriefResponse:
-    normalized = normalize_token_input(symbol)
-    return _brief_response("audit", normalized, analyze_audit(normalized))
-
-
-@app.get("/brief/meme", response_model=BriefResponse)
-def brief_meme(request: Request, _: None = Depends(enforce_api_guard), symbol: str = Query(..., min_length=1, max_length=20, description="Token symbol, e.g. DOGE")) -> BriefResponse:
-    normalized = normalize_token_input(symbol)
-    return _brief_response("meme", normalized, analyze_meme(normalized))
-
-
-@app.get("/brief/wallet", response_model=BriefResponse)
-def brief_wallet(request: Request, _: None = Depends(enforce_api_guard), address: str = Query(..., min_length=12, max_length=128, description="Wallet address starting with 0x")) -> BriefResponse:
-    if not looks_like_wallet_address(address):
-        raise HTTPException(status_code=400, detail="Wallet address must start with 0x and look valid.")
-    normalized = normalize_wallet_input(address)
-    return _brief_response("wallet", normalized, analyze_wallet(normalized))
-
-
-@app.get("/brief/watchtoday", response_model=BriefResponse)
-def brief_watchtoday(request: Request, _: None = Depends(enforce_api_guard)) -> BriefResponse:
-    return _brief_response("watchtoday", "market", watch_today())
-
-
 def _mode_warning() -> str | None:
     if settings.app_mode == "mock":
         return "Running in mock mode; outputs are scaffold/demo quality, not live market calls."

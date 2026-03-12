@@ -235,10 +235,7 @@ uvicorn src.api:app --host 0.0.0.0 --port 8000
 ### Endpoints
 
 Current note:
-- the **CLI/product surface** is canonicalized to `brief`, `signal`, `holdings`, `watchtoday`, and `audit`
-- the **REST API** now exposes matching canonical routes while keeping older compatibility routes alive
-
-#### Canonical API
+- the **CLI/product surface** and **REST API** are now aligned around the same canonical five-command map
 
 | Method | Path | Purpose |
 |--------|------|---------|
@@ -251,17 +248,6 @@ Current note:
 | GET | `/holdings` | Private portfolio posture |
 | GET | `/holdings?address=0x...` | Wallet behavior read |
 | GET | `/watchtoday` | Daily market board |
-
-#### Compatibility API
-
-| Method | Path | Purpose |
-|--------|------|---------|
-| GET | `/brief/token?symbol=BNB` | Deeper asset brief |
-| GET | `/brief/signal?token=DOGE` | Signal validation brief |
-| GET | `/brief/audit?symbol=BNB` | Security audit brief |
-| GET | `/brief/meme?symbol=DOGE` | Specialist meme brief |
-| GET | `/brief/wallet?address=0x...` | Wallet analysis brief |
-| GET | `/brief/watchtoday` | Daily market board |
 
 ### Security middleware
 - Optional API key authentication (`X-API-Key` header, HMAC timing-safe comparison)

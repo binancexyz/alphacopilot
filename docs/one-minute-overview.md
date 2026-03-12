@@ -18,8 +18,8 @@ It does not just show what is moving. It helps users understand **what matters i
 3. **Publishing** — share results to Binance Square with a premium daily posting engine
 
 ## Key numbers
-- **5 canonical CLI commands** — `/brief`, `/signal`, `/holdings`, `/watchtoday`, `/audit`
-- **8 API endpoints** — FastAPI REST service (v0.2.1) with security middleware; some routes still use older compatibility names
+- **5 canonical commands** — `/brief`, `/signal`, `/holdings`, `/watchtoday`, `/audit`
+- **7 API endpoints** — FastAPI REST service (v0.2.1) with security middleware
 - **1 premium nightly post** — scheduled daily publishing engine at 21:30 Asia/Phnom_Penh
 - **6 Binance Skills** — core evidence layer
 - **Mock and live modes** — offline development and real integration

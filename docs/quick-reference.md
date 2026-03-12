@@ -27,9 +27,8 @@
 
 Current note:
 - canonical **CLI/product commands** are `brief`, `signal`, `holdings`, `watchtoday`, and `audit`
-- the API now exposes matching canonical routes while keeping older compatibility routes alive
+- the API now matches that same canonical surface
 
-### Canonical API
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/health` | System status, version, config warnings |
@@ -41,16 +40,6 @@ Current note:
 | GET | `/holdings` | Private portfolio posture |
 | GET | `/holdings?address=0x...` | Wallet analysis brief |
 | GET | `/watchtoday` | Daily market board |
-
-### Compatibility API
-| Method | Path | Purpose |
-|--------|------|---------|
-| GET | `/brief/token?symbol=BNB` | Deeper asset brief |
-| GET | `/brief/signal?token=DOGE` | Signal validation brief |
-| GET | `/brief/audit?symbol=BNB` | Security audit brief |
-| GET | `/brief/meme?symbol=DOGE` | Specialist meme brief |
-| GET | `/brief/wallet?address=0x...` | Wallet analysis brief |
-| GET | `/brief/watchtoday` | Daily market board |
 
 ## Product promise
 **Less noise. Better conviction.**

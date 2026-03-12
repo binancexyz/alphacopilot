@@ -17,7 +17,7 @@ This is the practical go/no-go checklist for the current repo state.
 - [ ] `make test`
 - [ ] `make api`
 - [ ] `GET /health` returns OK
-- [ ] at least one `/brief/token` live-mode request succeeds
+- [ ] at least one `/brief?symbol=BNB&deep=true` live-mode request succeeds
 
 ## Security / release hygiene
 - [x] `.env` is ignored
