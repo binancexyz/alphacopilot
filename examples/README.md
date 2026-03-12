@@ -18,3 +18,4 @@ These examples help with:
 - README screenshots
 - output style reference
 - future regression checks
+- comparing the current core command surface against older output shapes

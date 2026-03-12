@@ -11,8 +11,9 @@ If work pauses here, the project can still be resumed cleanly.
 ## What is already true
 - repo is public/pushed
 - checks pass
-- all four commands have scaffolded live-brief paths
-- docs are extensive
+- the command surface is now clearly split into core and specialist commands
+- the main command family has upgraded premium output formatting
+- docs are extensive and the high-visibility summaries are updated
 
 ## What comes next
 The next work is implementation inside the real runtime environment, not broad repo planning.

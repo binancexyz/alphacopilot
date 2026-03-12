@@ -39,3 +39,15 @@ Same pattern with:
 - `crypto-market-rank`
 - `meme-rush`
 - `trading-signal`
+
+## `/brief <symbol>`
+Suggested runtime shape:
+- reuse token + signal + quote context
+- prefer the shortest high-value answer path
+- preserve explicit source/context framing
+
+## `/portfolio`
+Suggested runtime shape:
+- use signed Binance account-read endpoints
+- compute posture, concentration, freshness, and drift
+- preserve private posture as a distinct command, not a public-wallet variant

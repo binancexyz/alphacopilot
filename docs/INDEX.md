@@ -9,6 +9,7 @@
 - [`one-minute-overview.md`](one-minute-overview.md) — Quick project pitch
 - [`quick-reference.md`](quick-reference.md) — Command reference and output shape
 - [`commands-overview.md`](commands-overview.md) — Detailed command documentation
+- [`command-architecture.md`](command-architecture.md) — Core vs specialist command recommendation
 
 ## Submission and Demo
 - [`submission.md`](submission.md)
