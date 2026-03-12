@@ -137,24 +137,24 @@ def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
     thin_context = ctx.portfolio_value <= 0 and ctx.holdings_count <= 0 and not ctx.top_holdings
 
     if thin_context or evidence_level == "Low":
-        quick_verdict = "This wallet does not currently have enough live evidence to justify a strong follow call."
+        quick_verdict = "Too thin to read. Return after rotation activity."
         ctx.follow_verdict = "Unknown"
         conviction = "Low"
     elif ctx.follow_verdict == "Track" and ctx.top_concentration_pct < 60:
-        quick_verdict = "This wallet is worth tracking because the size, diversification, and visible exposures are strong enough to study seriously without reading it as blind copy-trade material."
+        quick_verdict = "Trackable wallet. Useful behavior signal."
         conviction = "Medium"
     elif ctx.follow_verdict == "Track":
-        quick_verdict = "This wallet is worth tracking for behavior, but concentration is high enough that studying it is safer than treating it like a clean copy-trade template."
+        quick_verdict = "Trackable wallet. Concentration still high."
     elif ctx.follow_verdict == "Don't follow":
-        quick_verdict = "This wallet does not have enough visible structure to justify following right now."
+        quick_verdict = "Not enough structure. Do not follow."
     elif ctx.top_concentration_pct >= 75:
-        quick_verdict = "This wallet is informative but heavily concentrated, which means copying it blindly would be much riskier than simply studying its behavior."
+        quick_verdict = "Readable wallet. Concentration too high to trust."
     elif ctx.top_concentration_pct >= 50:
-        quick_verdict = "This wallet is worth monitoring, but concentration still limits how clean the signal is."
+        quick_verdict = "Monitor only. Concentration still high."
     elif quality == "Medium":
-        quick_verdict = "This wallet looks reasonably useful for pattern-reading because the positioning is visible without being excessively concentrated."
+        quick_verdict = "Readable wallet. Pattern signal exists."
     else:
-        quick_verdict = "This wallet has some readable structure, but the edge still comes more from watching behavior over time than from one static snapshot."
+        quick_verdict = "Some structure visible. Needs more history."
 
     risk_tags.append(RiskTag(name="Follow Verdict", level="Low" if ctx.follow_verdict == "Track" else "Medium" if ctx.follow_verdict == "Unknown" else "High", note=ctx.follow_verdict))
 

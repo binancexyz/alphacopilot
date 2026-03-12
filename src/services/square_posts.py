@@ -174,19 +174,30 @@ def _build_wallet_post(brief: AnalysisBrief) -> str:
 
 
 def _build_watchtoday_post(brief: AnalysisBrief) -> str:
-    lines = ["📡 Daily Brief | Bibipilot", brief.quick_verdict]
-    preferred_titles = ["🏦 Exchange Board", "🔥 Trending Now", "🧠 Smart Money Flow", "👀 Today's Top 3", "🌊 Narrative"]
-    ordered = sorted(
-        brief.sections,
-        key=lambda section: preferred_titles.index(section.title) if section.title in preferred_titles else len(preferred_titles),
-    )
-    for section in ordered[:4]:
-        title = section.title.replace("🔥 ", "").replace("🧠 ", "").replace("📣 ", "").replace("🚀 ", "").replace("🌊 ", "").replace("👀 ", "").replace("🏦 ", "")
-        first_line = next((line.strip('- ').strip() for line in section.content.splitlines() if line.strip()), "")
-        if first_line:
-            lines.append(f"{title}: {first_line}")
-    if brief.top_risks:
-        lines.append(f"Risk: {brief.top_risks[0]}")
+    signal_section = next((section for section in brief.sections if "Smart Money Flow" in section.title or "Signal" in section.title), None)
+    attention_section = next((section for section in brief.sections if "Trending Now" in section.title), None)
+
+    signal_line = ""
+    if signal_section:
+        signal_line = next((line.strip('- ').strip() for line in signal_section.content.splitlines() if line.strip()), "")
+
+    attention_line = ""
+    if attention_section:
+        attention_line = next((line.strip('- ').strip() for line in attention_section.content.splitlines() if line.strip()), "")
+
+    verdict = (brief.quick_verdict or "").strip()
+    lower = verdict.lower()
+    if "opportunity exists" in lower and "selectivity matters" in lower:
+        verdict = "Opportunity visible. Be selective."
+    elif "selectively instead of defensively" in lower or "selective rather than complete" in lower:
+        verdict = "Opportunity visible. Stay selective."
+    elif not verdict:
+        verdict = "Opportunity visible. Be selective."
+    lines = [verdict]
+    if signal_line:
+        lines.append(signal_line)
+    if attention_line:
+        lines.append(attention_line)
     return "\n".join(lines)
 
 

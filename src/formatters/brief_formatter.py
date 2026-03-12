@@ -366,7 +366,8 @@ def _format_wallet_card(brief: AnalysisBrief) -> str:
     if watch:
         labels = ["Activity", "Top move", "Drift"]
         for idx, item in enumerate(watch[:3]):
-            behavior_lines.append(f"{labels[idx]}: {item.replace('whether ', '').rstrip('.')}" )
+            cleaned = item.replace('whether ', '').replace('the wallet ', '').rstrip('.')
+            behavior_lines.append(f"{labels[idx]}: {cleaned}")
     else:
         behavior_lines = ["Activity: Static", "Top move: No rotation visible", "Drift: No change detected"]
 
@@ -375,7 +376,7 @@ def _format_wallet_card(brief: AnalysisBrief) -> str:
     parts.extend(_tree_lines(behavior_lines[:3]))
     dot_level = "Low" if follow == "Unknown" else "Medium" if follow == "Track" else "Low"
     parts.extend(["", f"**🧠 Verdict {_dots(dot_level)}**\n{brief.quick_verdict}"])
-    risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Not a follow signal"]
+    risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Thin payload"]
     if follow == "Unknown" and "not a follow signal" not in " ".join(risk_bits).lower():
         risk_bits.append("Not a follow signal")
     parts.extend(["", f"**⚠️ {' · '.join(risk_bits[:2])}**"])
