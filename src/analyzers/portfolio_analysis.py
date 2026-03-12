@@ -260,6 +260,7 @@ def analyze_portfolio() -> AnalysisBrief:
         why = f"{why} {delta_summary}"
     if trend_summary:
         why = f"{why} Short local trend: {trend_summary}."
+        snapshot["tags"].append(RiskTag(name="Short Trend", level="Info", note=trend_summary))
 
     watch_items = [
         "whether the top holding keeps growing relative to the rest of the account",
