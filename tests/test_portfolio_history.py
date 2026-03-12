@@ -32,6 +32,8 @@ def test_describe_delta_detects_material_changes():
 def test_append_and_load_history(tmp_path: Path):
     old_path = portfolio_history.HISTORY_PATH
     portfolio_history.HISTORY_PATH = tmp_path / 'portfolio_history.json'
+    if portfolio_history.HISTORY_PATH.exists():
+        portfolio_history.HISTORY_PATH.unlink()
     try:
         portfolio_history.append_snapshot({'total_value': 1.0, 'priced_assets': []})
         history = portfolio_history.load_history()

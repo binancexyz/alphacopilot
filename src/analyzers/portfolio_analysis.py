@@ -9,6 +9,7 @@ from urllib.parse import urlencode
 
 from src.config import settings
 from src.models.schemas import AnalysisBrief, RiskTag
+from src.services.exposure_groups import top_groups
 from src.services.portfolio_history import append_snapshot, describe_delta, latest_snapshot
 
 BINANCE_API_BASE_URL = "https://api.binance.com"
@@ -145,6 +146,7 @@ def get_portfolio_snapshot() -> dict[str, Any]:
     risk_value = sum(item["usd_value"] for item in priced_assets if item["asset"] not in STABLES)
     stable_pct = (float(stable_value) / float(total_value) * 100) if total_value > 0 else 0.0
     risk_pct = (float(risk_value) / float(total_value) * 100) if total_value > 0 else 0.0
+    group_mix = top_groups({"asset": item["asset"], "usd_value": float(item["usd_value"])} for item in priced_assets)
     top = priced_assets[:5]
     top_lines: list[str] = []
     top_weights: list[float] = []
@@ -191,10 +193,12 @@ def get_portfolio_snapshot() -> dict[str, Any]:
     if not risk_lines:
         risk_lines.append("This is an estimated read-only snapshot, not a full PnL or cost-basis analysis.")
 
+    lead_groups = ", ".join(f"{name} {pct:.1f}%" for name, pct in group_mix[:3]) if group_mix else "no clear grouped exposure yet"
     why = (
         f"Estimated visible Spot value is about ${float(total_value):,.2f} across {available_assets} priced asset(s). "
         f"Stablecoins are {stable_pct:.1f}% of the priced snapshot and risk assets are {risk_pct:.1f}%. "
-        f"Top concentration is {concentration:.1f}%{' with some locked balances in play' if locked_assets else ''}, which makes the current posture look {posture_note}."
+        f"Top concentration is {concentration:.1f}%{' with some locked balances in play' if locked_assets else ''}, which makes the current posture look {posture_note}. "
+        f"Lead exposure groups: {lead_groups}."
     )
 
     tags = [
@@ -205,6 +209,8 @@ def get_portfolio_snapshot() -> dict[str, Any]:
     if concentration > 0:
         tags.append(RiskTag(name="Top Concentration", level="High" if concentration >= 70 else "Medium" if concentration >= 40 else "Low", note=f"{concentration:.1f}%"))
     tags.append(RiskTag(name="Stablecoin Share", level="High" if stable_pct >= 55 else "Medium" if stable_pct >= 20 else "Low", note=f"{stable_pct:.1f}%"))
+    if group_mix:
+        tags.append(RiskTag(name="Lead Group", level="Info", note=f"{group_mix[0][0]} {group_mix[0][1]:.1f}%"))
 
     return {
         "verdict": verdict,
