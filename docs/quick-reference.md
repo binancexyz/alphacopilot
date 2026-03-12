@@ -1,24 +1,44 @@
 # Quick Reference
 
 ## Commands
-- `/price <symbol>` — compact market card, prefers Binance Spot read-only data when available
-- `/brief <symbol>` — fast synthesis with exchange-native market grounding when available
-- `/token <symbol>` — token setup / conviction read with Spot as supporting confirmation
-- `/signal <token>` — setup validation that separates exchange price from matched signal quality
-- `/wallet <address>` — wallet behavior / follow verdict
-- `/watchtoday` — daily board with Exchange Board + signal / narrative lanes
-- `/meme <symbol>` — first-pass meme read
-- `careers` — Binance ecosystem/company-priority pulse
+
+| Command | Purpose |
+|---------|---------|
+| `/price <symbol>` | Compact market card, prefers Binance Spot read-only data when available |
+| `/brief <symbol>` | Fast synthesis with exchange-native market grounding when available |
+| `/token <symbol>` | Token setup / conviction read with Spot as supporting confirmation |
+| `/signal <token>` | Setup validation that separates exchange price from matched signal quality |
+| `/wallet <address>` | Wallet behavior / follow verdict |
+| `/risk <symbol>` | Downside-first risk assessment |
+| `/audit <symbol>` | Security-first token audit card |
+| `/watchtoday` | Daily board with Exchange Board + signal / narrative lanes |
+| `/meme <symbol>` | First-pass meme read |
+| `careers` | Binance ecosystem/company-priority pulse |
+
+## API Endpoints (v0.2.1)
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/health` | System status, version, config warnings |
+| GET | `/runtime/report` | Extended runtime diagnostics |
+| GET | `/brief/token?symbol=BNB` | Token analysis brief |
+| GET | `/brief/signal?token=DOGE` | Signal validation brief |
+| GET | `/brief/audit?symbol=BNB` | Security audit brief |
+| GET | `/brief/meme?symbol=DOGE` | Meme token brief |
+| GET | `/brief/wallet?address=0x...` | Wallet analysis brief |
+| GET | `/brief/watchtoday` | Daily market board |
 
 ## Product promise
 **Less noise. Better conviction.**
 
 ## What works especially well today
-- stronger trust / evidence honesty across the main commands
+- Stronger trust / evidence honesty across the main commands
 - Binance Spot read-only grounding for `price`, `brief`, and `watchtoday`
-- supporting Binance Spot confirmation for `token` and `signal`
-- wallet output is more behavior-aware than before
-- runtime health diagnostics exist in live mode via `/health`
+- Supporting Binance Spot confirmation for `token` and `signal`
+- Wallet output is more behavior-aware
+- Runtime health diagnostics in live mode via `/health`
+- Live Binance Square posting with scheduled daily engine
+- Security-hardened API (auth, rate limiting, SSRF protection, path traversal prevention)
 
 ## Output shape
 - Quick Verdict
@@ -28,13 +48,22 @@
 - What To Watch Next
 - Risk Tags / lane coverage when relevant
 
+## Publishing commands
+```bash
+python3 src/square_cli.py token BNB             # draft
+python3 src/square_cli.py token BNB --publish    # publish
+python3 src/square_diary.py night-diary          # scheduled diary
+```
+
 ## Best first docs
-- `README.md`
-- `docs/INDEX.md`
-- `docs/demo-script.md`
-- `docs/binance-spot-integration.md`
-- `docs/commands-overview.md`
-- `docs/production-readiness.md`
+- [`README.md`](../README.md)
+- [`docs/INDEX.md`](INDEX.md)
+- [`docs/prd.md`](prd.md)
+- [`docs/architecture.md`](architecture.md)
+- [`docs/commands-overview.md`](commands-overview.md)
+- [`docs/demo-script.md`](demo-script.md)
+- [`docs/binance-spot-integration.md`](binance-spot-integration.md)
+- [`docs/deployment.md`](deployment.md)
 
 ## Local checks
 ```bash
