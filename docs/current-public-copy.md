@@ -27,7 +27,7 @@ Bibipilot is built for a simple problem: crypto attention moves faster than clea
 Users can already find token movement, wallet activity, ranking changes, narrative rotation, and smart-money signals everywhere, but that still does not answer the questions that matter: what is real, what is risky, what is late, and what is worth publishing?
 
 Bibipilot closes that gap.
-It uses Binance Skills as the evidence layer, adds a judgment layer through command-specific outputs such as `/brief`, `/token`, `/signal`, `/portfolio`, `/wallet`, and `/watchtoday`, and then closes the loop by publishing directly to Binance Square.
+It uses Binance Skills as the evidence layer, adds a judgment layer through command-specific outputs such as `/brief`, `/signal`, `/holdings`, `/watchtoday`, and `/audit`, and then closes the loop by publishing directly to Binance Square.
 
 ## Public release message
 Launching **Bibipilot**.
@@ -37,20 +37,20 @@ It is a **public-alpha Binance-native research copilot** built around:
 - judgment
 - publishing
 
-### Core commands
+### Canonical commands
 - `/brief`
-- `/token`
 - `/signal`
+- `/holdings`
+- `/watchtoday`
+- `/audit`
+
+### Hidden compatibility
+- `/token`
 - `/portfolio`
 - `/wallet`
-- `/watchtoday`
-
-### Specialist commands
-- `/price`
 - `/risk`
-- `/audit`
 - `/meme`
-- `careers`
+- `/price`
 
 ### What is real today
 - runnable Python CLI + API surface

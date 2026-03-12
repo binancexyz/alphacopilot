@@ -1,15 +1,15 @@
 # Example Usage
 
-## Core commands
+## Canonical commands
 
 ### Brief
 ```bash
 python3 src/main.py brief BNB
 ```
 
-### Token
+### Brief (deeper asset read)
 ```bash
-python3 src/main.py token BNB
+python3 src/main.py brief BNB deep
 ```
 
 ### Signal
@@ -17,14 +17,14 @@ python3 src/main.py token BNB
 python3 src/main.py signal DOGE
 ```
 
-### Portfolio
+### Holdings (private posture)
 ```bash
-python3 src/main.py portfolio
+python3 src/main.py holdings
 ```
 
-### Wallet
+### Holdings (external wallet)
 ```bash
-python3 src/main.py wallet 0x1234567890ab
+python3 src/main.py holdings 0x1234567890ab
 ```
 
 ### Watch Today
@@ -32,29 +32,18 @@ python3 src/main.py wallet 0x1234567890ab
 python3 src/main.py watchtoday
 ```
 
-## Specialist commands
-
-### Price
-```bash
-python3 src/main.py price BNB
-```
-
-### Risk
-```bash
-python3 src/main.py risk ETH
-```
-
 ### Audit
 ```bash
 python3 src/main.py audit BNB
 ```
 
-### Meme
-```bash
-python3 src/main.py meme DOGE
-```
+## Hidden compatibility commands
 
-### Careers
 ```bash
-python3 src/main.py careers --cache-only
+python3 src/main.py token BNB
+python3 src/main.py portfolio
+python3 src/main.py wallet 0x1234567890ab
+python3 src/main.py risk ETH
+python3 src/main.py meme DOGE
+python3 src/main.py price BNB
 ```

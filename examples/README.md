@@ -1,9 +1,9 @@
 # Examples
 
 Recommended first file:
-- `current-output-examples.md` — fresh CLI examples for demo/screenshots
+- `current-output-examples.md` — fresh CLI examples for the canonical command surface
 
-This folder contains example outputs for the current core command family plus refreshed current-output snapshots.
+This folder contains example outputs for the current Bibipilot command family, with emphasis on the public 5-command map.
 
 ## Files
 - `current-output-examples.md`
@@ -18,4 +18,4 @@ These examples help with:
 - README screenshots
 - output style reference
 - future regression checks
-- comparing the current core command surface against older output shapes
+- comparing the canonical public surface against older compatibility outputs

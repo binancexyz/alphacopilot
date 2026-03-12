@@ -15,9 +15,9 @@
 - `/token BNB` live matching fix across bridge and extractor layers
 - live Binance Square draft/publish flow
 - scheduled Binance Square autoposting with a verified quality-focused premium 1-post/day Asia/Phnom_Penh cron engine
-- broader slash-command layer refined into core commands (`/brief`, `/token`, `/signal`, `/portfolio`, `/wallet`, `/watchtoday`) and specialist commands (`/price`, `/risk`, `/audit`, `/meme`, `careers`), with `watch today` kept as an alias
-- upgraded premium `/brief`, `/price`, and `/risk` command layer
-- command-specific layouts for `/token`, `/signal`, `/wallet`, `/watchtoday`, `/portfolio`, and `/audit`
+- broader slash-command layer was first refined into core/specialist groups and has now been reduced further into a canonical public surface: `/brief`, `/signal`, `/holdings`, `/watchtoday`, `/audit`
+- upgraded premium command layer, with `/brief` as the flagship entry point and hidden compatibility paths kept behind the scenes
+- command-specific layouts for deeper asset, signal, holdings, watchtoday, and audit reads
 - secondary-market fallback framing for `/price` and `/brief` without leaking provider-specific wording
 - hidden native BNB audit quirk suppression for cleaner risk output
 - explicit audit gate surfaced in `/token` and `/signal`

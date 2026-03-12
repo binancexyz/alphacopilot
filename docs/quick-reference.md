@@ -2,24 +2,26 @@
 
 ## Commands
 
-### Core
+### Canonical
 | Command | Purpose |
 |---------|---------|
-| `/brief <symbol>` | Fast default market read with source/context framing |
-| `/token <symbol>` | Token setup / conviction read with Spot as supporting confirmation |
-| `/signal <token>` | Setup validation with invalidation and matched-signal separation |
-| `/portfolio` | Private Binance Spot posture with freshness/history-aware drift |
-| `/wallet <address>` | Wallet behavior / follow verdict |
+| `/brief <symbol>` | Fast default asset read; can go deeper when data supports it |
+| `/signal <symbol>` | Setup validation with invalidation and risk merged in |
+| `/holdings [address]` | Portfolio posture or external wallet behavior |
 | `/watchtoday` | Daily board with Exchange Board + signal / narrative lanes |
+| `/audit <symbol>` | Security-first token read with meme lens folded in |
 
-### Specialist
-| Command | Purpose |
+### Hidden compatibility
+| Older command | New home |
 |---------|---------|
-| `/price <symbol>` | Premium market utility card |
-| `/risk <symbol>` | Downside-first risk assessment |
-| `/audit <symbol>` | Security-first token audit card |
-| `/meme <symbol>` | First-pass meme read |
-| `careers` | Binance ecosystem/company-priority pulse |
+| `/token <symbol>` | `/brief <symbol> deep` |
+| `/portfolio` | `/holdings` |
+| `/wallet <address>` | `/holdings <address>` |
+| `/risk <symbol>` | `/signal <symbol>` |
+| `/meme <symbol>` | `/audit <symbol>` |
+| `/price <symbol>` | hidden utility surface |
+| `/watch` | removed alias |
+| `careers` | removed from main product surface |
 
 ## API Endpoints (v0.2.1)
 

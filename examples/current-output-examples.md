@@ -3,34 +3,12 @@
 These are current example outputs from the CLI in the repo workspace.
 They are useful for demos, README screenshots, and judge-facing proof that the product surface is real.
 
----
-
-## `/price BNB`
-
-```text
-**💵 Price: BNB**
-
-**📁 Price**
-┣ Asset: BNB (BNB)
-┗ Rank: #4
-
-**📊 Market**
-┣ Current Price: $645.08
-┣ 24h Change: +0.67% 📈
-┣ Market Cap: $88.0B
-┗ 24h Volume: $1.7B
-
-**🏷️ Context**
-┗ Source: Info — Secondary market data
-
-**🧠 Source Note**
-┗ Using secondary market data.
-```
-
-What this shows:
-- compact market truth layer
-- stronger premium structure
-- source transparency without leaking implementation clutter
+The public product surface is now built around:
+- `/brief`
+- `/signal`
+- `/holdings`
+- `/watchtoday`
+- `/audit`
 
 ---
 
@@ -63,7 +41,7 @@ What this shows:
 
 ---
 
-## `/token BNB`
+## `/brief BNB deep`
 
 ```text
 **🪙 Token: BNB**
@@ -92,9 +70,9 @@ No matched smart-money signal is visible for this token in the current live boar
 ```
 
 What this shows:
+- deeper asset judgment through the canonical brief entry point
 - conviction language
 - audit-aware judgment shape
-- evidence-quality discipline
 
 ---
 
@@ -132,7 +110,79 @@ No matched smart-money signal is visible for this token in the current live boar
 What this shows:
 - honesty under thin live evidence
 - explicit invalidation framing
-- signal quality != signal existence
+- risk merged directly into setup judgment
+
+---
+
+## `/holdings`
+
+```text
+**📂 Portfolio: Binance Spot**
+
+**⚡ Portfolio Read**
+This read-only Spot snapshot looks defensive, with meaningful stablecoin dry powder and no extreme single-asset concentration.
+
+**📊 Posture**
+Defensive
+
+**🧠 Why**
+Estimated visible Spot value is about $1,628.40 across 18 priced asset(s). Stablecoins are 63.4% of the priced snapshot and risk assets are 36.6%. Top concentration is 38.0%, which makes the current posture look defensive. Lead exposure groups: Stablecoins 63.4%, Infra 20.4%, Meme 12.0%. Last local snapshot was saved 2m ago.
+
+**💼 Top Holdings**
+┣ USDC ~$618.12 (38.0%) | includes LD balances
+┣ USDT ~$414.18 (25.4%) | includes LD balances
+┣ ASTER ~$263.37 (16.2%) | includes LD balances
+┣ BARD ~$113.17 (6.9%) | includes LD balances
+┗ PENGU ~$69.70 (4.3%) | includes LD balances
+
+**⚠️ Risks**
+┗ This is an estimated read-only snapshot, not a full PnL or cost-basis analysis.
+
+**👀 Watch**
+┣ whether the top holding keeps growing relative to the rest of the account
+┗ whether stablecoin dry powder changes meaningfully after the next rotation
+
+**🏷️ Tags**
+┣ Freshness: Info — saved 2m ago
+┣ Account Mode: Read-only — estimated Spot snapshot
+┣ Source: Binance API — signed account read + live price map
+┣ Assets: 18 — priced balances
+┗ Top Concentration: Low — 38.0%
+```
+
+What this shows:
+- private posture intelligence
+- freshness-aware local snapshot framing
+- unified ownership/posture command
+
+---
+
+## `/holdings 0x1234567890ab`
+
+```text
+**👛 Wallet: 0x1234567890ab**
+
+✅ Follow: Track
+
+**⚡ Read**
+This wallet is worth tracking for behavior, but concentration is high enough that studying it is safer than treating it like a clean copy-trade template.
+
+**🧠 Why**
+This wallet tracks roughly $245,000 across 12 holding(s), so it is large enough to inspect for behavior rather than treating it as random dust. Current read: meaningful concentration with positive 24h change at +8.4%. Narrative bias: meme, AI | Risk posture: mixed
+
+**⚠️ Risks**
+┣ Low diversification can amplify drawdowns.
+┗ Wallet size alone does not prove smart-money quality.
+
+**👀 Watch**
+┣ whether recent gains are being held, expanded, or rotated out of
+┗ whether top holding concentration stays controlled as new positions appear
+```
+
+What this shows:
+- external wallet behavior read under the unified holdings surface
+- follow verdict framing
+- behavior-aware posture analysis
 
 ---
 
@@ -193,70 +243,41 @@ What this shows:
 
 ---
 
-## `/portfolio`
+## `/audit PEPE`
 
 ```text
-**📂 Portfolio: Binance Spot**
+**🔐 Audit: UPEPE**
 
-**⚡ Portfolio Read**
-This read-only Spot snapshot looks defensive, with meaningful stablecoin dry powder and no extreme single-asset concentration.
+**📁 Audit**
+┣ Asset: UPEPE (UPEPE)
+┣ Audit Gate: ALLOW 🟢
+┗ Risk Level: Low 🟢
 
-**📊 Posture**
-Defensive
+**⚡ Read**
+UPEPE has only limited audit visibility right now, so security conclusions should stay cautious.
 
-**🧠 Why**
-Estimated visible Spot value is about $1,628.40 across 18 priced asset(s). Stablecoins are 63.4% of the priced snapshot and risk assets are 36.6%. Top concentration is 38.0%, which makes the current posture look defensive. Lead exposure groups: Stablecoins 63.4%, Infra 20.4%, Meme 12.0%. Last local snapshot was saved 2m ago.
+**⚠️ Findings**
+┗ No major security issue surfaced in the current audit payload.
 
-**💼 Top Holdings**
-┣ USDC ~$618.12 (38.0%) | includes LD balances
-┣ USDT ~$414.18 (25.4%) | includes LD balances
-┣ ASTER ~$263.37 (16.2%) | includes LD balances
-┣ BARD ~$113.17 (6.9%) | includes LD balances
-┗ PENGU ~$69.70 (4.3%) | includes LD balances
+**🔍 Summary**
+┗ Risk level 1 (LOW); Buy tax 0.03% / Sell tax 0.03%
 
-**⚠️ Risks**
-┗ This is an estimated read-only snapshot, not a full PnL or cost-basis analysis.
+**🧪 Meme Lens**
+┣ UPEPE is still only a provisional meme read because live participation and lifecycle evidence are too thin to trust aggressively.
+┣ Participation Quality: Low: Participation quality is still too weak or one-dimensional to trust much.
+┗ Lifecycle: Medium: unknown
 
-**👀 Watch**
-┣ whether the top holding keeps growing relative to the rest of the account
-┗ whether stablecoin dry powder changes meaningfully after the next rotation
+**🏷️ Context**
+┗ Audit Validity: Limited — Live audit validity is partial or unsupported right now.
 
-**🏷️ Tags**
-┣ Freshness: Info — saved 2m ago
-┣ Account Mode: Read-only — estimated Spot snapshot
-┣ Source: Binance API — signed account read + live price map
-┣ Assets: 18 — priced balances
-┗ Top Concentration: Low — 38.0%
+**📝 Disclaimer**
+┗ This audit result is for reference only and does not constitute investment advice. Always conduct your own research.
 ```
 
 What this shows:
-- private posture intelligence
-- freshness-aware local snapshot framing
-- grouped exposure and trust-oriented wording
-
----
-
-## `/wallet 0x1234567890ab`
-
-```text
-**👛 Wallet: 0x1234567890ab**
-
-✅ Follow: Track
-
-**⚡ Read**
-This wallet is worth tracking for behavior, but concentration is high enough that studying it is safer than treating it like a clean copy-trade template.
-
-**🧠 Why**
-This wallet tracks roughly $245,000 across 12 holding(s), so it is large enough to inspect for behavior rather than treating it as random dust. Current read: meaningful concentration with positive 24h change at +8.4%. Narrative bias: meme, AI | Risk posture: mixed
-
-**⚠️ Risks**
-┣ Low diversification can amplify drawdowns.
-┗ Wallet size alone does not prove smart-money quality.
-
-**👀 Watch**
-┣ whether recent gains are being held, expanded, or rotated out of
-┗ whether top holding concentration stays controlled as new positions appear
-```
+- safety remains first-class
+- meme lens merged into audit context
+- cleaner single-command judgment for structurally risky/speculative assets
 
 What this shows:
 - wallet behavior interpretation

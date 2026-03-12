@@ -15,7 +15,7 @@ It uses Binance Skills Hub as the evidence layer, adds a Python judgment layer o
 
 > **Status: public alpha — real command surface, live publishing, security-hardened API**
 >
-> Bibipilot ships 11 research commands, live Binance Square publishing, a FastAPI REST service (v0.2.1), a live bridge for OpenClaw integration (v0.2.0), and production-grade security hardening. It is not finished, but it is well beyond concept stage.
+> Bibipilot now presents a 5-command canonical surface, live Binance Square publishing, a FastAPI REST service (v0.2.1), a live bridge for OpenClaw integration (v0.2.0), and production-grade security hardening. It is not finished, but it is well beyond concept stage.
 
 ---
 
@@ -160,19 +160,13 @@ pip install -r requirements.txt
 
 ### 2. CLI usage
 ```bash
-python3 src/main.py price BNB
 python3 src/main.py brief BTC
-python3 src/main.py token BNB
+python3 src/main.py brief BNB deep
 python3 src/main.py signal DOGE
-python3 src/main.py wallet 0x1234567890ab
-python3 src/main.py portfolio
-python3 src/main.py risk ETH
+python3 src/main.py holdings
+python3 src/main.py holdings 0x1234567890ab
 python3 src/main.py audit BNB
 python3 src/main.py watchtoday
-python3 src/main.py watch today     # alias for watchtoday
-python3 src/main.py meme DOGE
-python3 src/main.py careers
-python3 src/main.py careers --cache-only
 ```
 
 ### 3. Run checks
@@ -350,25 +344,22 @@ The careers pulse is deliberately separate from token/signal logic — treat it 
 ## Current status
 
 ### What works well
-- 11 research commands with structured output (verdict, conviction, risks, what to watch)
-- Trust and evidence honesty across core commands
-- Binance Spot read-only grounding for `price`, `brief`, `watchtoday`, and supporting confirmation in `token` / `signal`
-- Read-only private Spot posture via `/portfolio`
-- Portfolio-aware reasoning now appears in `/portfolio`, `/watchtoday`, `/risk`, and `/token`
+- 5-command canonical surface with structured output (read, conviction, risks, watch, context)
+- Trust and evidence honesty across the main commands
+- Binance Spot read-only grounding for `brief` and `watchtoday`, with supporting confirmation where deeper reads allow it
+- Unified posture read via `/holdings`
 - Runtime health diagnostics via `/health`
 - Live Binance Square posting with scheduled daily engine
 - API security hardening (auth, rate limiting, SSRF protection, path traversal prevention, security headers)
 
 ### Surface priority
-- **Primary:** `/brief`, `/watchtoday`, `/portfolio`, `/risk`, `/token`
-- **Secondary:** `/price`, `/signal`, `/audit`, `/wallet`
-- **Optional:** `/meme`, `careers`
+- **Canonical:** `/brief`, `/signal`, `/holdings`, `/watchtoday`, `/audit`
+- **Hidden compatibility:** `/token`, `/portfolio`, `/wallet`, `/risk`, `/meme`, `/price`
 
 ### What is still evolving
-- `/brief` should keep getting sharper as the premium default market read
+- `/brief` should keep getting sharper as the premium default asset read
 - Live bridge coverage is strongest for `token`, `signal`, `audit`, and `watchtoday`
-- `wallet` and `meme` depend on thinner live runtime context
-- Binance Careers is intentionally treated as adjacent ecosystem context, not a core trading surface
+- `wallet` and `meme` depth still depend on thinner live runtime context beneath the new `holdings` / `audit` surface
 - This is a public alpha research copilot, not a finished autonomous trading system
 
 ---
