@@ -14,6 +14,7 @@ BINANCE_API_BASE_URL = "https://api.binance.com"
 ACCOUNT_INFO_URL = "/api/v3/account"
 PRICE_TICKER_URL = "/api/v3/ticker/price"
 STABLES = {"USDT", "USDC", "BUSD", "FDUSD", "TUSD", "USDP", "DAI"}
+LD_PREFIXES = ("LD",)
 
 
 class PortfolioFetchError(RuntimeError):
@@ -69,6 +70,17 @@ def _load_prices() -> dict[str, Decimal]:
     return prices
 
 
+def _normalize_asset(asset: str) -> tuple[str, bool]:
+    normalized = asset.upper().strip()
+    wrapped = False
+    for prefix in LD_PREFIXES:
+        if normalized.startswith(prefix) and len(normalized) > len(prefix):
+            normalized = normalized[len(prefix):]
+            wrapped = True
+            break
+    return normalized, wrapped
+
+
 def _asset_usd_price(asset: str, prices: dict[str, Decimal]) -> Decimal:
     if asset in STABLES:
         return Decimal("1")
@@ -77,7 +89,8 @@ def _asset_usd_price(asset: str, prices: dict[str, Decimal]) -> Decimal:
         if pair in prices:
             return prices[pair]
     if asset == "BTC":
-        return Decimal("0")
+        btc_usdt = prices.get("BTCUSDT") or prices.get("BTCUSDC")
+        return btc_usdt or Decimal("0")
     btc_pair = f"{asset}BTC"
     btc_usdt = prices.get("BTCUSDT") or prices.get("BTCUSDC")
     if btc_pair in prices and btc_usdt:
@@ -104,31 +117,44 @@ def analyze_portfolio() -> AnalysisBrief:
         )
 
     balances = account.get("balances") or []
-    enriched: list[dict[str, Any]] = []
+    merged: dict[str, dict[str, Any]] = {}
+    unmapped_assets: list[str] = []
     total_value = Decimal("0")
     for item in balances:
         if not isinstance(item, dict):
             continue
-        asset = str(item.get("asset") or "").upper()
+        raw_asset = str(item.get("asset") or "").upper()
+        normalized_asset, wrapped = _normalize_asset(raw_asset)
         free = Decimal(str(item.get("free") or "0"))
         locked = Decimal(str(item.get("locked") or "0"))
         qty = free + locked
         if qty <= 0:
             continue
-        usd_price = _asset_usd_price(asset, prices)
+        usd_price = _asset_usd_price(normalized_asset, prices)
         usd_value = qty * usd_price
         total_value += usd_value
-        enriched.append({
-            "asset": asset,
-            "qty": qty,
-            "usd_price": usd_price,
-            "usd_value": usd_value,
-            "locked": locked,
+        slot = merged.setdefault(normalized_asset, {
+            "asset": normalized_asset,
+            "raw_assets": set(),
+            "qty": Decimal("0"),
+            "usd_price": Decimal("0"),
+            "usd_value": Decimal("0"),
+            "locked": Decimal("0"),
+            "wrapped": False,
         })
+        slot["raw_assets"].add(raw_asset)
+        slot["qty"] += qty
+        slot["locked"] += locked
+        slot["wrapped"] = slot["wrapped"] or wrapped
+        if usd_price > 0:
+            slot["usd_price"] = usd_price
+            slot["usd_value"] += usd_value
+        else:
+            unmapped_assets.append(raw_asset)
 
-    enriched.sort(key=lambda x: x["usd_value"], reverse=True)
-    nonzero_count = len(enriched)
-    top = enriched[:5]
+    enriched = sorted(merged.values(), key=lambda x: x["usd_value"], reverse=True)
+    priced_assets = [item for item in enriched if item["usd_value"] > 0]
+    top = priced_assets[:5]
     top_lines: list[str] = []
     top_weights: list[float] = []
     for item in top:
@@ -136,7 +162,8 @@ def analyze_portfolio() -> AnalysisBrief:
         weight = (value / float(total_value) * 100) if total_value > 0 else 0.0
         top_weights.append(weight)
         locked_note = " | some locked" if item["locked"] > 0 else ""
-        top_lines.append(f"{item['asset']} ~${value:,.2f} ({weight:.1f}%){locked_note}")
+        wrapped_note = " | includes LD balances" if item["wrapped"] else ""
+        top_lines.append(f"{item['asset']} ~${value:,.2f} ({weight:.1f}%){locked_note}{wrapped_note}")
 
     concentration = top_weights[0] if top_weights else 0.0
     if total_value <= 0:
@@ -152,7 +179,7 @@ def analyze_portfolio() -> AnalysisBrief:
         verdict = "This Spot portfolio looks more balanced than single-bet, with value spread across multiple assets."
         quality = "Balanced"
 
-    available_assets = sum(1 for item in enriched if item["usd_value"] > 0)
+    available_assets = len(priced_assets)
     locked_assets = sum(1 for item in enriched if item["locked"] > 0)
     risk_lines: list[str] = []
     if total_value <= 0:
@@ -161,6 +188,8 @@ def analyze_portfolio() -> AnalysisBrief:
         risk_lines.append("Top holding concentration is high enough that one move can dominate portfolio performance.")
     if locked_assets > 0:
         risk_lines.append("Some balances are locked, so immediately available exposure is lower than gross holdings suggest.")
+    if unmapped_assets:
+        risk_lines.append(f"Some asset codes still need mapping for cleaner valuation: {', '.join(sorted(set(unmapped_assets))[:5])}.")
     if not risk_lines:
         risk_lines.append("This is a read-only snapshot, not a full PnL or cost-basis analysis.")
 

@@ -58,3 +58,34 @@ def test_analyze_portfolio_builds_balanced_snapshot():
     assert "Estimated visible Spot value" in brief.why_it_matters
     assert any(tag.name == "Top Concentration" for tag in brief.risk_tags)
     assert "USDT" in (brief.beginner_note or "")
+
+
+def test_analyze_portfolio_normalizes_ld_assets():
+    old_client = portfolio_analysis._httpx_client
+    old_key = portfolio_analysis.settings.binance_api_key
+    old_secret = portfolio_analysis.settings.binance_api_secret
+    portfolio_analysis.settings.binance_api_key = "k"
+    portfolio_analysis.settings.binance_api_secret = "s"
+    portfolio_analysis._httpx_client = lambda *a, **k: DummyClient({
+        "account": {
+            "balances": [
+                {"asset": "LDUSDT", "free": "10", "locked": "0"},
+                {"asset": "LDETH", "free": "1", "locked": "0"},
+            ]
+        },
+        "prices": [
+            {"symbol": "ETHUSDT", "price": "2000"},
+            {"symbol": "BTCUSDT", "price": "80000"},
+        ],
+    })
+    try:
+        brief = portfolio_analysis.analyze_portfolio()
+    finally:
+        portfolio_analysis._httpx_client = old_client
+        portfolio_analysis.settings.binance_api_key = old_key
+        portfolio_analysis.settings.binance_api_secret = old_secret
+
+    note = brief.beginner_note or ""
+    assert "USDT" in note
+    assert "ETH" in note
+    assert "LDUSDT" not in note
