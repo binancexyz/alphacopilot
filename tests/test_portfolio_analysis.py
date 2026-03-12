@@ -56,7 +56,9 @@ def test_analyze_portfolio_builds_balanced_snapshot():
 
     assert brief.entity == "Portfolio: Binance Spot"
     assert "Estimated visible Spot value" in brief.why_it_matters
+    assert "Stablecoins are" in brief.why_it_matters
     assert any(tag.name == "Top Concentration" for tag in brief.risk_tags)
+    assert any(tag.name == "Stablecoin Share" for tag in brief.risk_tags)
     assert "USDT" in (brief.beginner_note or "")
 
 
@@ -89,3 +91,4 @@ def test_analyze_portfolio_normalizes_ld_assets():
     assert "USDT" in note
     assert "ETH" in note
     assert "LDUSDT" not in note
+    assert "estimated Spot snapshot" in " ".join((tag.note or "") for tag in brief.risk_tags)

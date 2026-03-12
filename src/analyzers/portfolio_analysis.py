@@ -154,6 +154,10 @@ def analyze_portfolio() -> AnalysisBrief:
 
     enriched = sorted(merged.values(), key=lambda x: x["usd_value"], reverse=True)
     priced_assets = [item for item in enriched if item["usd_value"] > 0]
+    stable_value = sum(item["usd_value"] for item in priced_assets if item["asset"] in STABLES)
+    risk_value = sum(item["usd_value"] for item in priced_assets if item["asset"] not in STABLES)
+    stable_pct = (float(stable_value) / float(total_value) * 100) if total_value > 0 else 0.0
+    risk_pct = (float(risk_value) / float(total_value) * 100) if total_value > 0 else 0.0
     top = priced_assets[:5]
     top_lines: list[str] = []
     top_weights: list[float] = []
@@ -167,16 +171,19 @@ def analyze_portfolio() -> AnalysisBrief:
 
     concentration = top_weights[0] if top_weights else 0.0
     if total_value <= 0:
-        verdict = "The account read worked, but there is no visible spot balance value to summarize yet."
+        verdict = "The account read worked, but there is no visible Spot balance value to summarize yet."
         quality = "Thin"
     elif concentration >= 70:
-        verdict = "This Spot portfolio is highly concentrated, so one position is dominating the account posture."
+        verdict = "This read-only Spot snapshot is highly concentrated, so one position is dominating the account posture."
         quality = "Concentrated"
+    elif stable_pct >= 55 and concentration < 40:
+        verdict = "This read-only Spot snapshot looks defensive, with meaningful stablecoin dry powder and no extreme single-asset concentration."
+        quality = "Defensive"
     elif concentration >= 40:
-        verdict = "This Spot portfolio has a clear lead position, with some diversification underneath it."
+        verdict = "This read-only Spot snapshot has a clear lead position, with some diversification underneath it."
         quality = "Moderate"
     else:
-        verdict = "This Spot portfolio looks more balanced than single-bet, with value spread across multiple assets."
+        verdict = "This read-only Spot snapshot looks more balanced than single-bet, with value spread across multiple assets."
         quality = "Balanced"
 
     available_assets = len(priced_assets)
@@ -186,29 +193,35 @@ def analyze_portfolio() -> AnalysisBrief:
         risk_lines.append("No priced Spot balances were visible, so the portfolio read stays incomplete.")
     if concentration >= 70:
         risk_lines.append("Top holding concentration is high enough that one move can dominate portfolio performance.")
+    if stable_pct <= 10 and total_value > 0:
+        risk_lines.append("Stablecoin dry powder looks thin, so flexibility may be lower if market conditions change quickly.")
     if locked_assets > 0:
         risk_lines.append("Some balances are locked, so immediately available exposure is lower than gross holdings suggest.")
     if unmapped_assets:
         risk_lines.append(f"Some asset codes still need mapping for cleaner valuation: {', '.join(sorted(set(unmapped_assets))[:5])}.")
     if not risk_lines:
-        risk_lines.append("This is a read-only snapshot, not a full PnL or cost-basis analysis.")
+        risk_lines.append("This is an estimated read-only snapshot, not a full PnL or cost-basis analysis.")
 
     watch = [
         "whether the top holding keeps growing relative to the rest of the account",
-        "whether stablecoin dry powder is high enough to change opportunity posture quickly",
+        "whether stablecoin dry powder changes meaningfully after the next rotation",
     ]
 
+    posture_note = "defensive" if stable_pct >= 55 else "risk-on" if stable_pct <= 20 else "mixed"
     why = (
         f"Estimated visible Spot value is about ${float(total_value):,.2f} across {available_assets} priced asset(s). "
-        f"Top concentration is {concentration:.1f}%{' with some locked balances in play' if locked_assets else ''}."
+        f"Stablecoins are {stable_pct:.1f}% of the priced snapshot and risk assets are {risk_pct:.1f}%. "
+        f"Top concentration is {concentration:.1f}%{' with some locked balances in play' if locked_assets else ''}, which makes the current posture look {posture_note}."
     )
 
     tags = [
-        RiskTag(name="Account Mode", level="Read-only", note="Spot account snapshot"),
+        RiskTag(name="Account Mode", level="Read-only", note="estimated Spot snapshot"),
+        RiskTag(name="Source", level="Binance API", note="signed account read + live price map"),
         RiskTag(name="Assets", level=str(available_assets), note="priced balances"),
     ]
     if concentration > 0:
         tags.append(RiskTag(name="Top Concentration", level="High" if concentration >= 70 else "Medium" if concentration >= 40 else "Low", note=f"{concentration:.1f}%"))
+    tags.append(RiskTag(name="Stablecoin Share", level="High" if stable_pct >= 55 else "Medium" if stable_pct >= 20 else "Low", note=f"{stable_pct:.1f}%"))
 
     brief = AnalysisBrief(
         entity="Portfolio: Binance Spot",
