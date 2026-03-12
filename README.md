@@ -7,15 +7,15 @@
 
 > **Less noise. Better conviction.**
 
-Bibipilot is a **Binance-native research copilot** that filters crypto signals, interprets risk, and publishes what is worth attention to Binance Square.
+Bibipilot is a **Binance-native market, posture, and publishing intelligence copilot** that filters crypto signals, interprets risk, and publishes what is worth attention to Binance Square.
 
-**research → judgment → publishing**
+**research → judgment → posture → publishing**
 
 It uses Binance Skills Hub as the evidence layer, adds a Python judgment layer on top, and turns useful output into Binance Square posts — including a premium scheduled daily publishing engine.
 
 > **Status: public alpha — real command surface, live publishing, security-hardened API**
 >
-> Bibipilot ships 10 research commands, live Binance Square publishing, a FastAPI REST service (v0.2.1), a live bridge for OpenClaw integration (v0.2.0), and production-grade security hardening. It is not finished, but it is well beyond concept stage.
+> Bibipilot ships 11 research commands, live Binance Square publishing, a FastAPI REST service (v0.2.1), a live bridge for OpenClaw integration (v0.2.0), and production-grade security hardening. It is not finished, but it is well beyond concept stage.
 
 ---
 

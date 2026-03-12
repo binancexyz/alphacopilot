@@ -302,7 +302,7 @@ def _format_portfolio_card(brief: AnalysisBrief) -> str:
     if brief.risk_tags:
         parts.append("")
         parts.append("**🏷️ Tags**")
-        for tag in brief.risk_tags[:3]:
+        for tag in brief.risk_tags[:4]:
             suffix = f" — {tag.note}" if tag.note else ""
             parts.append(f"- {tag.name}: {tag.level}{suffix}")
     return "\n".join(parts).strip() + "\n"

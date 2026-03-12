@@ -37,6 +37,7 @@
 - Show fragility and confirmation conditions
 - Distinguish between live exchange price and matched smart-money signal quality
 - Show signal timing, direction, and exit rate
+- Factors in current portfolio posture when private Spot account context is available
 
 **Example:** `python3 src/main.py signal DOGE`
 
