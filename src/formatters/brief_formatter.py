@@ -207,6 +207,9 @@ def _format_audit_card(brief: AnalysisBrief) -> str:
     if audit_summary:
         parts.extend(["", "**🔍 Summary**"])
         parts.extend(_tree_lines([audit_summary]))
+    if brief.risk_tags:
+        parts.extend(["", "**🏷️ Context**"])
+        parts.extend(_tree_lines([_tag_line(tag) for tag in brief.risk_tags[:2]]))
     parts.extend(["", "**📝 Disclaimer**"])
     parts.extend(_tree_lines(["This audit result is for reference only and does not constitute investment advice. Always conduct your own research."]))
     return "\n".join(parts).strip() + "\n"
@@ -370,8 +373,19 @@ def _format_portfolio_card(brief: AnalysisBrief) -> str:
     if brief.risk_tags:
         parts.append("")
         parts.append("**🏷️ Tags**")
+        preferred = []
+        for name in ["Freshness", "Top Change", "Short Trend", "Account Mode", "Source", "Assets", "Top Concentration"]:
+            preferred.extend([tag for tag in brief.risk_tags if tag.name == name])
+        seen = set()
+        ordered = []
+        for tag in preferred + brief.risk_tags:
+            key = (tag.name, tag.level, tag.note)
+            if key in seen:
+                continue
+            seen.add(key)
+            ordered.append(tag)
         tag_lines = []
-        for tag in brief.risk_tags[:4]:
+        for tag in ordered[:5]:
             suffix = f" — {tag.note}" if tag.note else ""
             tag_lines.append(f"{tag.name}: {tag.level}{suffix}")
         parts.extend(_tree_lines(tag_lines))

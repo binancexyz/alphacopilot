@@ -8,42 +8,58 @@ They are useful for demos, README screenshots, and judge-facing proof that the p
 ## `/price BNB`
 
 ```text
-💰 BNB (BNB)
-Rank #4
+**💵 Price: BNB**
 
-💵 Current Price: $645.48
+**📁 Price**
+┣ Asset: BNB (BNB)
+┗ Rank: #4
 
-📊 24h Change: -0.30% 📉
-📈 High: $651.81 | 📉 Low: $636.75
+**📊 Market**
+┣ Current Price: $645.08
+┣ 24h Change: +0.67% 📈
+┣ Market Cap: $88.0B
+┗ 24h Volume: $1.7B
 
-💼 Market:
-Cap: $88.0B | Vol: $927.7M
+**🏷️ Context**
+┗ Source: Info — Secondary market data
+
+**🧠 Source Note**
+┗ Using secondary market data.
 ```
 
 What this shows:
 - compact market truth layer
-- product-style price card
-- stronger grounding than a raw quote blob
+- stronger premium structure
+- source transparency without leaking implementation clutter
 
 ---
 
-## `/brief BTC`
+## `/brief BNB`
 
 ```text
-🧩 Bitcoin (BTC)
-Rank #1 | Signal: watch
+**🧩 Brief: BNB**
 
-💵 Price: $70,224.00 | 24h: -1.25% 📉
-💧 Liquidity: $1.0M
+**⚡ Read**
+┣ Rank: #4
+┣ Signal: unmatched
+┣ Price: $644.52 | 24h: +0.39% 📈
+┗ Visible Liquidity: $58.5M
 
-⚡ Worth watching, but not clean enough to trust blindly.
-⚠️ Top Risk: Signal may weaken if volume does not confirm.
+**🧠 Verdict**
+More of a monitor than a conviction setup right now.
+
+**⚠️ Top Risk**
+┗ Using secondary market data for this brief. Current posture is fairly defensive, so higher-beta ideas should earn their place instead of being chased by default.
+
+**🏷️ Context**
+┣ Source: Info — Secondary market data
+┗ Confidence: Low
 ```
 
 What this shows:
 - fast synthesis layer
-- compact decision support
-- not just field dumping
+- premium mini-brief shape
+- confidence and context shown explicitly
 
 ---
 
@@ -55,24 +71,24 @@ What this shows:
 🟢 Audit Gate: ALLOW
 
 **⚡ Setup**
-BNB has enough structure to take seriously, but conviction is still capped until the risk picture and follow-through get cleaner.
+BNB Chain Native Token is still a provisional read right now because too much live context is incomplete, early, or unmatched.
 
 **📊 Read**
-High | Conviction: Medium
+Low | Conviction: Low
 
 **🧠 Why**
-BNB has early positive context but still requires confirmation. BNB has visible market relevance, but attention still needs confirmation.
+No matched smart-money signal is visible for this token in the current live board.
 
 **⚠️ Risks**
-- Signal may weaken if volume does not confirm.
-- Market sentiment can reverse short-term strength.
+┣ No matched live smart-money signal is visible on the current board, so this token read stays capped.
+┗ Current posture is fairly defensive, so higher-beta ideas should earn their place instead of being chased by default.
 
 **👀 Watch**
-- whether the current signal status improves from attention into real follow-through
-- whether liquidity remains supportive as attention rotates
+┣ whether a clearer signal status appears instead of vague market attention
+┗ whether liquidity remains supportive as attention rotates
 
 **🏷️ Tags**
-- Evidence Quality: Medium — The token read is usable, but some important live context is still missing or thin.
+┗ Evidence Quality: Low — The token read is provisional because too much of the live context is still incomplete or unmatched.
 ```
 
 What this shows:
@@ -82,37 +98,40 @@ What this shows:
 
 ---
 
-## `/signal DOGE`
+## `/signal BNB`
 
 ```text
-**📡 Signal: DOGE**
+**📡 Signal: BNB**
 
 🟢 Audit Gate: ALLOW
 
 **⚡ Signal**
-DOGE is still a provisional signal read because the live setup evidence is too thin or unmatched to trust aggressively.
+BNB is still a provisional signal read because the live setup evidence is too early or unmatched to trust aggressively.
 
 **📊 Strength**
-Medium | Conviction: Low
+Low | Conviction: Low
 
 **🧠 Why**
-This matters because a visible setup can become actionable only if attention turns into durable confirmation instead of fading after the first reaction.
+No matched smart-money signal is visible for this token in the current live board.
 
 **👀 Watch**
-- whether the setup shows stronger price confirmation instead of only attention
-- whether the signal persists into the next cycle instead of fading quickly
+┣ whether the setup shows stronger price confirmation instead of only attention
+┗ whether the signal persists into the next cycle instead of fading quickly
+
+**🧩 Invalidation**
+┗ Breaks if price attention never turns into a matched smart-money signal.
 
 **⚠️ Risks**
-- A visible signal does not guarantee continuation.
-- Weak follow-through can turn momentum into noise.
+┣ No matched live smart-money signal is visible on the current board, so this signal read is watchlist-only.
+┗ Current posture is fairly defensive, so higher-beta ideas should earn their place instead of being chased by default.
 
 **🏷️ Tags**
-- Evidence Quality: Low — The signal read is provisional because confirmation context is still thin or unmatched.
+┗ Evidence Quality: Low — The signal read is provisional because confirmation context is still early or unmatched.
 ```
 
 What this shows:
 - honesty under thin live evidence
-- not a hype bot
+- explicit invalidation framing
 - signal quality != signal existence
 
 ---
@@ -123,40 +142,97 @@ What this shows:
 **🌐 Market Watch**
 
 **⚡ Today**
-Opportunity exists, but selectivity matters. Some lanes are still sparse, so treat the board as selective rather than complete.
+Current rank leaders: quq, WMTX, SN3. Opportunity exists, but selectivity matters. Your current posture still has meaningful stablecoin dry powder, so the board can be read selectively instead of defensively.
+
+**🔥 Trending Now**
+┣ quq — 38 searches | Liq $2.3M
+┣ WMTX — 24 searches | Liq $1.2M
+┗ SN3 — 460 searches | Liq $682.5K
+
+**🧠 Smart Money Flow**
+┣ SAFE — 4 smart-money wallets | BUY
+┣ Fight — 5 smart-money wallets | BUY
+┗ 龙虾 — 10 smart-money wallets | BUY
 
 **🏦 Exchange Board**
-- BNB +2.4% | Binance Spot leader board anchor
-- BTC +1.1% | broad risk tone stable
-- SOL -0.6% | momentum softer than BNB
+┣ quq | liq $2.3M
+┣ WMTX | liq $1.2M
+┗ SN3 | liq $0.7M
+
+**📣 Social Hype**
+┣ quq — 38 searches in 24h
+┗ WMTX — 24 searches in 24h
 
 **🌊 Narrative**
-- AI
-- meme rotation
-- L2
+┣ Community Recognition Level
+┣ Launch Platform
+┗ Wash Trading Behavior
 
-**🧩 Lane Coverage**
-- Ready: Narrative, Signal Core, Exchange Board
-- Sparse: Trending Now, Smart Money Flow, Social Hype, Meme Watch
+**👀 Today's Top 3**
+┣ SAFE: buy (timeout) — best visible setup
+┣ quq — 38 searches | Liq $2.3M — strongest broad attention
+┗ Community Recognition Level — narrative worth ranking, not chasing
 
 **🧠 Priority**
-Top signal lanes: BNB strength, AI inflows. Narrative heat: AI, meme rotation. Exchange board: BNB +2.4% | Binance Spot leader board anchor, BTC +1.1% | broad risk tone stable. The edge today is ranking clean setups ahead of crowded or concentrated names. Populated lanes: Narrative, Signal Core, Exchange Board. Sparse lanes: Trending Now, Smart Money Flow.
+Top signal lanes: SAFE: buy (timeout), Fight: buy (timeout). Narrative heat: Community Recognition Level, Launch Platform. Exchange board: quq | liq $2.3M, WMTX | liq $1.2M. The edge today is ranking clean setups ahead of crowded or concentrated names.
 
 **👀 Focus**
-- whether the cleanest setup stays with BNB strength instead of rolling over fast
-- whether attention in AI, meme rotation stays durable instead of turning into rotation-chasing
-- whether risk pockets like overheated meme names cool down or keep trapping late attention
+┣ whether the lead idea stays with SAFE: buy (timeout) — best visible setup instead of fading into noise
+┣ whether attention in Community Recognition Level, Launch Platform stays durable instead of turning into rotation-chasing
+┗ whether concentration, caution flags, or late flows start overpowering the cleaner setups
 
 **⚠️ Risks**
-- Trending sectors may already be overheated.
-- Signal quality can vary across the same narrative.
+┣ WMTX shows audit cautions in market rank context.
+┗ SN3 has very high top-10 holder concentration.
 ```
 
 What this shows:
 - daily market board structure
-- Exchange Board lane
-- lane coverage honesty
+- stronger selectivity and top-pick emphasis
 - prioritization instead of noise
+
+---
+
+## `/portfolio`
+
+```text
+**📂 Portfolio: Binance Spot**
+
+**⚡ Portfolio Read**
+This read-only Spot snapshot looks defensive, with meaningful stablecoin dry powder and no extreme single-asset concentration.
+
+**📊 Posture**
+Defensive
+
+**🧠 Why**
+Estimated visible Spot value is about $1,628.40 across 18 priced asset(s). Stablecoins are 63.4% of the priced snapshot and risk assets are 36.6%. Top concentration is 38.0%, which makes the current posture look defensive. Lead exposure groups: Stablecoins 63.4%, Infra 20.4%, Meme 12.0%. Last local snapshot was saved 2m ago.
+
+**💼 Top Holdings**
+┣ USDC ~$618.12 (38.0%) | includes LD balances
+┣ USDT ~$414.18 (25.4%) | includes LD balances
+┣ ASTER ~$263.37 (16.2%) | includes LD balances
+┣ BARD ~$113.17 (6.9%) | includes LD balances
+┗ PENGU ~$69.70 (4.3%) | includes LD balances
+
+**⚠️ Risks**
+┗ This is an estimated read-only snapshot, not a full PnL or cost-basis analysis.
+
+**👀 Watch**
+┣ whether the top holding keeps growing relative to the rest of the account
+┗ whether stablecoin dry powder changes meaningfully after the next rotation
+
+**🏷️ Tags**
+┣ Freshness: Info — saved 2m ago
+┣ Account Mode: Read-only — estimated Spot snapshot
+┣ Source: Binance API — signed account read + live price map
+┣ Assets: 18 — priced balances
+┗ Top Concentration: Low — 38.0%
+```
+
+What this shows:
+- private posture intelligence
+- freshness-aware local snapshot framing
+- grouped exposure and trust-oriented wording
 
 ---
 
@@ -174,12 +250,12 @@ This wallet is worth tracking for behavior, but concentration is high enough tha
 This wallet tracks roughly $245,000 across 12 holding(s), so it is large enough to inspect for behavior rather than treating it as random dust. Current read: meaningful concentration with positive 24h change at +8.4%. Narrative bias: meme, AI | Risk posture: mixed
 
 **⚠️ Risks**
-- Low diversification can amplify drawdowns.
-- Wallet size alone does not prove smart-money quality.
+┣ Low diversification can amplify drawdowns.
+┗ Wallet size alone does not prove smart-money quality.
 
 **👀 Watch**
-- whether recent gains are being held, expanded, or rotated out of
-- whether top holding concentration stays controlled as new positions appear
+┣ whether recent gains are being held, expanded, or rotated out of
+┗ whether top holding concentration stays controlled as new positions appear
 ```
 
 What this shows:

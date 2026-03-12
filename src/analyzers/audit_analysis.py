@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.models.schemas import AnalysisBrief
+from src.models.schemas import AnalysisBrief, RiskTag
 from src.services.factory import get_market_data_service
 
 
@@ -16,9 +16,13 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
     audit_summary = str(audit.get("audit_summary") or blocked_reason or "Audit output is limited right now.")
     audit_flags = [str(x) for x in audit.get("audit_flags", [])]
     risks = [str(x) for x in audit.get("major_risks", [])]
+    audit_valid = bool(audit.get("has_result", audit.get("hasResult", False))) and bool(audit.get("is_supported", audit.get("isSupported", False)))
+    audit_limited = not audit_valid or "limited" in audit_summary.lower() or "partial" in blocked_reason.lower() or "unavailable" in blocked_reason.lower()
 
     if audit_gate == "BLOCK":
         verdict = f"{display_name} fails the current audit gate, so it should be treated as blocked until the security picture changes."
+    elif audit_limited:
+        verdict = f"{display_name} has only limited audit visibility right now, so security conclusions should stay cautious."
     elif audit_gate == "WARN":
         verdict = f"{display_name} has a usable audit read, but caution flags mean it should not be treated as clean."
     else:
@@ -39,6 +43,12 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
         verdict,
     ])
 
+    tags: list[RiskTag] = []
+    if audit_limited:
+        tags.append(RiskTag(name="Audit Validity", level="Limited", note="Live audit validity is partial or unsupported right now."))
+    elif audit_valid:
+        tags.append(RiskTag(name="Audit Validity", level="Valid", note="Result is based on a supported audit payload."))
+
     return AnalysisBrief(
         entity=f"Audit: {display_symbol}",
         quick_verdict=packed,
@@ -46,7 +56,7 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
         top_risks=[],
         why_it_matters="",
         what_to_watch_next=[],
-        risk_tags=[],
+        risk_tags=tags,
         conviction=None,
         beginner_note=None,
         audit_gate=audit_gate,
