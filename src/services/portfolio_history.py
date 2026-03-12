@@ -27,6 +27,13 @@ def latest_snapshot() -> dict[str, Any] | None:
     return history[-1] if history else None
 
 
+def earlier_snapshot(steps_back: int = 3) -> dict[str, Any] | None:
+    history = load_history()
+    if len(history) <= steps_back:
+        return None
+    return history[-(steps_back + 1)]
+
+
 def _json_safe(value: Any) -> Any:
     if is_dataclass(value):
         return {k: _json_safe(v) for k, v in asdict(value).items()}
@@ -104,3 +111,29 @@ def describe_delta(previous: dict[str, Any] | None, current: dict[str, Any]) -> 
 
     summary = " ".join(changes[:2])
     return summary, changes[:5]
+
+
+def describe_trend(reference: dict[str, Any] | None, current: dict[str, Any]) -> str:
+    if not reference:
+        return ""
+    total_prev = float(reference.get("total_value") or 0)
+    total_cur = float(current.get("total_value") or 0)
+    stable_prev = float(reference.get("stable_pct") or 0)
+    stable_cur = float(current.get("stable_pct") or 0)
+    conc_prev = float(reference.get("concentration") or 0)
+    conc_cur = float(current.get("concentration") or 0)
+
+    trend_bits: list[str] = []
+    total_delta = total_cur - total_prev
+    if abs(total_delta) >= 25:
+        direction = "up" if total_delta > 0 else "down"
+        trend_bits.append(f"visible value is {direction} ${abs(total_delta):,.0f} versus the older local trend")
+    stable_delta = stable_cur - stable_prev
+    if abs(stable_delta) >= 3:
+        direction = "more defensive" if stable_delta > 0 else "more deployed"
+        trend_bits.append(f"posture looks {direction} over the short local trend")
+    conc_delta = conc_cur - conc_prev
+    if abs(conc_delta) >= 3:
+        direction = "more concentrated" if conc_delta > 0 else "less concentrated"
+        trend_bits.append(f"top concentration is {direction} over the short local trend")
+    return "; ".join(trend_bits[:2]).strip()

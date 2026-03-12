@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 from src.config import settings
 from src.models.schemas import AnalysisBrief, RiskTag
 from src.services.exposure_groups import top_groups
-from src.services.portfolio_history import append_snapshot, describe_delta, latest_snapshot
+from src.services.portfolio_history import append_snapshot, describe_delta, describe_trend, earlier_snapshot, latest_snapshot
 
 BINANCE_API_BASE_URL = "https://api.binance.com"
 ACCOUNT_INFO_URL = "/api/v3/account"
@@ -250,12 +250,16 @@ def analyze_portfolio() -> AnalysisBrief:
         )
 
     previous = latest_snapshot()
+    prior_trend = earlier_snapshot(steps_back=3)
     delta_summary, delta_watch = describe_delta(previous, snapshot)
+    trend_summary = describe_trend(prior_trend, snapshot)
     append_snapshot(snapshot)
 
     why = snapshot["why"]
     if delta_summary:
         why = f"{why} {delta_summary}"
+    if trend_summary:
+        why = f"{why} Short local trend: {trend_summary}."
 
     watch_items = [
         "whether the top holding keeps growing relative to the rest of the account",

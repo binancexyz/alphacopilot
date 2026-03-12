@@ -42,3 +42,11 @@ def test_append_and_load_history(tmp_path: Path):
         portfolio_history.HISTORY_PATH = old_path
     assert len(history) == 1
     assert history[0]['total_value'] == 1.0
+
+
+def test_describe_trend_detects_short_local_direction():
+    older = {'total_value': 1000.0, 'stable_pct': 20.0, 'concentration': 25.0}
+    current = {'total_value': 1300.0, 'stable_pct': 40.0, 'concentration': 35.0}
+    trend = portfolio_history.describe_trend(older, current)
+    assert 'visible value is up' in trend
+    assert 'more defensive' in trend
