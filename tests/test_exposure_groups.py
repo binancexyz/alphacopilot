@@ -10,3 +10,9 @@ def test_top_groups_ranks_exposure_buckets():
     ])
     assert groups[0][0] == 'Stablecoins'
     assert groups[0][1] > groups[1][1]
+
+
+def test_classify_asset_supports_exchange_and_data_buckets():
+    assert exposure_groups.classify_asset('BNB') == 'Exchange'
+    assert exposure_groups.classify_asset('SXT') == 'AI'
+    assert exposure_groups.classify_asset('WAL') == 'Data'

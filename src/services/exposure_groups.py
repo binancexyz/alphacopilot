@@ -3,22 +3,28 @@ from __future__ import annotations
 from typing import Iterable
 
 STABLES = {"USDT", "USDC", "BUSD", "FDUSD", "TUSD", "USDP", "DAI"}
-MAJORS = {"BTC", "ETH", "BNB", "SOL", "XRP", "ADA", "DOGE", "TRX", "TON", "AVAX", "LINK", "BCH"}
+MAJORS = {"BTC", "ETH", "SOL", "XRP", "ADA", "DOGE", "TRX", "TON", "AVAX", "LINK", "BCH"}
+EXCHANGE = {"BNB"}
 MEME = {"DOGS", "PENGU", "1000CAT", "BARD", "NOT"}
 AI = {"WLD", "VANA", "SXT"}
 INFRA = {"ASTER", "ZKC", "WAL", "OPEN", "TOWNS", "JASMY"}
+DATA = {"ZKC", "WAL", "SXT"}
 
 
 def classify_asset(asset: str) -> str:
     sym = asset.upper().strip()
     if sym in STABLES:
         return "Stablecoins"
+    if sym in EXCHANGE:
+        return "Exchange"
     if sym in MAJORS:
         return "Majors"
     if sym in MEME:
         return "Meme"
     if sym in AI:
         return "AI"
+    if sym in DATA:
+        return "Data"
     if sym in INFRA:
         return "Infra"
     return "Other"
