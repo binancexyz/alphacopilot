@@ -11,9 +11,9 @@
 ### 2. Product refinement from real usage
 - keep tightening `/brief` as the default command
 - keep improving `/watchtoday` ranking/selectivity
-- deepen `/portfolio` change/drift storytelling as history grows
-- refine wallet behavior reads with repeated observation
-- keep strengthening meme participation/lifecycle judgment
+- deepen `/holdings` change/drift storytelling as history grows
+- refine external-wallet behavior reads with repeated observation
+- keep strengthening speculative participation/lifecycle judgment where it informs `/audit`
 
 ### 3. Release / demo polish
 - capture screenshots or short demo clips if useful
@@ -30,20 +30,12 @@
 3. finish optional public/demo assets only when needed
 
 ## Current product surface reminder
-### Core
+### Canonical
 - `/brief`
-- `/token`
 - `/signal`
-- `/portfolio`
-- `/wallet`
+- `/holdings`
 - `/watchtoday`
-
-### Specialist
-- `/price`
-- `/risk`
 - `/audit`
-- `/meme`
-- `careers`
 
 ## Current finish line
 The repo no longer needs broad cleanup.

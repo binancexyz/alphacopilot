@@ -62,14 +62,6 @@ Current posting posture:
 - `/watchtoday`
 - `/audit`
 
-### Hidden compatibility
-- `/token`
-- `/portfolio`
-- `/wallet`
-- `/risk`
-- `/meme`
-- `/price`
-
 ### What this proves
 - Bibipilot has a real product surface
 - commands are role-specific, not one generic prompt wrapper

@@ -44,26 +44,25 @@ It is a **public-alpha Binance-native research copilot** built around:
 - `/watchtoday`
 - `/audit`
 
-### Hidden compatibility
-- `/token`
-- `/portfolio`
-- `/wallet`
-- `/risk`
-- `/meme`
-- `/price`
+### Product surface
+- `/brief`
+- `/signal`
+- `/holdings`
+- `/watchtoday`
+- `/audit`
 
 ### What is real today
 - runnable Python CLI + API surface
 - stronger evidence honesty across the main commands
-- Binance Spot read-only grounding for `price`, `brief`, and `watchtoday`
-- supporting Binance Spot confirmation for `token` and `signal`
-- improved wallet behavior judgment
+- Binance Spot read-only grounding for `brief` and `watchtoday`
+- deeper asset judgment available through `brief ... deep`
+- improved holdings / wallet-behavior judgment
 - Binance Square publishing + premium scheduled daily posting engine
 - live runtime health diagnostics via `/health`
 
 ### What is still partial
-- live bridge coverage is strongest for `token`, `signal`, `audit`, and `watchtoday`
-- wallet and meme live depth still need richer runtime context
+- live bridge coverage is strongest for deeper asset reads, `signal`, `audit`, and `watchtoday`
+- external-wallet and speculative/meme-style depth still need richer runtime context
 - this should be treated as a credible public alpha, not a finished autonomous trading system
 
 ## Social / launch post
@@ -71,11 +70,11 @@ Building **Bibipilot** with OpenClaw.
 
 A Binance Skills-powered research copilot for:
 - market reads
-- token judgment
+- deeper asset judgment
 - signal timing
-- wallet intelligence
-- portfolio posture
-- risk and audit checks
+- holdings intelligence
+- posture awareness
+- audit and safety checks
 
 Goal: help users understand not just what is moving, but whether it is actually worth attention.
 

@@ -116,16 +116,25 @@ This should stay behind explicit confirmation and stronger safety controls.
 
 ## Best command-to-skill mapping
 
-### `/token <symbol>`
+### `/brief <symbol>`
+- `query-token-info`
+- `crypto-market-rank`
+- `trading-signal`
+
+### `/brief <symbol> deep`
 - `query-token-info`
 - `crypto-market-rank`
 - `trading-signal`
 - `query-token-audit`
 
-### `/wallet <address>`
+### `/holdings <address>`
 - `query-address-info`
 - optional enrichment from `query-token-info`
 - optional market/trader context from `crypto-market-rank`
+
+### `/holdings`
+- signed Binance account read
+- live price map
 
 ### `/watchtoday`
 - `crypto-market-rank`
@@ -152,7 +161,7 @@ This should stay behind explicit confirmation and stronger safety controls.
 ## Current product stance
 Bibipilot should be:
 - research-first
-- signal-and-risk oriented
+- judgment-oriented across a canonical five-command surface
 - Square-output capable
 - human-supervised
 - cautious about execution features
