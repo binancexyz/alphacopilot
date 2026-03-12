@@ -283,8 +283,8 @@ def analyze_price(symbol: str) -> AnalysisBrief:
                 top_risks.append(f"Using Binance Spot market data ({quote.get('exchange_symbol') or quote['symbol']}); spread currently reads around {spread_pct:.2f}%.")
             else:
                 top_risks.append(f"Using Binance Spot market data ({quote.get('exchange_symbol') or quote['symbol']}).")
-        elif source != "CoinGecko":
-            top_risks.append(f"Primary Binance Spot/CoinGecko quote unavailable; using {source} market data.")
+        elif source != "Binance Spot":
+            top_risks.append("Using secondary market data.")
         return AnalysisBrief(
             entity=f"Price: {quote['symbol']}",
             quick_verdict=f"{quote['name']}|{quote['symbol']}|{quote['link']}|{quote['rank']}",

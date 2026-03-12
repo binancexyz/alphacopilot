@@ -57,8 +57,8 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
             top_risk = f"Binance Spot price is live through {exchange_symbol or display_symbol}, but there is still no matched live smart-money signal on the board."
         else:
             top_risk = f"Using Binance Spot market data via {exchange_symbol or display_symbol}; exchange price context is good, but setup quality still depends on confirmation."
-    elif quote and quote_source and quote_source != "CoinGecko":
-        top_risk = f"Primary Binance Spot/CoinGecko quote was unavailable, so this brief is using {quote_source} market data."
+    elif quote and quote_source and quote_source != "Binance Spot":
+        top_risk = "Using secondary market data for this brief."
 
     if signal_quality == "High" and not token.audit_flags:
         verdict = "Looks constructive, but still needs follow-through."
