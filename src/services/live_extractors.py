@@ -52,15 +52,25 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
     items = address_info.get("list") or address_info.get("data", {}).get("list") or []
 
     if not items and (address_info.get("top_holdings") or address_info.get("portfolio_value") is not None):
+        holdings_count = _to_int(address_info.get("holdings_count"))
+        portfolio_value = _to_float(address_info.get("portfolio_value"))
+        top_holdings = address_info.get("top_holdings", [])
+        top_concentration_pct = _to_float(address_info.get("top_concentration_pct"))
+        change_24h = _to_float(address_info.get("change_24h"))
+        major_risks = [str(x) for x in address_info.get("major_risks", [])]
+        if holdings_count <= 0 and top_holdings:
+            holdings_count = len(top_holdings)
+        if not major_risks and not top_holdings and portfolio_value <= 0:
+            major_risks = ["Thin payload."]
         return {
             "address": address,
-            "portfolio_value": _to_float(address_info.get("portfolio_value")),
-            "holdings_count": _to_int(address_info.get("holdings_count")),
-            "top_holdings": address_info.get("top_holdings", []),
-            "top_concentration_pct": _to_float(address_info.get("top_concentration_pct")),
-            "change_24h": _to_float(address_info.get("change_24h")),
+            "portfolio_value": portfolio_value,
+            "holdings_count": holdings_count,
+            "top_holdings": top_holdings,
+            "top_concentration_pct": top_concentration_pct,
+            "change_24h": change_24h,
             "notable_exposures": [str(x) for x in address_info.get("notable_exposures", [])],
-            "major_risks": [str(x) for x in address_info.get("major_risks", [])],
+            "major_risks": major_risks,
             "style_profile": str(address_info.get("style_profile", "")),
             "exposure_breakdown": [str(x) for x in address_info.get("exposure_breakdown", [])],
         }

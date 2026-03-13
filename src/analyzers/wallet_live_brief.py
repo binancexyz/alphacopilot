@@ -135,9 +135,14 @@ def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
     risk_tags.append(RiskTag(name="Style Profile", level="Low", note=_wallet_style_profile(ctx)))
 
     thin_context = ctx.portfolio_value <= 0 and ctx.holdings_count <= 0 and not ctx.top_holdings
+    partial_context = not thin_context and evidence_level == "Low"
 
-    if thin_context or evidence_level == "Low":
+    if thin_context:
         quick_verdict = "Too thin to read. Return after rotation activity."
+        ctx.follow_verdict = "Unknown"
+        conviction = "Low"
+    elif partial_context:
+        quick_verdict = "Limited read. Some structure visible."
         ctx.follow_verdict = "Unknown"
         conviction = "Low"
     elif ctx.follow_verdict == "Track" and ctx.top_concentration_pct < 60:
@@ -178,7 +183,7 @@ def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
         quick_verdict=quick_verdict,
         signal_quality=quality,
         top_risks=top_risks,
-        why_it_matters=_wallet_why_it_matters(ctx) if not (thin_context or evidence_level == "Low") else "Current live wallet evidence is limited, so this read should be treated as provisional rather than definitive.",
+        why_it_matters=_wallet_why_it_matters(ctx) if not thin_context else "Current live wallet evidence is limited, so this read should be treated as provisional rather than definitive.",
         what_to_watch_next=_wallet_watch_next(ctx),
         risk_tags=risk_tags,
         conviction=conviction,

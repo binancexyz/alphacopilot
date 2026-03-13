@@ -378,8 +378,17 @@ def _format_wallet_card(brief: AnalysisBrief) -> str:
     behavior_lines = []
     thin_wallet = any("thin" in (risk or "").lower() for risk in brief.top_risks[:2]) or "too thin" in (brief.quick_verdict or "").lower()
     watch = brief.what_to_watch_next[:3]
+    lead_holding = next((tag.note for tag in brief.risk_tags if tag.name == "Lead Holding" and tag.note), "")
+    concentration = next((tag.note for tag in brief.risk_tags if tag.name == "Concentration Risk" and tag.note), "")
+    activity = next((tag.note for tag in brief.risk_tags if tag.name == "Activity" and tag.note), "")
     if thin_wallet:
         behavior_lines = ["Activity: Static", "Top move: No rotation visible", "Drift: No change detected"]
+    elif lead_holding or concentration or activity:
+        behavior_lines = [
+            f"Activity: {activity or 'Visible'}",
+            f"Top move: {lead_holding or 'Lead holding visible'}",
+            f"Drift: {concentration or 'Concentration controlled'}",
+        ]
     elif watch:
         labels = ["Activity", "Top move", "Drift"]
         for idx, item in enumerate(watch[:3]):
