@@ -113,52 +113,41 @@ def _build_risk_post(brief: AnalysisBrief) -> str:
 
 
 def _build_audit_post(brief: AnalysisBrief) -> str:
-    name, symbol, risk_level, audit_summary, top_flag, second_flag, _liquidity, gate_status, verdict = (brief.quick_verdict.split("|", 8) + ["", "", "Medium", "", "", "", "0", "warn", ""])[:9]
-    gate = brief.audit_gate or gate_status.upper()
-    lines = [f"🔐 {name} ({symbol})", f"Gate {gate} | Risk {risk_level}"]
+    _name, symbol, risk_level, _audit_summary, top_flag, second_flag, third_flag, gate_status, verdict = (brief.quick_verdict.split("|", 8) + ["", "", "Medium", "", "", "", "", "warn", ""])[:9]
+    gate = (brief.audit_gate or gate_status.upper() or "WARN").upper()
+    gate_word = "Avoid" if gate == "BLOCK" else "Warn" if gate == "WARN" else "Allow"
+    lines = [f"🔐 {symbol} Audit: {gate_word} · Risk {risk_level}"]
+    if top_flag:
+        lines.append(top_flag)
+    elif second_flag:
+        lines.append(second_flag)
+    elif third_flag:
+        lines.append(third_flag)
     if verdict:
         lines.append(verdict)
-    if top_flag:
-        lines.append(f"Primary: {top_flag}")
-    if second_flag:
-        lines.append(f"Next: {second_flag}")
-    if audit_summary:
-        lines.append(f"Summary: {audit_summary}")
     return "\n".join(lines)
 
 
 def _build_token_post(brief: AnalysisBrief) -> str:
     symbol = brief.entity.split(":", 1)[1].strip() if ":" in brief.entity else brief.entity
-    lines = [f"🪙 {symbol} scan"]
-    if brief.audit_gate:
-        lines.append(f"Gate: {brief.audit_gate}")
-    lines.append(brief.quick_verdict)
-    if brief.signal_quality:
-        quality = brief.signal_quality if not brief.conviction else f"{brief.signal_quality} | Conviction {brief.conviction}"
-        lines.append(f"Read: {quality}")
+    lines = [f"🧩 {symbol}"]
+    if brief.quick_verdict:
+        lines.append(brief.quick_verdict)
     if brief.top_risks:
-        lines.append(f"Risk: {brief.top_risks[0]}")
-    if brief.what_to_watch_next:
-        lines.append(f"Watch: {brief.what_to_watch_next[0]}")
-    tags = _top_tag_notes(brief)
-    if tags:
-        lines.append(f"Tags: {tags}")
+        risk = brief.top_risks[0].replace("No matched live smart-money signal is visible on the current board, so this token read stays capped.", "No signal match.")
+        lines.append(risk)
     return "\n".join(lines)
 
 
 def _build_signal_post(brief: AnalysisBrief) -> str:
     symbol = brief.entity.split(":", 1)[1].strip() if ":" in brief.entity else brief.entity
-    lines = [f"📡 {symbol} signal"]
-    if brief.audit_gate:
-        lines.append(f"Gate: {brief.audit_gate}")
-    lines.append(brief.quick_verdict)
-    if brief.signal_quality:
-        quality = brief.signal_quality if not brief.conviction else f"{brief.signal_quality} | Conviction {brief.conviction}"
-        lines.append(f"Strength: {quality}")
+    gate = (brief.audit_gate or "WARN").title()
+    lines = [f"📡 {symbol} · {gate}"]
+    if brief.quick_verdict:
+        lines.append(brief.quick_verdict)
     if brief.top_risks:
-        lines.append(f"Risk: {brief.top_risks[0]}")
-    if brief.what_to_watch_next:
-        lines.append(f"Watch: {brief.what_to_watch_next[0]}")
+        risk = brief.top_risks[0].replace("No matched live smart-money signal is visible on the current board, so this signal read is watchlist-only.", "No smart-money follow-through.")
+        lines.append(risk)
     return "\n".join(lines)
 
 

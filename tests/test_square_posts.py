@@ -13,8 +13,9 @@ def test_build_square_post_contains_key_fields():
         conviction="Medium",
     )
     out = build_square_post(brief, max_chars=280)
+    assert "🧩 BNB" in out
     assert "BNB looks worth monitoring." in out
-    assert "Read: High | Conviction Medium" in out
+    assert "Need volume confirmation." in out
 
 
 def test_publish_square_post_dry_run():
