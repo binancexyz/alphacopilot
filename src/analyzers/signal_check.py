@@ -25,6 +25,11 @@ def analyze_signal(token: str) -> AnalysisBrief:
         rank = int(quote.get("rank") or 0)
         brief.risk_tags.insert(0, RiskTag(name="Header Market", level="Info", note=f"{price}|{change}|{rank}"))
 
+    if signal_context.trigger_price > 0:
+        zone_low = signal_context.trigger_price * 0.99
+        zone_high = signal_context.trigger_price * 1.01
+        brief.risk_tags.append(RiskTag(name="Entry Zone", level="Info", note=f"${zone_low:,.2f} – ${zone_high:,.2f}"))
+
     if quote and source == "Binance Spot":
         pair = str(quote.get("exchange_symbol") or token)
         spread = float(quote.get("spread_pct") or 0)

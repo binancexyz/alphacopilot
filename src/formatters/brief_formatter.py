@@ -142,6 +142,17 @@ def _strength_word(value: str) -> str:
     return v.split("|", 1)[0].strip().title() if v else "Low"
 
 
+def _freshness_label(note: str) -> str:
+    lower = (note or "").lower()
+    if "fresh" in lower:
+        return f"{note.split('|',1)[1].strip() if '|' in note else note} (fresh ✅)"
+    if "stale" in lower:
+        return f"{note.split('|',1)[1].strip() if '|' in note else note} (stale ⚠️)"
+    if "aging" in lower:
+        return f"{note.split('|',1)[1].strip() if '|' in note else note} (aging ⚠️)"
+    return note
+
+
 def _trend_from_change(change: float, top_risk: str = "") -> str:
     if change >= 3.0:
         return "Bullish momentum"
@@ -388,16 +399,29 @@ def _format_signal_card(brief: AnalysisBrief) -> str:
     gate = (brief.audit_gate or "WARN").title()
     invalidation_tags = [tag for tag in brief.risk_tags if tag.name == "Invalidation" and tag.note]
     invalidation = invalidation_tags[0].note if invalidation_tags else "Needs confirmation"
+    entry_zone = next((tag.note for tag in brief.risk_tags if tag.name == "Entry Zone" and tag.note), "")
+    timing = next((tag.note for tag in brief.risk_tags if tag.name == "Signal Timing" and tag.note), "")
+    exit_pressure = next((tag.note for tag in brief.risk_tags if tag.name == "Exit Pressure" and tag.note), "")
+    strength_line = _strength_word(brief.signal_quality)
+    if exit_pressure:
+        exit_pct = exit_pressure.replace("Exit rate ", "").strip()
+        strength_line = f"{strength_line} · {exit_pct} exited ⚠️" if exit_pct else strength_line
+
+    setup_lines = [f"Audit: {'🔴' if gate.lower() == 'block' else '🟠' if gate.lower() == 'warn' else '🟢'} {gate}"]
+    if entry_zone:
+        setup_lines.append(f"Entry zone: {entry_zone}")
+    setup_lines.append(f"Strength: {strength_line}")
+    if timing:
+        setup_lines.append(f"Signal age: {_freshness_label(timing)}")
+    setup_lines.append(f"Invalidation: {_short_risk(invalidation)}")
 
     parts = [_signal_header(symbol, price_f, change_f, rank_i)]
     parts.extend(["", "**⚡ Setup**"])
-    parts.extend(_tree_lines([
-        f"Audit: {'🔴' if gate.lower() == 'block' else '🟠' if gate.lower() == 'warn' else '🟢'} {gate}",
-        f"Strength: {_strength_word(brief.signal_quality)}",
-        f"Invalidation: {_short_risk(invalidation)}",
-    ]))
+    parts.extend(_tree_lines(setup_lines))
     parts.extend(["", f"**🧠 Verdict {_dots(brief.signal_quality)}**\n{brief.quick_verdict}"])
     risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Thin payload"]
+    if any("late setup" in (risk or "").lower() for risk in brief.top_risks[:2]) and "Most wallets already exited" not in risk_bits:
+        risk_bits.insert(0, "Most wallets already exited")
     parts.extend(["", f"**⚠️ {' · '.join(risk_bits[:2])}**"])
     return "\n".join(parts).strip() + "\n"
 
