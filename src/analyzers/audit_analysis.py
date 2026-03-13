@@ -5,6 +5,15 @@ from src.analyzers.meme_analysis import analyze_meme
 from src.services.factory import get_market_data_service
 
 
+def _pick_finding(items: list[str], *keywords: str) -> str:
+    lower_keywords = [k.lower() for k in keywords]
+    for item in items:
+        lower = item.lower()
+        if any(k in lower for k in lower_keywords):
+            return item
+    return ""
+
+
 def analyze_audit(symbol: str) -> AnalysisBrief:
     service = get_market_data_service()
     audit = service.get_audit_context(symbol)
@@ -29,25 +38,25 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
     else:
         verdict = "Clean audit. Normal caution still applies."
 
-    if blocked_reason:
-        primary = f"Contract: {blocked_reason}"
-    elif audit_flags:
-        primary = f"Contract: {audit_flags[0]}"
-    elif risks:
-        primary = f"Contract: {risks[0]}"
+    contract_hit = blocked_reason or _pick_finding(audit_flags + risks, "contract", "code", "verified", "mint", "owner", "blacklist", "proxy")
+    liquidity_hit = _pick_finding(audit_flags + risks, "liquidity", "tax", "sell", "buy", "slippage", "pool")
+    structure_hit = _pick_finding(audit_flags + risks, "holder", "concentration", "risk level", "wash", "honeypot", "hidden")
+
+    if contract_hit:
+        primary = f"Contract: {contract_hit}"
     else:
         primary = "Contract: No red flags"
 
-    if len(audit_flags) > 1:
-        secondary = f"Liquidity: {audit_flags[1]}"
-    elif len(risks) > 1:
-        secondary = f"Liquidity: {risks[1]}"
+    if liquidity_hit:
+        secondary = f"Liquidity: {liquidity_hit}"
     elif audit_limited:
         secondary = "Liquidity: Partial visibility ⚠️"
     else:
         secondary = "Liquidity: Adequate"
 
-    if audit_gate == "BLOCK":
+    if structure_hit:
+        tertiary = f"Structure: {structure_hit}"
+    elif audit_gate == "BLOCK":
         tertiary = "Structure: Weak"
     elif risk_level.lower() == "low":
         tertiary = "Structure: Stable"

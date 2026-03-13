@@ -80,8 +80,8 @@ class MockMarketDataService:
             "display_name": symbol,
             "audit_gate": "WARN",
             "blocked_reason": "Audit coverage is partial or unavailable.",
-            "audit_flags": [],
-            "major_risks": ["Audit context is incomplete right now, so security conclusions should stay cautious."],
+            "audit_flags": ["Contract Code Not Verified"],
+            "major_risks": ["Liquidity context is incomplete right now."],
             "risk_level": "Medium",
             "audit_summary": "No live audit payload available in mock mode.",
         }
