@@ -137,6 +137,10 @@ def _short_risk(text: str) -> str:
         return "Low liquidity" if "low" in cleaned.lower() or "thin" in cleaned.lower() else "Liquidity caution"
     if "too many daily market lanes are still sparse" in cleaned.lower():
         return "Sparse lane coverage"
+    if "no clean smart-money setup yet" in cleaned.lower():
+        return "No clean board leader yet"
+    if "coverage is thin" in cleaned.lower():
+        return "Attention is limited"
     if "partial" in cleaned.lower() or "limited" in cleaned.lower() or "unsupported" in cleaned.lower():
         return "Partial validity"
     if "httpx" in cleaned.lower() or "optional dependency" in cleaned.lower():
@@ -179,6 +183,9 @@ def _freshness_label(note: str) -> str:
 
 
 def _trend_from_change(change: float, top_risk: str = "") -> str:
+    lower_risk = (top_risk or "").lower()
+    if "thin payload" in lower_risk or "runtime dependency missing" in lower_risk or "live bridge limited" in lower_risk or "optional dependency" in lower_risk or "httpx" in lower_risk:
+        return "Limited read"
     if change >= 3.0:
         return "Bullish momentum"
     if change >= 1.0:
@@ -289,13 +296,15 @@ def _format_compact_brief_card(brief: AnalysisBrief) -> str:
         return _entity_line(brief.entity)
 
     signal_map = {
-        "unmatched": "No clear entry",
+        "unmatched": "Signal not confirmed",
         "watch": "Watching — early setup",
         "bullish": "Watching — early setup",
         "triggered": "Active follow-through",
-        "unknown": "No clear entry",
+        "unknown": "Signal not confirmed",
     }
     trend = _trend_from_change(change_f, top_risk)
+    if price_f <= 0 or liquidity_f <= 0:
+        trend = "Limited read"
     liquidity_text = _liquidity_label(liquidity_f)
     if liquidity_f <= 0 and liquidity_text == "—":
         liquidity_text = "— limited"
@@ -388,7 +397,7 @@ def _format_token_card(brief: AnalysisBrief) -> str:
     except Exception:
         liquidity_f = 0.0
     gate = brief.audit_gate or "WARN"
-    signal_word = "No clear entry"
+    signal_word = "Signal not confirmed"
     lower_why = (brief.why_it_matters or "").lower()
     lower_verdict = (brief.quick_verdict or "").lower()
     if gate == "BLOCK" or "blocked" in lower_verdict:
@@ -551,13 +560,13 @@ def _format_watchtoday_card(brief: AnalysisBrief) -> str:
     if signals_content.strip():
         parts.append(_treeify_block(signals_content))
     else:
-        parts.append(_placeholder_tree("No clean smart-money setup yet", "Board is running thin"))
+        parts.append(_placeholder_tree("No clean board leader yet", "Signal breadth is limited"))
 
     parts.extend(["", "**🔥 Attention**"])
     if attention_content.strip():
         parts.append(_treeify_block(attention_content))
     else:
-        parts.append(_placeholder_tree("No strong attention pocket yet", "Coverage is thin"))
+        parts.append(_placeholder_tree("No strong attention pocket yet", "Attention is limited"))
 
     board_verdict = brief.quick_verdict or "Quiet board. Hold posture."
     lower_board = board_verdict.lower()
