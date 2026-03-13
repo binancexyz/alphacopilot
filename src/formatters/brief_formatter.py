@@ -108,8 +108,22 @@ def _arrow(change: float) -> str:
     return "📈" if change > 0 else "📉" if change < 0 else "➖"
 
 
+def _is_operator_runtime_note(text: str) -> bool:
+    lower = (text or "").strip().lower()
+    return any([
+        "bridge is enabled" in lower,
+        "live token/signal/audit bridge" in lower,
+        "live watchtoday bridge" in lower,
+        "live wallet bridge" in lower,
+        "live audit bridge" in lower,
+        "live signal bridge" in lower,
+    ])
+
+
 def _short_risk(text: str) -> str:
     cleaned = (text or "").strip().rstrip(".")
+    if _is_operator_runtime_note(cleaned):
+        return ""
     replacements = {
         "Using secondary market data for this brief": "Secondary data",
         "This is an estimated read-only snapshot, not a full PnL or cost-basis analysis": "Read-only estimate",
@@ -468,7 +482,7 @@ def _format_token_card(brief: AnalysisBrief) -> str:
 
     verdict_text = brief.quick_verdict or "Thin read. No conviction yet."
     parts.extend(["", f"**🧠 Verdict {_dots(brief.signal_quality)}**\n{verdict_text}"])
-    risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Thin payload"]
+    risk_bits = [bit for bit in (_short_risk(risk) for risk in brief.top_risks[:2]) if bit] or ["Thin payload"]
     if "No signal match" in risk_bits and any("market-only read" in bit.lower() or "defensive market" in bit.lower() for bit in risk_bits):
         risk_bits = [bit for bit in risk_bits if bit != "No signal match"]
     risk_bits = list(dict.fromkeys(risk_bits))
@@ -503,7 +517,7 @@ def _format_signal_card(brief: AnalysisBrief) -> str:
     parts.extend(_tree_lines(setup_lines))
     verdict_text = brief.quick_verdict or "Watchlist only. Needs confirmation."
     parts.extend(["", f"**🧠 Verdict {_dots(brief.signal_quality)}**\n{verdict_text}"])
-    risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Thin payload"]
+    risk_bits = [bit for bit in (_short_risk(risk) for risk in brief.top_risks[:2]) if bit] or ["Thin payload"]
     if any("late setup" in (risk or "").lower() for risk in brief.top_risks[:2]) and "Most wallets already exited" not in risk_bits:
         risk_bits.insert(0, "Most wallets already exited")
     risk_bits = list(dict.fromkeys(risk_bits))
@@ -548,7 +562,7 @@ def _format_wallet_card(brief: AnalysisBrief) -> str:
     dot_level = "Low" if follow == "Unknown" else "Medium" if follow == "Track" else "Low"
     verdict_text = brief.quick_verdict or "Limited read. Some structure visible."
     parts.extend(["", f"**🧠 Verdict {_dots(dot_level)}**\n{verdict_text}"])
-    risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Thin payload"]
+    risk_bits = [bit for bit in (_short_risk(risk) for risk in brief.top_risks[:2]) if bit] or ["Thin payload"]
     risk_bits = ["Thin payload" if "thin" in bit.lower() or "wallet payload" in bit.lower() else bit for bit in risk_bits]
     risk_bits = list(dict.fromkeys(risk_bits))
     if "Runtime dependency missing" in risk_bits and "Live bridge limited" in risk_bits:
@@ -595,7 +609,7 @@ def _format_watchtoday_card(brief: AnalysisBrief) -> str:
     elif len(board_verdict) > 90:
         board_verdict = board_verdict.split(". ", 1)[0].rstrip(".") + "."
     parts.extend(["", f"**🧠 Board {_dots(brief.signal_quality)}**\n{board_verdict}"])
-    risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Attention ≠ signal"]
+    risk_bits = [bit for bit in (_short_risk(risk) for risk in brief.top_risks[:2]) if bit] or ["Attention ≠ signal"]
     risk_bits = list(dict.fromkeys(risk_bits))
     if "Runtime dependency missing" in risk_bits and "Live bridge limited" in risk_bits:
         risk_bits = [bit for bit in risk_bits if bit != "Live bridge limited"]
@@ -667,7 +681,7 @@ def _format_portfolio_card(brief: AnalysisBrief) -> str:
     freshness = next((tag.note for tag in brief.risk_tags if tag.name == "Freshness" and tag.note), "")
     footer_bits = [f"Snapshot {freshness}" if freshness else "Read-only estimate", "Read-only estimate"]
     if unavailable:
-        risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Read-only estimate"]
+        risk_bits = [bit for bit in (_short_risk(risk) for risk in brief.top_risks[:2]) if bit] or ["Read-only estimate"]
         footer_bits = list(dict.fromkeys(risk_bits + footer_bits))[:2]
     else:
         footer_bits = list(dict.fromkeys(footer_bits))[:2]
