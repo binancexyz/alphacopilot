@@ -24,6 +24,7 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     audit_gate, blocked_reason = _audit_gate_state(audit_payload, audit_flags)
 
     resolved_signal_status = signal.get("status") or signal.get("direction") or ("watch" if _first_item(signal.get("data")) else "unmatched")
+    top_holder_concentration_pct = _pick_number(_best_symbol_match((market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []), _normalize_match_key(resolved_symbol)) or {}, "holdersTop10Percent", "top10HoldersPercentage")
 
     return {
         "symbol": resolved_symbol,
@@ -31,6 +32,7 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         "price": _pick_number(dynamic, "price") or _pick_number(search_item, "price"),
         "liquidity": _pick_number(dynamic, "liquidity") or _pick_number(search_item, "liquidity"),
         "holders": _pick_int(dynamic, "holders", "kycHolderCount") or _pick_int(search_item, "holders"),
+        "top_holder_concentration_pct": top_holder_concentration_pct,
         "market_rank_context": _build_market_rank_context(market_rank, resolved_symbol),
         "signal_status": resolved_signal_status,
         "signal_trigger_context": _build_signal_context(signal),

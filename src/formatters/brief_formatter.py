@@ -338,7 +338,8 @@ def _format_token_card(brief: AnalysisBrief) -> str:
         f"Liquidity: {liquidity_text}",
     ]))
     if brief.beginner_note and "research summary" not in brief.beginner_note.lower():
-        parts.extend(["", "**💼 Top Holdings**"])
+        ownership_title = "**💼 Ownership**" if any(line.startswith(("Holders:", "Smart money:", "Top-10 concentration:")) for line in brief.beginner_note.splitlines()) else "**💼 Top Holdings**"
+        parts.extend(["", ownership_title])
         parts.extend(_tree_lines(brief.beginner_note.splitlines()[:3]))
     verdict_text = brief.quick_verdict
     parts.extend(["", f"**🧠 Verdict {_dots(brief.signal_quality)}**\n{verdict_text}"])

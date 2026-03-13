@@ -10,6 +10,7 @@ class TokenContext:
     price: float = 0.0
     liquidity: float = 0.0
     holders: int = 0
+    top_holder_concentration_pct: float = 0.0
     market_rank_context: str = ""
     signal_status: str = "unknown"
     signal_trigger_context: str = ""

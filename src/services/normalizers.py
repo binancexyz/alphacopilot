@@ -10,6 +10,7 @@ def normalize_token_context(payload: dict) -> TokenContext:
         price=_to_float(payload.get("price")),
         liquidity=_to_float(payload.get("liquidity")),
         holders=_to_int(payload.get("holders")),
+        top_holder_concentration_pct=_to_float(payload.get("top_holder_concentration_pct")),
         market_rank_context=str(payload.get("market_rank_context", "")),
         signal_status=str(payload.get("signal_status", "unknown")),
         signal_trigger_context=str(payload.get("signal_trigger_context", "")),
