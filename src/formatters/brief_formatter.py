@@ -133,6 +133,16 @@ def _short_risk(text: str) -> str:
             return new
     if "higher-beta ideas" in cleaned.lower() or "defensive" in cleaned.lower():
         return "Defensive market"
+    if "user reported" in cleaned.lower() or "reported as risky by users" in cleaned.lower():
+        return "User-reported risk"
+    if "contract upgradeable" in cleaned.lower():
+        return "Upgradeable contract"
+    if "honeypot" in cleaned.lower():
+        return "Honeypot risk"
+    if "scam risk" in cleaned.lower():
+        return "Scam risk"
+    if "contract risk" in cleaned.lower():
+        return "Contract risk"
     if "liquidity" in cleaned.lower():
         return "Low liquidity" if "low" in cleaned.lower() or "thin" in cleaned.lower() else "Liquidity caution"
     if "too many daily market lanes are still sparse" in cleaned.lower():
