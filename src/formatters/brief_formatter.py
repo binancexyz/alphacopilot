@@ -471,13 +471,13 @@ def _format_wallet_card(brief: AnalysisBrief) -> str:
     short_address = address if len(address) <= 10 else f"{address[:6]}…{address[-5:]}"
 
     behavior_lines = []
-    thin_wallet = any("thin" in (risk or "").lower() for risk in brief.top_risks[:2]) or "too thin" in (brief.quick_verdict or "").lower()
+    thin_wallet = any("thin" in (risk or "").lower() for risk in brief.top_risks[:2]) or "too thin" in (brief.quick_verdict or "").lower() or "unavailable" in (brief.quick_verdict or "").lower()
     watch = brief.what_to_watch_next[:3]
     lead_holding = next((tag.note for tag in brief.risk_tags if tag.name == "Lead Holding" and tag.note), "")
     concentration = next((tag.note for tag in brief.risk_tags if tag.name == "Concentration Risk" and tag.note), "")
     activity = next((tag.note for tag in brief.risk_tags if tag.name == "Activity" and tag.note), "")
     if thin_wallet:
-        behavior_lines = ["Activity: Static", "Top move: No rotation visible", "Drift: No change detected"]
+        behavior_lines = ["Activity: Limited", "Top move: No rotation visible", "Drift: Follow signal unavailable"]
     elif lead_holding or concentration or activity:
         behavior_lines = [
             f"Activity: {activity or 'Visible'}",
@@ -496,7 +496,8 @@ def _format_wallet_card(brief: AnalysisBrief) -> str:
     parts.extend(["", "**⚡ Behavior**"])
     parts.extend(_tree_lines(behavior_lines[:3]))
     dot_level = "Low" if follow == "Unknown" else "Medium" if follow == "Track" else "Low"
-    parts.extend(["", f"**🧠 Verdict {_dots(dot_level)}**\n{brief.quick_verdict}"])
+    verdict_text = brief.quick_verdict or "Limited read. Some structure visible."
+    parts.extend(["", f"**🧠 Verdict {_dots(dot_level)}**\n{verdict_text}"])
     risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Thin payload"]
     risk_bits = ["Thin payload" if "thin" in bit.lower() or "wallet payload" in bit.lower() else bit for bit in risk_bits]
     if follow == "Unknown" and "not a follow signal" not in " ".join(risk_bits).lower():
@@ -586,20 +587,35 @@ def _format_portfolio_card(brief: AnalysisBrief) -> str:
         except Exception:
             pass
 
+    unavailable = "unavailable" in (brief.quick_verdict or "").lower()
     parts = [f"**📂 Holdings Binance Spot {'~$' + total_value if total_value else ''}**".rstrip()]
     parts.extend(["", "**⚡ Posture**"])
-    parts.extend(_tree_lines([
-        f"Stables: {stable_tag.note} 💵" if stable_tag else "Stables: —",
-        f"Risk: {risk_pct}",
-        f"Top asset: {top_asset}",
-    ]))
+    if unavailable:
+        posture_lines = ["Stables: —", "Risk: —", "Top asset: —"]
+    else:
+        posture_lines = [
+            f"Stables: {stable_tag.note} 💵" if stable_tag else "Stables: —",
+            f"Risk: {risk_pct}",
+            f"Top asset: {top_asset}",
+        ]
+    parts.extend(_tree_lines(posture_lines))
+
+    parts.extend(["", "**💼 Top Holdings**"])
     if top_lines:
-        parts.extend(["", "**💼 Top Holdings**"])
         parts.extend(_tree_lines(top_lines))
-    parts.extend(["", f"**🧠 Verdict {_dots(posture)}**\n{brief.quick_verdict}"])
+    else:
+        parts.extend(_tree_lines(["No priced holdings visible", "Read-only snapshot unavailable"] if unavailable else ["No priced holdings visible", "Waiting for fuller snapshot"]))
+
+    verdict_text = brief.quick_verdict or "Portfolio read is unavailable right now."
+    parts.extend(["", f"**🧠 Verdict {_dots(posture)}**\n{verdict_text}"])
     freshness = next((tag.note for tag in brief.risk_tags if tag.name == "Freshness" and tag.note), "")
     footer_bits = [f"Snapshot {freshness}" if freshness else "Read-only estimate", "Read-only estimate"]
-    parts.extend(["", f"**⚠️ {' · '.join(list(dict.fromkeys(footer_bits))[:2])}**"])
+    if unavailable:
+        risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Read-only estimate"]
+        footer_bits = list(dict.fromkeys(risk_bits + footer_bits))[:2]
+    else:
+        footer_bits = list(dict.fromkeys(footer_bits))[:2]
+    parts.extend(["", f"**⚠️ {' · '.join(footer_bits)}**"])
     return "\n".join(parts).strip() + "\n"
 
 
