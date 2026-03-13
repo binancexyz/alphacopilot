@@ -10,6 +10,8 @@
 - [`quick-reference.md`](quick-reference.md) — Command reference and output shape
 - [`public-command-card.md`](public-command-card.md) — One-page public command surface and example output card
 - [`telegram-cheat-sheet.md`](telegram-cheat-sheet.md) — Short Telegram-friendly command guide
+- [`enhancement-blueprint.md`](enhancement-blueprint.md) — Master next-phase product and architecture plan
+- [`competition-week-checklist.md`](competition-week-checklist.md) — Practical execution checklist for the competition phase
 - [`commands-overview.md`](commands-overview.md) — Detailed command documentation
 - [`command-architecture.md`](command-architecture.md) — Core vs specialist command recommendation
 - [`cleanup-audit.md`](cleanup-audit.md) — Keep / merge / archive / delete-candidate cleanup plan
