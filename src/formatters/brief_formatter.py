@@ -121,6 +121,11 @@ def _short_risk(text: str) -> str:
         "Too much live token context is still missing, so this read should stay provisional": "Thin payload",
         "Live signal confirmation is still too thin to treat this as a strong setup": "Thin payload",
         "Live market quote temporarily unavailable, so this brief is using thinner fallback context": "Thin payload",
+        "Live bridge is unavailable for token; using degraded context": "Live bridge limited",
+        "Live bridge is unavailable for signal; using degraded context": "Live bridge limited",
+        "Live bridge is unavailable for wallet; using degraded context": "Live bridge limited",
+        "Live bridge is unavailable for audit; using degraded context": "Live bridge limited",
+        "Live bridge is unavailable for watchtoday; using degraded context": "Live bridge limited",
         "Runtime detail: HTTP live mode requires the optional dependency 'httpx'. Install requirements.txt or use file:// live mode": "Runtime dependency missing",
     }
     for old, new in replacements.items():
@@ -136,8 +141,10 @@ def _short_risk(text: str) -> str:
         return "Partial validity"
     if "httpx" in cleaned.lower() or "optional dependency" in cleaned.lower():
         return "Runtime dependency missing"
+    if "live bridge is unavailable" in cleaned.lower():
+        return "Live bridge limited"
     if "degrad" in cleaned.lower():
-        return "Degraded payload"
+        return "Live bridge limited"
     return cleaned
 
 
@@ -427,6 +434,9 @@ def _format_token_card(brief: AnalysisBrief) -> str:
     verdict_text = brief.quick_verdict or "Thin read. No conviction yet."
     parts.extend(["", f"**🧠 Verdict {_dots(brief.signal_quality)}**\n{verdict_text}"])
     risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Thin payload"]
+    risk_bits = list(dict.fromkeys(risk_bits))
+    if "Runtime dependency missing" in risk_bits and "Live bridge limited" in risk_bits:
+        risk_bits = [bit for bit in risk_bits if bit != "Live bridge limited"]
     parts.extend(["", f"**⚠️ {' · '.join(risk_bits[:2])}**"])
     return "\n".join(parts).strip() + "\n"
 
@@ -459,6 +469,9 @@ def _format_signal_card(brief: AnalysisBrief) -> str:
     risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Thin payload"]
     if any("late setup" in (risk or "").lower() for risk in brief.top_risks[:2]) and "Most wallets already exited" not in risk_bits:
         risk_bits.insert(0, "Most wallets already exited")
+    risk_bits = list(dict.fromkeys(risk_bits))
+    if "Runtime dependency missing" in risk_bits and "Live bridge limited" in risk_bits:
+        risk_bits = [bit for bit in risk_bits if bit != "Live bridge limited"]
     parts.extend(["", f"**⚠️ {' · '.join(risk_bits[:2])}**"])
     return "\n".join(parts).strip() + "\n"
 
@@ -500,6 +513,9 @@ def _format_wallet_card(brief: AnalysisBrief) -> str:
     parts.extend(["", f"**🧠 Verdict {_dots(dot_level)}**\n{verdict_text}"])
     risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Thin payload"]
     risk_bits = ["Thin payload" if "thin" in bit.lower() or "wallet payload" in bit.lower() else bit for bit in risk_bits]
+    risk_bits = list(dict.fromkeys(risk_bits))
+    if "Runtime dependency missing" in risk_bits and "Live bridge limited" in risk_bits:
+        risk_bits = [bit for bit in risk_bits if bit != "Live bridge limited"]
     if follow == "Unknown" and "not a follow signal" not in " ".join(risk_bits).lower():
         risk_bits.append("Not a follow signal")
     parts.extend(["", f"**⚠️ {' · '.join(risk_bits[:2])}**"])
@@ -543,6 +559,9 @@ def _format_watchtoday_card(brief: AnalysisBrief) -> str:
         board_verdict = board_verdict.split(". ", 1)[0].rstrip(".") + "."
     parts.extend(["", f"**🧠 Board {_dots(brief.signal_quality)}**\n{board_verdict}"])
     risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Attention ≠ signal"]
+    risk_bits = list(dict.fromkeys(risk_bits))
+    if "Runtime dependency missing" in risk_bits and "Live bridge limited" in risk_bits:
+        risk_bits = [bit for bit in risk_bits if bit != "Live bridge limited"]
     if len(risk_bits) >= 2:
         left, right = risk_bits[0], risk_bits[1]
         left_token = left.split()[0].rstrip(':') if left else ''
