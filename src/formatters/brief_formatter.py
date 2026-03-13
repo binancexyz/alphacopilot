@@ -142,6 +142,20 @@ def _strength_word(value: str) -> str:
     return v.split("|", 1)[0].strip().title() if v else "Low"
 
 
+def _trend_from_change(change: float, top_risk: str = "") -> str:
+    if change >= 3.0:
+        return "Bullish momentum"
+    if change >= 1.0:
+        return "Mild uptrend"
+    if change >= -1.0:
+        return "Neutral drift"
+    if change >= -3.0:
+        return "Mild downtrend"
+    if change < -3.0:
+        return "Bearish pressure"
+    return "Defensive drift"
+
+
 def _extract_price_tag(brief: AnalysisBrief) -> tuple[float, float, int, str]:
     header_note = next((tag.note for tag in brief.risk_tags if tag.name == "Header Market" and tag.note), "")
     price = 0.0
@@ -232,7 +246,7 @@ def _format_compact_brief_card(brief: AnalysisBrief) -> str:
         "triggered": "Active follow-through",
         "unknown": "No clear entry",
     }
-    trend = "Defensive drift" if "defensive" in top_risk.lower() else "Mild bullish" if change_f > 0 else "Soft pressure" if change_f < 0 else "Mixed"
+    trend = _trend_from_change(change_f, top_risk)
     liquidity_text = "—" if liquidity_f <= 0 else f"{_human_money(liquidity_f)} {'✅' if liquidity_f >= 1_000_000_000 else ''}".rstrip()
     confidence = brief.signal_quality or "Low"
 
@@ -324,7 +338,7 @@ def _format_token_card(brief: AnalysisBrief) -> str:
     if gate == "BLOCK":
         signal_word = "Blocked"
 
-    trend = "Defensive drift" if any("defensive" in risk.lower() for risk in brief.top_risks[:2]) else "Mild bullish" if change_f > 0 else "Soft pressure" if change_f < 0 else "Mixed"
+    trend = _trend_from_change(change_f)
     liquidity_tag = next((tag for tag in brief.risk_tags if tag.name == "Binance Spot"), None)
     liquidity_text = pair or "—"
     if liquidity_tag and liquidity_tag.note and "spread" in liquidity_tag.note.lower():

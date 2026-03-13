@@ -61,13 +61,13 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
         top_risk = "Using secondary market data for this brief."
 
     if signal_quality == "High" and not token.audit_flags:
-        verdict = "Looks constructive, but still needs follow-through."
+        verdict = "Conviction setup. Follow-through still needed."
     elif signal_quality == "Medium" and quote_source == "Binance Spot" and spread_pct <= 0.2:
-        verdict = "Worth watching; exchange price context looks clean enough, but setup quality still needs proof."
+        verdict = "Clean price context. Setup needs confirmation."
     elif signal_quality == "Medium":
-        verdict = "Worth watching, but not clean enough to trust blindly."
+        verdict = "Watch setup. Not clean enough yet."
     else:
-        verdict = "More of a monitor than a conviction setup right now."
+        verdict = "Monitor only. No conviction setup."
 
     portfolio_note = portfolio_note_for(display_symbol)
     if portfolio_note:
