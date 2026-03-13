@@ -32,7 +32,7 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
     if audit_gate == "BLOCK":
         verdict = "Avoid until live context improves."
     elif audit_limited:
-        verdict = "Partial read. Stay cautious."
+        verdict = "Limited audit visibility. Stay cautious."
     elif audit_gate == "WARN":
         verdict = "Caution flags visible. Not clean yet."
     else:

@@ -62,6 +62,19 @@ def _treeify_block(text: str) -> str:
     return "\n".join(_tree_lines(bullet_like))
 
 
+def _section_content(brief: AnalysisBrief, *keywords: str) -> str:
+    lowered = [keyword.lower() for keyword in keywords]
+    for section in brief.sections:
+        title = (section.title or "").lower()
+        if any(keyword in title for keyword in lowered):
+            return section.content or ""
+    return ""
+
+
+def _placeholder_tree(*items: str) -> str:
+    return "\n".join(_tree_lines([item for item in items if item and item.strip()]))
+
+
 def _tag_line(tag: RiskTag) -> str:
     suffix = f" — {tag.note}" if tag.note else ""
     return f"{tag.name}: {tag.level}{suffix}"
@@ -328,22 +341,23 @@ def _format_audit_card(brief: AnalysisBrief) -> str:
     gate_word = "Avoid" if gate == "BLOCK" else "Warn" if gate == "WARN" else "Allow"
     findings = [item for item in [top_flag, second_flag, third_flag] if item][:3]
     if not findings:
-        findings = ["Contract: No red flags", "Liquidity: Adequate", "Structure: Stable"]
+        findings = ["Contract: —", "Liquidity: —", "Structure: —"]
 
     parts = [f"**🔐 {symbol} Audit: {'🔴' if gate == 'BLOCK' else '🟠' if gate == 'WARN' else '🟢'} {gate_word} Risk: {risk_level}**"]
     parts.extend(["", "**⚡ Findings**"])
     parts.extend(_tree_lines(findings[:3]))
 
-    meme_sections = [section for section in brief.sections if section.title == "🧪 Meme Lens" and section.content.strip()]
-    if meme_sections:
+    meme_content = _section_content(brief, "meme lens")
+    if meme_content.strip():
         parts.extend(["", "**🧪 Meme Lens**"])
-        parts.append(_treeify_block(meme_sections[0].content))
+        parts.append(_treeify_block(meme_content))
 
-    parts.extend(["", f"**🧠 Verdict {_dots(risk_level if gate != 'BLOCK' else 'Low')}**\n{verdict}"])
+    verdict_text = verdict or "Partial read. Stay cautious."
+    parts.extend(["", f"**🧠 Verdict {_dots(risk_level if gate != 'BLOCK' else 'Low')}**\n{verdict_text}"])
     footer_bits = []
     validity = next((tag for tag in brief.risk_tags if tag.name == "Audit Validity"), None)
     if validity and validity.level.lower() == "limited":
-        footer_bits.append("Partial validity")
+        footer_bits.append("Limited audit visibility")
     if "degrad" in audit_summary.lower():
         footer_bits.append("Degraded payload")
     footer_bits.append("Not investment advice")
@@ -362,10 +376,12 @@ def _format_token_card(brief: AnalysisBrief) -> str:
     gate = brief.audit_gate or "WARN"
     signal_word = "No clear entry"
     lower_why = (brief.why_it_matters or "").lower()
-    if "smart-money wallets" in lower_why:
+    if "smart-money wallets" in lower_why or "signal timing" in lower_why or "signal is" in lower_why:
         signal_word = "Watching — early setup"
     if gate == "BLOCK":
         signal_word = "Blocked"
+    if "unmatched" in lower_why or "no matched smart-money signal" in lower_why:
+        signal_word = "No signal match"
 
     trend = _trend_from_change(change_f)
     liquidity_tag = next((tag for tag in brief.risk_tags if tag.name == "Binance Spot"), None)
@@ -374,19 +390,27 @@ def _format_token_card(brief: AnalysisBrief) -> str:
         liquidity_text = pair
     if liquidity_tag and liquidity_tag.note and "spread" in liquidity_tag.note.lower() and liquidity_f <= 0:
         liquidity_text = liquidity_tag.note.split("|")[0].strip()
+    if liquidity_f <= 0 and liquidity_text == "—":
+        liquidity_text = "— thin"
 
     parts = [_brief_header(symbol, price_f, change_f, rank_i)]
     parts.extend(["", "**⚡ Snapshot**"])
     parts.extend(_tree_lines([
         f"Signal: {signal_word}",
-        f"Trend: {trend}",
+        f"Trend: {trend if price_f > 0 else '— thin'}",
         f"Liquidity: {liquidity_text}",
     ]))
+
+    ownership_lines: list[str] = []
     if brief.beginner_note and "research summary" not in brief.beginner_note.lower():
-        ownership_title = "**💼 Ownership**" if any(line.startswith(("Holders:", "Smart money:", "Top-10 concentration:")) for line in brief.beginner_note.splitlines()) else "**💼 Top Holdings**"
-        parts.extend(["", ownership_title])
-        parts.extend(_tree_lines(brief.beginner_note.splitlines()[:3]))
-    verdict_text = brief.quick_verdict
+        ownership_lines = [line for line in brief.beginner_note.splitlines()[:3] if line.strip()]
+    if not ownership_lines:
+        ownership_lines = ["Holders: —", "Smart money: —", "Top-10 concentration: —"]
+    ownership_title = "**💼 Ownership**"
+    parts.extend(["", ownership_title])
+    parts.extend(_tree_lines(ownership_lines[:3]))
+
+    verdict_text = brief.quick_verdict or "Thin read. No conviction yet."
     parts.extend(["", f"**🧠 Verdict {_dots(brief.signal_quality)}**\n{verdict_text}"])
     risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Thin payload"]
     parts.extend(["", f"**⚠️ {' · '.join(risk_bits[:2])}**"])
@@ -398,7 +422,7 @@ def _format_signal_card(brief: AnalysisBrief) -> str:
     price_f, change_f, rank_i, _pair = _extract_price_tag(brief)
     gate = (brief.audit_gate or "WARN").title()
     invalidation_tags = [tag for tag in brief.risk_tags if tag.name == "Invalidation" and tag.note]
-    invalidation = invalidation_tags[0].note if invalidation_tags else "Needs confirmation"
+    invalidation = invalidation_tags[0].note if invalidation_tags else "— thin"
     entry_zone = next((tag.note for tag in brief.risk_tags if tag.name == "Entry Zone" and tag.note), "")
     timing = next((tag.note for tag in brief.risk_tags if tag.name == "Signal Timing" and tag.note), "")
     exit_pressure = next((tag.note for tag in brief.risk_tags if tag.name == "Exit Pressure" and tag.note), "")
@@ -408,17 +432,16 @@ def _format_signal_card(brief: AnalysisBrief) -> str:
         strength_line = f"{strength_line} · {exit_pct} exited ⚠️" if exit_pct else strength_line
 
     setup_lines = [f"Audit: {'🔴' if gate.lower() == 'block' else '🟠' if gate.lower() == 'warn' else '🟢'} {gate}"]
-    if entry_zone:
-        setup_lines.append(f"Entry zone: {entry_zone}")
+    setup_lines.append(f"Entry zone: {entry_zone or '— thin'}")
     setup_lines.append(f"Strength: {strength_line}")
-    if timing:
-        setup_lines.append(f"Signal age: {_freshness_label(timing)}")
+    setup_lines.append(f"Signal age: {_freshness_label(timing) if timing else '— thin'}")
     setup_lines.append(f"Invalidation: {_short_risk(invalidation)}")
 
     parts = [_signal_header(symbol, price_f, change_f, rank_i)]
     parts.extend(["", "**⚡ Setup**"])
     parts.extend(_tree_lines(setup_lines))
-    parts.extend(["", f"**🧠 Verdict {_dots(brief.signal_quality)}**\n{brief.quick_verdict}"])
+    verdict_text = brief.quick_verdict or "Watchlist only. Needs confirmation."
+    parts.extend(["", f"**🧠 Verdict {_dots(brief.signal_quality)}**\n{verdict_text}"])
     risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Thin payload"]
     if any("late setup" in (risk or "").lower() for risk in brief.top_risks[:2]) and "Most wallets already exited" not in risk_bits:
         risk_bits.insert(0, "Most wallets already exited")
@@ -480,17 +503,22 @@ def _format_watchtoday_card(brief: AnalysisBrief) -> str:
     parts = ["**🌐 Watchtoday**"]
     parts.extend(_runtime_banner(brief))
 
-    signals = next((section for section in brief.sections if "Smart Money Flow" in section.title or "Signal" in section.title), None)
-    attention = next((section for section in brief.sections if "Trending Now" in section.title), None)
+    signals_content = _section_content(brief, "smart money flow", "signal")
+    attention_content = _section_content(brief, "trending now")
 
-    if signals and signals.content:
-        parts.extend(["", "**⚡ Signals**"])
-        parts.append(_treeify_block(signals.content))
-    if attention and attention.content:
-        parts.extend(["", "**🔥 Attention**"])
-        parts.append(_treeify_block(attention.content))
+    parts.extend(["", "**⚡ Signals**"])
+    if signals_content.strip():
+        parts.append(_treeify_block(signals_content))
+    else:
+        parts.append(_placeholder_tree("No clean smart-money setup yet", "Board is running thin"))
 
-    board_verdict = brief.quick_verdict
+    parts.extend(["", "**🔥 Attention**"])
+    if attention_content.strip():
+        parts.append(_treeify_block(attention_content))
+    else:
+        parts.append(_placeholder_tree("No strong attention pocket yet", "Coverage is thin"))
+
+    board_verdict = brief.quick_verdict or "Quiet board. Hold posture."
     lower_board = board_verdict.lower()
     if "opportunity exists" in lower_board and "selectivity matters" in lower_board:
         board_verdict = "Moderate board. Be selective."
@@ -519,7 +547,7 @@ def _format_watchtoday_card(brief: AnalysisBrief) -> str:
                 if item not in dedup_tail:
                     dedup_tail.append(item)
             risk_bits = [f"{left_token}: {' + '.join(dedup_tail)}"] if dedup_tail else [left]
-    if attention and signals:
+    if attention_content.strip() and signals_content.strip():
         risk_bits.insert(0, "Attention ≠ signal")
     parts.extend(["", f"**⚠️ {' · '.join(dict.fromkeys(risk_bits))}**"])
     return "\n".join(parts).strip() + "\n"

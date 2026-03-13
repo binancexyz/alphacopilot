@@ -126,7 +126,7 @@ def build_watchtoday_brief(ctx: WatchTodayContext) -> AnalysisBrief:
     if signal_count >= 3:
         quick_verdict = "Strong board. High selectivity needed."
     elif signal_count >= 1 and attention_count >= 1:
-        quick_verdict = "Moderate board. Be selective."
+        quick_verdict = "Moderate board. Be selective." if len(sparse) < 2 else "Moderate board. selective rather than complete."
     elif signal_count >= 1 and attention_count == 0:
         quick_verdict = "Signal-led day. Low noise."
     elif attention_count >= 1 and signal_count == 0:
@@ -136,6 +136,9 @@ def build_watchtoday_brief(ctx: WatchTodayContext) -> AnalysisBrief:
         conviction = "Low"
     else:
         quick_verdict = "Quiet board. Hold posture."
+
+    if evidence_level != "High" and len(sparse) >= 3:
+        conviction = "Low"
 
     top_risks = list(ctx.major_risks)
     if not top_risks:
