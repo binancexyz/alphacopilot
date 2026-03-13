@@ -5,6 +5,11 @@ from src.analyzers.meme_analysis import analyze_meme
 from src.services.factory import get_market_data_service
 
 
+_CONTRACT_KEYS = ("contract", "code", "verified", "mint", "owner", "blacklist", "proxy", "scam")
+_LIQUIDITY_KEYS = ("liquidity", "tax", "sell", "buy", "slippage", "pool", "trade")
+_STRUCTURE_KEYS = ("holder", "concentration", "risk level", "wash", "honeypot", "hidden", "risk")
+
+
 def _pick_finding(items: list[str], *keywords: str) -> str:
     lower_keywords = [k.lower() for k in keywords]
     for item in items:
@@ -12,6 +17,45 @@ def _pick_finding(items: list[str], *keywords: str) -> str:
         if any(k in lower for k in lower_keywords):
             return item
     return ""
+
+
+
+def _collect_matches(items: list[str], keywords: tuple[str, ...]) -> list[str]:
+    matches: list[str] = []
+    for item in items:
+        lower = item.lower()
+        if any(keyword in lower for keyword in keywords) and item not in matches:
+            matches.append(item)
+    return matches
+
+
+
+def _severity(audit_gate: str, risk_level: str, audit_limited: bool, audit_flags: list[str]) -> str:
+    if audit_gate == "BLOCK":
+        return "High"
+    if audit_limited:
+        return "Medium"
+    if risk_level.lower() == "high":
+        return "High"
+    if risk_level.lower() == "low" and not audit_flags:
+        return "Low"
+    return "Medium"
+
+
+
+def _verdict(audit_gate: str, risk_level: str, audit_limited: bool, audit_flags: list[str]) -> str:
+    if audit_gate == "BLOCK":
+        return "Avoid. Structural risk is too high."
+    if audit_limited:
+        return "Limited audit visibility. Stay cautious."
+    if any("tax above 10%" in flag.lower() for flag in audit_flags):
+        return "Tradable but flagged. Tax friction is high."
+    if risk_level.lower() == "high":
+        return "Structural caution. Risk flags are heavy."
+    if audit_gate == "WARN" or audit_flags:
+        return "Caution flags visible. Not clean yet."
+    return "Clean audit. Normal caution still applies."
+
 
 
 def analyze_audit(symbol: str) -> AnalysisBrief:
@@ -26,24 +70,25 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
     audit_summary = str(audit.get("audit_summary") or blocked_reason or "Audit output is limited right now.").replace("|", " / ")
     audit_flags = [str(x).replace("|", " / ") for x in audit.get("audit_flags", [])]
     risks = [str(x).replace("|", " / ") for x in audit.get("major_risks", [])]
+    combined = [x for x in [blocked_reason, *audit_flags, *risks] if x]
     audit_valid = bool(audit.get("has_result", audit.get("hasResult", False))) and bool(audit.get("is_supported", audit.get("isSupported", False)))
     audit_limited = not audit_valid or "limited" in audit_summary.lower() or "partial" in blocked_reason.lower() or "unavailable" in blocked_reason.lower()
 
-    if audit_gate == "BLOCK":
-        verdict = "Avoid until live context improves."
-    elif audit_limited:
-        verdict = "Limited audit visibility. Stay cautious."
-    elif audit_gate == "WARN":
-        verdict = "Caution flags visible. Not clean yet."
-    else:
-        verdict = "Clean audit. Normal caution still applies."
+    verdict = _verdict(audit_gate, risk_level, audit_limited, audit_flags)
+    severity = _severity(audit_gate, risk_level, audit_limited, audit_flags)
 
-    contract_hit = blocked_reason or _pick_finding(audit_flags + risks, "contract", "code", "verified", "mint", "owner", "blacklist", "proxy")
-    liquidity_hit = _pick_finding(audit_flags + risks, "liquidity", "tax", "sell", "buy", "slippage", "pool")
-    structure_hit = _pick_finding(audit_flags + risks, "holder", "concentration", "risk level", "wash", "honeypot", "hidden")
+    contract_matches = _collect_matches(combined, _CONTRACT_KEYS)
+    liquidity_matches = _collect_matches(combined, _LIQUIDITY_KEYS)
+    structure_matches = _collect_matches(combined, _STRUCTURE_KEYS)
+
+    contract_hit = blocked_reason if audit_gate == "BLOCK" else (contract_matches[0] if contract_matches else "")
+    liquidity_hit = liquidity_matches[0] if liquidity_matches else ""
+    structure_hit = structure_matches[0] if structure_matches else ""
 
     if contract_hit:
         primary = f"Contract: {contract_hit}"
+    elif audit_limited:
+        primary = "Contract: Partial visibility ⚠️"
     else:
         primary = "Contract: No red flags"
 
@@ -51,6 +96,8 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
         secondary = f"Liquidity: {liquidity_hit}"
     elif audit_limited:
         secondary = "Liquidity: Partial visibility ⚠️"
+    elif any("tax" in flag.lower() for flag in audit_flags):
+        secondary = f"Liquidity: {next(flag for flag in audit_flags if 'tax' in flag.lower())}"
     else:
         secondary = "Liquidity: Adequate"
 
@@ -58,17 +105,17 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
         tertiary = f"Structure: {structure_hit}"
     elif audit_gate == "BLOCK":
         tertiary = "Structure: Weak"
-    elif risk_level.lower() == "low":
-        tertiary = "Structure: Stable"
     elif audit_limited:
         tertiary = "Structure: Partial"
+    elif risk_level.lower() == "low":
+        tertiary = "Structure: Stable"
     else:
         tertiary = f"Structure: {risk_level} risk"
 
     packed = "|".join([
         display_name,
         display_symbol,
-        risk_level,
+        severity,
         audit_summary,
         primary,
         secondary,
@@ -82,6 +129,7 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
         tags.append(RiskTag(name="Audit Validity", level="Limited", note="Live audit validity is partial or unsupported right now."))
     elif audit_valid:
         tags.append(RiskTag(name="Audit Validity", level="Valid", note="Result is based on a supported audit payload."))
+    tags.append(RiskTag(name="Severity", level=severity, note=risk_level))
 
     sections: list[BriefSection] = []
     try:
@@ -112,7 +160,7 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
     return AnalysisBrief(
         entity=f"Audit: {display_symbol}",
         quick_verdict=packed,
-        signal_quality=risk_level,
+        signal_quality=severity,
         top_risks=[],
         why_it_matters="",
         what_to_watch_next=[],
