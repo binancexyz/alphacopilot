@@ -53,7 +53,7 @@ def analyze_signal(token: str) -> AnalysisBrief:
     elif signal_context.exit_rate >= 70:
         invalidation = "Breaks if exit pressure stays elevated and fresh participation does not replace it."
     elif signal_context.signal_status == "unmatched":
-        invalidation = "Breaks if price attention never turns into a matched smart-money signal."
+        invalidation = "No smart-money follow-through"
     else:
         invalidation = "Breaks if confirmation does not improve in the next cycle."
     brief.risk_tags.append(RiskTag(name="Invalidation", level="Info", note=invalidation))
