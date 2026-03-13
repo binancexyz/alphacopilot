@@ -404,6 +404,8 @@ def _format_token_card(brief: AnalysisBrief) -> str:
         signal_word = "Blocked"
     elif "no signal match" in lower_verdict or "unmatched" in lower_why or "no matched smart-money signal" in lower_why:
         signal_word = "No signal match"
+    elif "monitor only" in lower_verdict and ("active pricing" in lower_why or price_f > 0):
+        signal_word = "Market active · setup absent"
     elif "active but late" in lower_verdict:
         signal_word = "Active — late setup"
     elif "active setup" in lower_verdict:
@@ -415,10 +417,14 @@ def _format_token_card(brief: AnalysisBrief) -> str:
 
     trend = _trend_from_change(change_f)
     liquidity_tag = next((tag for tag in brief.risk_tags if tag.name == "Binance Spot"), None)
+    explicit_liquidity_tag = next((tag for tag in brief.risk_tags if tag.name == "Liquidity" and tag.note), None)
     liquidity_text = _liquidity_label(liquidity_f)
-    if pair and liquidity_f <= 0:
+    if explicit_liquidity_tag:
+        note = explicit_liquidity_tag.note.replace("Visible liquidity ", "").strip()
+        liquidity_text = _human_money(float(note.replace(',', ''))) if note.replace(',', '').replace('.', '').isdigit() else note
+    elif pair and liquidity_f <= 0:
         liquidity_text = pair
-    if liquidity_tag and liquidity_tag.note and "spread" in liquidity_tag.note.lower() and liquidity_f <= 0:
+    if liquidity_tag and liquidity_tag.note and "spread" in liquidity_tag.note.lower() and liquidity_f <= 0 and not explicit_liquidity_tag:
         liquidity_text = liquidity_tag.note.split("|")[0].strip()
     if liquidity_f <= 0 and liquidity_text == "—":
         liquidity_text = "— limited"
@@ -453,6 +459,8 @@ def _format_token_card(brief: AnalysisBrief) -> str:
     verdict_text = brief.quick_verdict or "Thin read. No conviction yet."
     parts.extend(["", f"**🧠 Verdict {_dots(brief.signal_quality)}**\n{verdict_text}"])
     risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Thin payload"]
+    if "No signal match" in risk_bits and any("market-only read" in bit.lower() or "defensive market" in bit.lower() for bit in risk_bits):
+        risk_bits = [bit for bit in risk_bits if bit != "No signal match"]
     risk_bits = list(dict.fromkeys(risk_bits))
     if "Runtime dependency missing" in risk_bits and "Live bridge limited" in risk_bits:
         risk_bits = [bit for bit in risk_bits if bit != "Live bridge limited"]
