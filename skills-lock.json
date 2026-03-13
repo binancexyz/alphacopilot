@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "skills": {
+    "alpha": {
+      "source": "binance/binance-skills-hub",
+      "sourceType": "github",
+      "computedHash": "6ade6a93ae7e9f70fb6a77465f91cba385072a1b222ab7d44d6253eb42a46feb"
+    },
+    "assets": {
+      "source": "binance/binance-skills-hub",
+      "sourceType": "github",
+      "computedHash": "13ba46981a0b78f2db3ddbe6316ac9e40fd162b14faafe493d915d17ad682b87"
+    },
+    "crypto-market-rank": {
+      "source": "binance/binance-skills-hub",
+      "sourceType": "github",
+      "computedHash": "39d9fe350baa5aa4494276d00cdb384fd3e8db9cf1630d4c76fb29a36d78fb5c"
+    },
+    "derivatives-trading-usds-futures": {
+      "source": "binance/binance-skills-hub",
+      "sourceType": "github",
+      "computedHash": "305627d67d41459c81f03fd08b4f9e2fe084dda1429f3850ba404063009e54e8"
+    },
+    "margin-trading": {
+      "source": "binance/binance-skills-hub",
+      "sourceType": "github",
+      "computedHash": "2cd97639db7772133133f96a8e6fe1c542d51b5de6a38d9e117ef0a70d8b5c58"
+    },
+    "meme-rush": {
+      "source": "binance/binance-skills-hub",
+      "sourceType": "github",
+      "computedHash": "bbcd8eb61503bf644e336dff2c389dea81243f0ae0976cd0680066327e627de6"
+    },
+    "query-address-info": {
+      "source": "binance/binance-skills-hub",
+      "sourceType": "github",
+      "computedHash": "7b42da16255ecc24a204a11f2aedda82a57de0094a76d4e969b259bcfcc2f107"
+    },
+    "query-token-audit": {
+      "source": "binance/binance-skills-hub",
+      "sourceType": "github",
+      "computedHash": "a625548dc9aa0820c325e3585e1f2a1fe6adc7fb8c0de1290e1f5f05f86c8ff4"
+    },
+    "query-token-info": {
+      "source": "binance/binance-skills-hub",
+      "sourceType": "github",
+      "computedHash": "30802a287aa33dd56853ac63e9d02b9561754b0eb8f4a70711605728f7920fb2"
+    },
+    "spot": {
+      "source": "binance/binance-skills-hub",
+      "sourceType": "github",
+      "computedHash": "3ad001002acf73cf62a07de731aa930695870ff9b4a6dc8411df36ba6d4f7630"
+    },
+    "square-post": {
+      "source": "binance/binance-skills-hub",
+      "sourceType": "github",
+      "computedHash": "5323d876e326674c9a88a7b36e3d88fcbb8cdc39b14282e412eaf953ca3ad741"
+    },
+    "trading-signal": {
+      "source": "binance/binance-skills-hub",
+      "sourceType": "github",
+      "computedHash": "d48cecf5130bfd100ef8aa5360e9981f9a598164046518aefe09dcfcd74f56c7"
+    }
+  }
+}
