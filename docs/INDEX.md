@@ -8,6 +8,8 @@
 - [`mvp-definition.md`](mvp-definition.md) — MVP scope and command surface
 - [`one-minute-overview.md`](one-minute-overview.md) — Quick project pitch
 - [`quick-reference.md`](quick-reference.md) — Command reference and output shape
+- [`public-command-card.md`](public-command-card.md) — One-page public command surface and example output card
+- [`telegram-cheat-sheet.md`](telegram-cheat-sheet.md) — Short Telegram-friendly command guide
 - [`commands-overview.md`](commands-overview.md) — Detailed command documentation
 - [`command-architecture.md`](command-architecture.md) — Core vs specialist command recommendation
 - [`cleanup-audit.md`](cleanup-audit.md) — Keep / merge / archive / delete-candidate cleanup plan

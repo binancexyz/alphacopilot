@@ -73,6 +73,8 @@ That gives Bibipilot a very simple product story:
 
 `/brief <symbol> deep` is the richer asset-judgment path when you want more than the compact default answer.
 
+For the cleanest one-page public explanation, see [`docs/public-command-card.md`](docs/public-command-card.md).
+
 Publishing remains a first-class product output through Binance Square.
 
 It also supports:
@@ -178,6 +180,7 @@ make test    # test suite
 
 ### 4. Best first read if you want to collaborate
 - `README.md`
+- `docs/public-command-card.md`
 - `docs/maintainer-summary.md`
 - `docs/quick-reference.md`
 - `docs/developer-flow.md`

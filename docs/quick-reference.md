@@ -11,6 +11,8 @@
 | `/watchtoday` | Daily board with smart-money signals first and attention separated cleanly |
 | `/audit <symbol>` | Security-first token read with conditional meme lens |
 
+For a cleaner public-facing one-page version, see [`public-command-card.md`](public-command-card.md).
+
 ## API Endpoints (v0.2.1)
 
 Current note:
