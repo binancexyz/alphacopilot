@@ -62,7 +62,7 @@ Live Binance Square posting works, the scheduled premium 1-post/day Square engin
 Real commands, real Square publishing, real scheduling, and a partially live bridge.
 
 ### Longer answer
-Bibipilot already supports `/price`, `/brief`, `/risk`, `/audit`, `/token`, `/signal`, `/wallet`, `/watchtoday`, and `/meme`, and it has live posting proof on Binance Square.
+Bibipilot already supports the current live public surface: `/brief`, `/signal`, `/audit`, `/holdings`, and `/watchtoday`, and it has live posting proof on Binance Square.
 
 ---
 
@@ -116,13 +116,13 @@ That Bibipilot can prioritize market attention, not just list data.
 
 ---
 
-## 12. What does `/wallet` prove?
+## 12. What does `/holdings <address>` prove?
 
 ### Short answer
 That Bibipilot interprets behavior instead of stopping at balances.
 
 ### Longer answer
-The wallet flow now includes an explicit follow verdict layer: Track, Unknown, or Don't follow. That is a good example of the judgment layer.
+The public-wallet path inside `/holdings <address>` includes an explicit follow verdict layer: Track, Unknown, or Don't follow. That is a good example of the judgment layer.
 
 ---
 
@@ -159,7 +159,7 @@ Bibipilot is beyond concept stage because the command surface is real, the publi
 - command surface is real
 - `/audit` is first-class
 - `/watchtoday` now renders live lanes
-- `/wallet` includes follow verdicts
+- `/holdings <address>` includes follow verdicts
 - bridge is partially live
 
 ---

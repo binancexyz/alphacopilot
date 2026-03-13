@@ -11,53 +11,45 @@ It is best understood as a:
 ## Main Workflows
 
 Support these core commands:
-- `/price <symbol>`
 - `/brief <symbol>`
-- `/risk <symbol>`
-- `/audit <symbol>`
-- `/token <symbol_or_name>`
 - `/signal <token>`
-- `/wallet <address>`
+- `/audit <symbol>`
+- `/holdings [address]`
 - `/watchtoday`
-- `/meme <symbol>`
 
 ## Command Intent
 
-### `/price`
-Goal:
-- give a compact market card quickly
-
 ### `/brief`
 Goal:
-- compress context into a minimal synthesis
-
-### `/risk`
-Goal:
-- give a downside-first read
+- compress context into the default asset synthesis
+- support a deeper path when richer token judgment is needed
 
 ### `/audit`
 Goal:
 - make security and contract risk first-class
-
-### `/token`
-Goal:
-- summarize token context, conviction, fragility, and main risks
+- absorb meme-style caution/lifecycle context when relevant
 
 ### `/signal`
 Goal:
 - explain timing quality, fragility, and what confirms or weakens the setup
 
-### `/wallet`
+### `/holdings`
 Goal:
-- interpret concentration, wallet behavior, and whether the wallet is worth following
+- interpret portfolio posture with no argument
+- interpret wallet behavior and whether a wallet is worth following when an address is provided
 
 ### `/watchtoday`
 Goal:
 - filter the market into useful attention lanes and daily priorities
 
-### `/meme`
-Goal:
-- give a fast meme-style scan with lifecycle, risk, and timing context
+## Legacy / folded surfaces
+
+These may still exist internally or in compatibility layers, but they are not the active product surface:
+- `/price` -> folded into `/brief`
+- `/token` -> folded into `/brief <symbol> deep`
+- `/wallet` -> folded into `/holdings <address>`
+- `/risk` -> folded into `/signal`
+- `/meme` -> folded into `/audit`
 
 ## Product Rules
 
