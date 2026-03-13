@@ -121,19 +121,21 @@ def build_watchtoday_brief(ctx: WatchTodayContext) -> AnalysisBrief:
 
     populated, sparse = _watch_lane_summary(ctx)
 
-    if evidence_level == "Low":
-        quick_verdict = "Today’s board is still provisional because too many market lanes are sparse, so filtering matters more than confidence."
+    signal_count = len(ctx.strongest_signals)
+    attention_count = len(ctx.trending_now)
+    if signal_count >= 3:
+        quick_verdict = "Strong board. High selectivity needed."
+    elif signal_count >= 1 and attention_count >= 1:
+        quick_verdict = "Moderate board. Be selective."
+    elif signal_count >= 1 and attention_count == 0:
+        quick_verdict = "Signal-led day. Low noise."
+    elif attention_count >= 1 and signal_count == 0:
+        quick_verdict = "Hype day. Caution."
+    elif evidence_level == "Low":
+        quick_verdict = "Quiet board. Hold posture."
         conviction = "Low"
-    elif ctx.market_takeaway and sparse:
-        quick_verdict = f"{ctx.market_takeaway} Some lanes are still sparse, so treat the board as selective rather than complete."
-    elif ctx.market_takeaway:
-        quick_verdict = ctx.market_takeaway
-    elif quality == "High":
-        quick_verdict = "There is real opportunity on the board today, but the edge comes from ranking clean setups ahead of noisy narratives."
-    elif quality == "Medium":
-        quick_verdict = "There is enough movement to care today, but only a small part of it looks worth trusting."
     else:
-        quick_verdict = "Today looks noisier than clean, so preservation and filtering matter more than excitement."
+        quick_verdict = "Quiet board. Hold posture."
 
     top_risks = list(ctx.major_risks)
     if not top_risks:

@@ -493,9 +493,9 @@ def _format_watchtoday_card(brief: AnalysisBrief) -> str:
     board_verdict = brief.quick_verdict
     lower_board = board_verdict.lower()
     if "opportunity exists" in lower_board and "selectivity matters" in lower_board:
-        board_verdict = "Opportunity visible. Be selective."
+        board_verdict = "Moderate board. Be selective."
     elif "selective rather than defensive" in lower_board or "selectively instead of defensively" in lower_board:
-        board_verdict = "Opportunity visible. Stay selective."
+        board_verdict = "Moderate board. Be selective."
     elif len(board_verdict) > 90:
         board_verdict = board_verdict.split(". ", 1)[0].rstrip(".") + "."
     parts.extend(["", f"**🧠 Board {_dots(brief.signal_quality)}**\n{board_verdict}"])

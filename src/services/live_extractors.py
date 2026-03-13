@@ -646,9 +646,15 @@ def _extract_strongest_signals(signal: dict[str, Any]) -> list[str]:
     out = []
     for item in items[:5]:
         ticker = item.get("ticker") or "Token"
-        direction = item.get("direction") or "signal"
+        direction = str(item.get("direction") or "signal").upper()
         status = item.get("status") or "unknown"
-        out.append(f"{ticker}: {direction} ({status})")
+        wallets = _to_int(item.get("smartMoneyCount"))
+        age_hours = _signal_age_hours(item)
+        age_suffix = f" {age_hours:.0f}h ago" if age_hours > 0 else ""
+        if wallets > 0:
+            out.append(f"{ticker} — {wallets} smart-money wallets | {direction}{' ⏱️' if status == 'timeout' else ''}{age_suffix}")
+        else:
+            out.append(f"{ticker}: {direction} ({status}){age_suffix}")
     return _unique(out)
 
 
@@ -657,6 +663,18 @@ def _extract_symbol_and_liquidity(item: dict[str, Any]) -> tuple[str, float]:
     liquidity = _pick_number(item, "liquidity", "liquidityUsd")
     return symbol, liquidity
 
+
+
+def _watch_liquidity_quality(liquidity: float) -> str:
+    if liquidity <= 0:
+        return ""
+    if liquidity < 1_000_000:
+        return "⚠️ very thin"
+    if liquidity < 10_000_000:
+        return "⚠️ thin"
+    if liquidity < 50_000_000:
+        return "🟡 moderate"
+    return "✅ deep"
 
 
 def _extract_trending_now(market_rank: dict[str, Any]) -> list[str]:
@@ -669,10 +687,11 @@ def _extract_trending_now(market_rank: dict[str, Any]) -> list[str]:
     for item in tokens[:3]:
         symbol, liquidity = _extract_symbol_and_liquidity(item)
         search_count = _to_int(item.get("searchCount24h"))
+        liq_part = f"{_human_money_short(liquidity)} liq {_watch_liquidity_quality(liquidity)}".strip() if liquidity > 0 else "liq —"
         if search_count > 0:
-            out.append(f"{symbol} — {search_count} searches | Liq {_human_money_short(liquidity)}")
+            out.append(f"{symbol} {search_count} searches · {liq_part}")
         else:
-            out.append(f"{symbol} — Liq {_human_money_short(liquidity)}")
+            out.append(f"{symbol} · {liq_part}")
     leaderboard = market_rank.get("data", {}).get("leaderBoardList", []) or market_rank.get("leaderBoardList", []) or []
     for item in leaderboard[:3]:
         symbol = item.get("symbol") or item.get("baseAsset") or item.get("name") or "Token"
