@@ -7,22 +7,22 @@ Run the best short live demo with clear narration and safe fallback lines.
 
 ## Demo order
 
-### 1. `/price BNB`
+### 1. `/brief BNB`
 **What to say:**
-"I’ll start with grounding. This is the compact market truth layer. It now uses Binance Spot read-only data when available, so the first thing you see is more exchange-native than before."
+"I’ll start with the flagship default surface. This is the compact asset read layer: fast, structured, and easier to use than spreading the same idea across old legacy commands."
 
 **What it proves:**
-- clean market card
+- clean flagship surface
 - fast output
 - product-like UX
-- Binance-native exchange grounding
+- synthesis before sprawl
 
 **Fallback if thin:**
-"Even at minimum, this shows the product starts from a compact market truth instead of a wall of text."
+"Even at minimum, this shows the product starts from a compact judgment surface instead of a wall of text."
 
 ---
 
-### 2. `/brief BTC`
+### 2. `/brief BNB deep`
 **What to say:**
 "This is the fast synthesis layer. It compresses context instead of dumping fields, and it can now separate exchange price context from actual signal quality."
 
@@ -65,18 +65,18 @@ Run the best short live demo with clear narration and safe fallback lines.
 
 ---
 
-### 5. `/holdings <address>`
+### 5. `/holdings`
 **What to say:**
-"Holdings can mean your own posture or an external wallet. In this mode, Bibipilot tries to answer whether the wallet is even worth following, and does a better job explaining concentration, activity, and why a wallet is useful for behavior study."
+"Holdings can mean your own posture or an external wallet. I’d start with the default portfolio mode because it is stronger and clearer in a live demo. If needed, the same command can also study a public wallet by passing an address."
 
 **What it proves:**
-- interpretation layer
-- follow verdicts
+- posture interpretation
+- ownership intelligence
 - opinionated design
-- behavior-aware wallet judgment
+- practical read-only portfolio judgment
 
 **Fallback if sparse:**
-"The external-wallet path is still thinner than brief/signal, but the judgment shape is already in place."
+"The portfolio mode is the cleanest proof here, and the external-wallet path is available when we want behavior study specifically."
 
 ---
 

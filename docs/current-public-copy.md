@@ -11,11 +11,10 @@ Bibipilot is a public-alpha Binance-native research copilot built around a simpl
 **research -> judgment -> publishing**
 
 It turns Binance Skills outputs into:
-- fast market reads
-- deeper asset judgment
+- fast default asset reads
+- deeper asset judgment through `brief ... deep`
 - signal timing and invalidation
-- public wallet behavior reads
-- private portfolio posture
+- portfolio posture and public-wallet behavior reads through `holdings`
 - Binance Square publishing output
 
 ## Short submission version

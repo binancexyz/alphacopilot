@@ -11,23 +11,23 @@ The product is built around a simple loop:
 
 ---
 
-## Demo 1 — `/price BNB`
+## Demo 1 — `/brief BNB`
 ### Show
-- premium market card
-- fast price/trend/rank view
-- source/context framing and Binance Spot spread-aware note when available
+- flagship compact read
+- price/trend/liquidity snapshot
+- minimal but useful decision support
 
 ### Narration
-Start with grounding.
-This shows Bibipilot can give a clean market truth immediately, not a wall of text.
-It also shows the product is becoming more Binance-native at the exchange-data layer, not just in branding.
+Start with the default product surface.
+This shows Bibipilot can give a clean asset read immediately, not a wall of text.
+It also shows the product now starts from synthesis instead of making users choose between scattered legacy commands.
 
 ### Judge takeaway
 This feels like a real product surface, not raw terminal output.
 
 ---
 
-## Demo 2 — `/brief BTC`
+## Demo 2 — `/brief BNB deep`
 ### Show
 - compact synthesis
 - minimal but useful decision support
@@ -79,18 +79,19 @@ This is a decision system, not just a signal repeater.
 
 ---
 
-## Demo 5 — `/holdings <address>`
+## Demo 5 — `/holdings`
 ### Show
-- follow verdict
-- interpretation layer
-- risk / watch output
+- portfolio posture
+- top holdings
+- risk / dry-powder framing
 
 ### Narration
 Holdings can mean your own posture or an external wallet.
-In this mode, Bibipilot tries to answer whether the wallet is even worth following.
+Start with the default portfolio mode because it is stronger and more immediately legible in live demos.
+If needed, mention that `/holdings <address>` also supports public wallet behavior reads.
 
 ### Judge takeaway
-The assistant interprets behavior, not just holdings.
+The assistant interprets posture, not just balances.
 
 ---
 

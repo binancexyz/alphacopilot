@@ -81,7 +81,7 @@ It also supports:
 - **Binance Square publishing** — live text posting with draft/publish support
 - **Scheduled daily posting** — premium 1-post/day engine centered on the nightly `night-diary` slot
 - **REST API** — FastAPI service (v0.2.1) with auth, rate limiting, and security headers
-- **Live bridge** — OpenClaw runtime bridge (v0.2.0) with a single `/runtime` endpoint handling token, signal, audit, meme, wallet, and watchtoday via `command` query parameter
+- **Live bridge** — OpenClaw runtime bridge (v0.2.0) that powers the current product surface and supporting internal utilities
 
 ---
 
