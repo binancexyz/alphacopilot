@@ -390,12 +390,19 @@ def _format_token_card(brief: AnalysisBrief) -> str:
     gate = brief.audit_gate or "WARN"
     signal_word = "No clear entry"
     lower_why = (brief.why_it_matters or "").lower()
-    if "smart-money wallets" in lower_why or "signal timing" in lower_why or "signal is" in lower_why:
-        signal_word = "Watching — early setup"
-    if gate == "BLOCK":
+    lower_verdict = (brief.quick_verdict or "").lower()
+    if gate == "BLOCK" or "blocked" in lower_verdict:
         signal_word = "Blocked"
-    if "unmatched" in lower_why or "no matched smart-money signal" in lower_why:
+    elif "no signal match" in lower_verdict or "unmatched" in lower_why or "no matched smart-money signal" in lower_why:
         signal_word = "No signal match"
+    elif "active but late" in lower_verdict:
+        signal_word = "Active — late setup"
+    elif "active setup" in lower_verdict:
+        signal_word = "Active follow-through"
+    elif "stale setup" in lower_verdict:
+        signal_word = "Stale setup"
+    elif "early setup" in lower_verdict or "smart-money wallets" in lower_why or "signal timing" in lower_why or "signal is" in lower_why:
+        signal_word = "Watching — early setup"
 
     trend = _trend_from_change(change_f)
     liquidity_tag = next((tag for tag in brief.risk_tags if tag.name == "Binance Spot"), None)
@@ -418,6 +425,9 @@ def _format_token_card(brief: AnalysisBrief) -> str:
     ownership_lines: list[str] = []
     if brief.beginner_note and "research summary" not in brief.beginner_note.lower():
         ownership_lines = [line for line in brief.beginner_note.splitlines()[:3] if line.strip()]
+    ownership_tag = next((tag for tag in brief.risk_tags if tag.name == "Ownership" and tag.note), None)
+    if ownership_tag and not any(line.startswith("Top-10 concentration:") for line in ownership_lines):
+        ownership_lines.append(ownership_tag.note.replace("Top-10 concentration ", "Top-10 concentration: "))
     while len(ownership_lines) < 3:
         if not any(line.startswith("Holders:") for line in ownership_lines):
             ownership_lines.append("Holders: —")

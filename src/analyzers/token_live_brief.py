@@ -80,10 +80,30 @@ def _token_watch_next(ctx: TokenContext) -> list[str]:
     return watch
 
 
+
+def _token_state_label(ctx: TokenContext, quality: str, evidence_level: str) -> str:
+    if ctx.audit_gate == "BLOCK":
+        return "blocked"
+    if evidence_level == "Low":
+        return "thin"
+    if ctx.signal_status == "unmatched":
+        return "unmatched"
+    if ctx.signal_freshness == "STALE":
+        return "stale"
+    if ctx.exit_rate >= 70:
+        return "late"
+    if quality == "High" and ctx.smart_money_count > 0 and ctx.liquidity > 0:
+        return "active"
+    if quality in {"High", "Medium"} and ctx.signal_status in {"watch", "bullish", "triggered"}:
+        return "early"
+    return "fragile"
+
+
 def build_token_brief(ctx: TokenContext) -> AnalysisBrief:
     quality = token_signal_quality(ctx)
     conviction = token_conviction(ctx)
     evidence_level, evidence_note = _token_evidence_level(ctx)
+    state = _token_state_label(ctx, quality, evidence_level)
 
     risk_tags: list[RiskTag] = [RiskTag(name="Evidence Quality", level=evidence_level, note=evidence_note)]
     gate_level = "High" if ctx.audit_gate == "BLOCK" else "Medium" if ctx.audit_gate == "WARN" else "Low"
@@ -96,34 +116,54 @@ def build_token_brief(ctx: TokenContext) -> AnalysisBrief:
     if ctx.exit_rate > 0:
         exit_note = f"Exit rate {ctx.exit_rate:.0f}%"
         risk_tags.append(RiskTag(name="Exit Pressure", level="High" if ctx.exit_rate >= 70 else "Medium" if ctx.exit_rate >= 40 else "Low", note=exit_note))
+    if ctx.top_holder_concentration_pct > 0:
+        concentration_level = "High" if ctx.top_holder_concentration_pct >= 80 else "Medium" if ctx.top_holder_concentration_pct >= 60 else "Low"
+        risk_tags.append(RiskTag(name="Ownership", level=concentration_level, note=f"Top-10 concentration {ctx.top_holder_concentration_pct:.1f}%"))
+    if ctx.liquidity > 0:
+        liquidity_level = "High" if ctx.liquidity >= 50_000_000 else "Medium" if ctx.liquidity >= 10_000_000 else "Low"
+        risk_tags.append(RiskTag(name="Liquidity", level=liquidity_level, note=f"Visible liquidity {ctx.liquidity:,.0f}"))
 
-    if ctx.audit_gate == "BLOCK":
-        quick_verdict = "Blocked. Audit risk too high."
+    if state == "blocked":
+        quick_verdict = "Blocked. Audit risk is too high."
         quality = "Blocked"
         conviction = "Low"
-    elif evidence_level == "Low":
+    elif state == "thin":
         quick_verdict = "Thin read. No conviction yet."
         conviction = "Low"
-    elif ctx.signal_status == "unmatched":
+    elif state == "unmatched":
         quick_verdict = "Monitor only. No signal match."
-    elif quality == "High" and conviction == "High":
-        quick_verdict = "Strong setup. Risk still matters."
-    elif quality == "High":
-        quick_verdict = "Serious setup. Needs cleaner follow-through."
-    elif quality == "Medium":
-        quick_verdict = "Watch closely. Still conditional."
+        conviction = "Low"
+    elif state == "stale":
+        quick_verdict = "Stale setup. Fresh confirmation needed."
+        conviction = "Low"
+    elif state == "late":
+        quick_verdict = "Active but late. Exit pressure is rising."
+        conviction = "Low"
+    elif state == "active":
+        if ctx.top_holder_concentration_pct >= 80:
+            quick_verdict = "Active setup. Ownership risk is still heavy."
+            conviction = "Medium"
+        elif ctx.audit_gate == "WARN":
+            quick_verdict = "Active setup. Audit caution still applies."
+            conviction = "Medium"
+        else:
+            quick_verdict = "Active setup. Structure is supportive."
+            conviction = "High"
+    elif state == "early":
+        quick_verdict = "Early setup. Structure is forming."
+        conviction = "Medium" if evidence_level == "High" else "Low"
     else:
-        quick_verdict = "Thin structure. Confirmation needed."
+        quick_verdict = "Fragile setup. Confirmation still weak."
 
     top_risks = list(ctx.major_risks)
     if ctx.audit_gate == "BLOCK" and ctx.blocked_reason:
         top_risks.insert(0, ctx.blocked_reason)
     if not top_risks:
-        if evidence_level == "Low":
+        if state == "thin":
             top_risks.append("Too much live token context is still missing, so this read should stay provisional.")
         if ctx.audit_flags:
             top_risks.append("Contract-level flags still weigh on the setup.")
-        if ctx.signal_status == "unmatched":
+        if state == "unmatched":
             top_risks.append("There is no matched live smart-money signal on the current board, so conviction should stay capped.")
         if ctx.exit_rate >= 70:
             top_risks.append("Most tracked smart money may already be exiting, which makes the setup look late.")
@@ -133,8 +173,14 @@ def build_token_brief(ctx: TokenContext) -> AnalysisBrief:
             top_risks.append("Signal timing is stale, so fresh confirmation matters more than the original trigger.")
         elif ctx.signal_freshness == "AGING":
             top_risks.append("Signal timing is aging and may degrade if new confirmation does not appear soon.")
+        if ctx.top_holder_concentration_pct >= 80:
+            top_risks.append("Top-holder concentration is very high, so ownership quality is less clean than headline strength suggests.")
+        elif ctx.top_holder_concentration_pct >= 60:
+            top_risks.append("Ownership concentration is elevated, so conviction should stay selective.")
         if ctx.liquidity <= 0:
             top_risks.append("Liquidity context is missing or weak, which lowers confidence.")
+        elif ctx.liquidity < 1_000_000:
+            top_risks.append("Liquidity is very thin, so execution quality may be weaker than the setup suggests.")
         if not top_risks:
             top_risks.append("The setup still needs confirmation before attention turns into conviction.")
 
