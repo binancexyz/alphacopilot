@@ -57,6 +57,14 @@ def analyze_token(symbol: str) -> AnalysisBrief:
     if ownership_lines:
         brief.beginner_note = "\n".join(ownership_lines[:3])
 
+    if token_context.liquidity >= 10_000_000:
+        brief.top_risks = [
+            risk for risk in brief.top_risks
+            if "low liquidity" not in risk.lower()
+            and "liquidity context is missing or weak" not in risk.lower()
+            and "liquidity is very thin" not in risk.lower()
+        ]
+
     append_posture_note_to_brief(brief, token_context.symbol)
 
     return brief
