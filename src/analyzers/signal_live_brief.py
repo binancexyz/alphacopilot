@@ -10,6 +10,29 @@ _GENERIC_SIGNAL_CONTEXTS = {
 }
 
 
+def _signal_state_label(ctx: SignalContext, quality: str, evidence_level: str) -> str:
+    if ctx.audit_gate == "BLOCK":
+        return "blocked"
+    if ctx.signal_status == "unmatched":
+        return "unmatched"
+    if evidence_level == "Low":
+        return "thin"
+    if ctx.signal_freshness == "STALE":
+        return "stale"
+    if ctx.exit_rate >= 70:
+        return "late"
+    if ctx.trigger_price > 0 and ctx.current_price > 0:
+        if ctx.current_price >= ctx.trigger_price and quality == "High":
+            return "active"
+        if ctx.current_price < ctx.trigger_price:
+            return "early"
+    if quality == "High":
+        return "active"
+    if quality == "Medium":
+        return "early"
+    return "fragile"
+
+
 def _signal_evidence_level(ctx: SignalContext) -> tuple[str, str]:
     score = 0
     if ctx.signal_status != "unknown":
@@ -94,6 +117,7 @@ def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
     quality = signal_quality_from_signal(ctx)
     conviction = "High" if quality == "High" and not ctx.major_risks else "Medium" if quality == "Medium" else "Low"
     evidence_level, evidence_note = _signal_evidence_level(ctx)
+    state = _signal_state_label(ctx, quality, evidence_level)
 
     risk_tags: list[RiskTag] = [RiskTag(name="Evidence Quality", level=evidence_level, note=evidence_note)]
     gate_level = "High" if ctx.audit_gate == "BLOCK" else "Medium" if ctx.audit_gate == "WARN" else "Low"
@@ -105,28 +129,39 @@ def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
     if ctx.exit_rate > 0:
         risk_tags.append(RiskTag(name="Exit Pressure", level="High" if ctx.exit_rate >= 70 else "Medium" if ctx.exit_rate >= 40 else "Low", note=f"Exit rate {ctx.exit_rate:.0f}%"))
 
-    if ctx.audit_gate == "BLOCK":
+    if state == "blocked":
         quick_verdict = "Blocked. Audit risk too high."
         quality = "Blocked"
         conviction = "Low"
-    elif evidence_level == "Low":
-        quick_verdict = "Watchlist only. Needs confirmation."
-        conviction = "Low"
-    elif ctx.signal_status == "unmatched":
+    elif state == "unmatched":
         quick_verdict = "Watchlist only. No signal match."
-    elif quality == "High":
-        quick_verdict = "Live setup. Needs follow-through."
-    elif quality == "Medium":
-        quick_verdict = "Usable setup. Still fragile."
+        conviction = "Low"
+    elif state == "thin":
+        quick_verdict = "Thin setup. Needs live confirmation."
+        conviction = "Low"
+    elif state == "stale":
+        quick_verdict = "Stale setup. Fresh trigger needed."
+        conviction = "Low"
+    elif state == "late":
+        quick_verdict = "Active but late. Exit pressure is high."
+        conviction = "Low"
+    elif state == "active":
+        quick_verdict = "Active setup. Trigger is holding."
+        conviction = "Medium" if ctx.exit_rate >= 40 or ctx.audit_gate == "WARN" else "High"
+    elif state == "early":
+        quick_verdict = "Early setup. Trigger still needs reclaim."
+        conviction = "Medium" if evidence_level == "High" else "Low"
     else:
-        quick_verdict = "Weak setup. Better confirmation needed."
+        quick_verdict = "Fragile setup. Better confirmation needed."
 
     top_risks = list(ctx.major_risks)
     if ctx.audit_gate == "BLOCK" and ctx.blocked_reason:
         top_risks.insert(0, ctx.blocked_reason)
     if not top_risks:
-        if evidence_level == "Low":
+        if state == "thin":
             top_risks.append("Live signal confirmation is still too thin to treat this as a strong setup.")
+        if state == "unmatched":
+            top_risks.append("No matched smart-money signal is visible on the current board.")
         if ctx.exit_rate >= 70:
             top_risks.append(f"Late setup: {ctx.exit_rate:.0f}% of tracked smart money may already be out.")
         elif ctx.exit_rate >= 40:
@@ -135,6 +170,8 @@ def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
             top_risks.append("Signal timing is stale and needs fresh confirmation.")
         elif ctx.signal_freshness == "AGING":
             top_risks.append("Signal timing is aging and can degrade quickly.")
+        if ctx.trigger_price > 0 and ctx.current_price > 0 and ctx.current_price < ctx.trigger_price:
+            top_risks.append("Price is still below the trigger zone, so confirmation remains incomplete.")
         if not top_risks:
             top_risks.append("Visible signals can fail quickly when follow-through does not arrive.")
         if ctx.audit_flags:

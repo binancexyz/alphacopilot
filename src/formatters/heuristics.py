@@ -40,11 +40,48 @@ def token_conviction(ctx: TokenContext) -> str:
 
 
 def signal_quality_from_signal(ctx: SignalContext) -> str:
+    if ctx.audit_gate == "BLOCK":
+        return "Blocked"
+
+    score = 0
     if ctx.signal_status == "unmatched":
-        return "Low"
-    if ctx.signal_status in {"triggered", "bullish"} and not ctx.audit_flags:
+        score -= 2
+    elif ctx.signal_status == "watch":
+        score += 1
+    elif ctx.signal_status in {"triggered", "bullish"}:
+        score += 2
+
+    if ctx.trigger_price > 0 and ctx.current_price > 0:
+        if ctx.current_price >= ctx.trigger_price:
+            score += 1
+        else:
+            score -= 1
+
+    if ctx.smart_money_count >= 3:
+        score += 1
+    elif ctx.smart_money_count == 0 and ctx.signal_status != "unknown":
+        score -= 1
+
+    if ctx.signal_freshness == "FRESH":
+        score += 1
+    elif ctx.signal_freshness == "AGING":
+        score -= 1
+    elif ctx.signal_freshness == "STALE":
+        score -= 2
+
+    if ctx.exit_rate >= 70:
+        score -= 2
+    elif ctx.exit_rate >= 40:
+        score -= 1
+
+    if ctx.audit_flags:
+        score -= 1
+    if ctx.audit_gate == "WARN":
+        score -= 1
+
+    if score >= 4:
         return "High"
-    if ctx.signal_status in {"watch", "triggered", "bullish"}:
+    if score >= 1:
         return "Medium"
     return "Low"
 
