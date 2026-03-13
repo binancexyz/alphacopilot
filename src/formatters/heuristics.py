@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from src.analyzers.thresholds import (
+    CONCENTRATION_EXTREME,
+    CONCENTRATION_HIGH,
+    EXIT_RATE_HIGH,
+    EXIT_RATE_MODERATE,
+)
 from src.models.context import SignalContext, TokenContext, WalletContext, WatchTodayContext
 
 
@@ -19,7 +25,7 @@ def token_signal_quality(ctx: TokenContext) -> str:
         score += 1
     elif ctx.signal_freshness == "STALE":
         score -= 1
-    if ctx.exit_rate >= 70:
+    if ctx.exit_rate >= EXIT_RATE_HIGH:
         score -= 1
 
     if score >= 4:
@@ -69,9 +75,9 @@ def signal_quality_from_signal(ctx: SignalContext) -> str:
     elif ctx.signal_freshness == "STALE":
         score -= 2
 
-    if ctx.exit_rate >= 70:
+    if ctx.exit_rate >= EXIT_RATE_HIGH:
         score -= 2
-    elif ctx.exit_rate >= 40:
+    elif ctx.exit_rate >= EXIT_RATE_MODERATE:
         score -= 1
 
     if ctx.audit_flags:
@@ -98,9 +104,9 @@ def wallet_signal_quality(ctx: WalletContext) -> str:
         score += 1
 
     concentration = ctx.top_concentration_pct
-    if concentration >= 80:
+    if concentration >= CONCENTRATION_EXTREME:
         score -= 2
-    elif concentration >= 65:
+    elif concentration >= CONCENTRATION_HIGH:
         score -= 1
 
     if score >= 3:

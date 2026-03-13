@@ -45,9 +45,9 @@ def test_format_watchtoday_card_keeps_sections_when_thin():
     )
     rendered = format_brief(brief)
     assert "**⚡ Signals**" in rendered
-    assert "No clean smart-money setup yet" in rendered
+    assert "No clean board leader yet" in rendered
     assert "**🔥 Attention**" in rendered
-    assert "Coverage is thin" in rendered
+    assert "Attention is limited" in rendered
     assert "Sparse lane coverage" in rendered
 
 

@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from src.analyzers.thresholds import (
+    CONCENTRATION_ELEVATED,
+    CONCENTRATION_EXTREME,
+    EXIT_RATE_HIGH,
+    EXIT_RATE_MODERATE,
+)
 from src.models.schemas import AnalysisBrief, RiskTag
 from src.services.factory import get_market_data_service
 from src.services.normalizers import normalize_meme_context
@@ -38,7 +44,7 @@ def analyze_meme(symbol: str) -> AnalysisBrief:
     evidence_level, evidence_note = _meme_evidence_level(ctx)
 
     tags: list[RiskTag] = [RiskTag(name="Evidence Quality", level=evidence_level, note=evidence_note)]
-    participation_quality = "High" if ctx.smart_money_count > 0 and ctx.signal_freshness == "FRESH" and ctx.top_holder_concentration_pct < 60 else "Medium" if ctx.smart_money_count > 0 or ctx.lifecycle_stage in {"attention", "active", "finalizing"} else "Low"
+    participation_quality = "High" if ctx.smart_money_count > 0 and ctx.signal_freshness == "FRESH" and ctx.top_holder_concentration_pct < CONCENTRATION_ELEVATED else "Medium" if ctx.smart_money_count > 0 or ctx.lifecycle_stage in {"attention", "active", "finalizing"} else "Low"
     participation_note = "Participation looks healthier than pure headline hype." if participation_quality == "High" else "Participation is visible, but still needs discipline and confirmation." if participation_quality == "Medium" else "Participation quality is still too weak or one-dimensional to trust much."
     tags.append(RiskTag(name="Participation Quality", level=participation_quality, note=participation_note))
     tags.append(RiskTag(name="Lifecycle", level="Medium", note=ctx.lifecycle_stage))
@@ -49,7 +55,7 @@ def analyze_meme(symbol: str) -> AnalysisBrief:
     if ctx.signal_freshness != "UNKNOWN":
         tags.append(RiskTag(name="Timing", level="High" if ctx.signal_freshness == "STALE" else "Medium" if ctx.signal_freshness == "AGING" else "Low", note=f"{ctx.signal_freshness.title()} | {ctx.signal_age_hours:.1f}h old"))
     if ctx.top_holder_concentration_pct > 0:
-        tags.append(RiskTag(name="Holder Concentration", level="High" if ctx.top_holder_concentration_pct >= 80 else "Medium", note=f"Top holders {ctx.top_holder_concentration_pct:.1f}%"))
+        tags.append(RiskTag(name="Holder Concentration", level="High" if ctx.top_holder_concentration_pct >= CONCENTRATION_EXTREME else "Medium", note=f"Top holders {ctx.top_holder_concentration_pct:.1f}%"))
 
     if ctx.audit_gate == "BLOCK":
         verdict = f"{ctx.display_name} is blocked as a meme setup because the audit layer is too dangerous to ignore."
@@ -94,13 +100,13 @@ def analyze_meme(symbol: str) -> AnalysisBrief:
     if not risks:
         if evidence_level == "Low":
             risks.append("Live meme participation is still too thin to treat this as a strong setup.")
-        if ctx.top_holder_concentration_pct >= 80:
+        if ctx.top_holder_concentration_pct >= CONCENTRATION_EXTREME:
             risks.append("Top-holder concentration is extreme, so meme participation may be less healthy than headline attention suggests.")
-        elif ctx.top_holder_concentration_pct >= 60:
+        elif ctx.top_holder_concentration_pct >= CONCENTRATION_ELEVATED:
             risks.append("Holder concentration is still elevated, so participation quality may be weaker than the narrative suggests.")
-        if ctx.exit_rate >= 70:
+        if ctx.exit_rate >= EXIT_RATE_HIGH:
             risks.append("Most tracked smart money may already be exiting, which makes this meme setup look late.")
-        elif ctx.exit_rate >= 40:
+        elif ctx.exit_rate >= EXIT_RATE_MODERATE:
             risks.append("Exit rate is already mixed, so continuation quality may be weaker than the hype suggests.")
         elif ctx.lifecycle_stage not in {"attention", "active", "finalizing"}:
             risks.append("Current live context is too weak to treat this as a strong meme candidate.")
@@ -117,7 +123,7 @@ def analyze_meme(symbol: str) -> AnalysisBrief:
             watch.append(f"whether bonding progress builds from {ctx.bonded_progress:.0f}% into a cleaner launch state")
         elif ctx.lifecycle_stage == "attention":
             watch.append("whether attention develops into a cleaner active meme setup instead of fading as a loose narrative")
-        if ctx.exit_rate >= 70:
+        if ctx.exit_rate >= EXIT_RATE_HIGH:
             watch.append("whether exit pressure cools down, because the current setup already looks late")
         else:
             watch.append("whether smart-money interest expands instead of fading after the first burst")

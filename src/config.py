@@ -64,4 +64,12 @@ def config_warnings() -> list[str]:
         warnings.append("API_AUTH_ENABLED=true but API_AUTH_KEY is empty.")
     if settings.api_rate_limit_enabled and settings.api_rate_limit_requests <= 0:
         warnings.append("API rate limiting is enabled but API_RATE_LIMIT_REQUESTS is not positive.")
+    if settings.app_env != "development" and not settings.api_auth_enabled:
+        warnings.append("API_AUTH_ENABLED is false outside development — set API_AUTH_ENABLED=true and provide API_AUTH_KEY for production.")
+    if settings.api_port < 1 or settings.api_port > 65535:
+        warnings.append(f"API_PORT={settings.api_port} is outside valid range (1-65535).")
+    if settings.bridge_http_timeout_seconds <= 0:
+        warnings.append("BRIDGE_HTTP_TIMEOUT_SECONDS must be positive.")
+    if settings.api_rate_limit_enabled and settings.api_rate_limit_window_seconds <= 0:
+        warnings.append("API_RATE_LIMIT_WINDOW_SECONDS must be positive.")
     return warnings

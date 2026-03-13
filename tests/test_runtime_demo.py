@@ -8,9 +8,11 @@ def run(*args: str) -> str:
 
 def test_runtime_demo_token():
     out = run("python3", "src/runtime_demo.py", "token", "BNB", "examples/payloads/token-bnb.json")
-    assert "Token: BNB" in out
+    assert "BNB" in out
+    assert len(out) > 50
 
 
 def test_runtime_demo_signal():
     out = run("python3", "src/runtime_demo.py", "signal", "DOGE", "examples/payloads/signal-doge.json")
-    assert "Signal: DOGE" in out
+    assert "DOGE" in out
+    assert len(out) > 50

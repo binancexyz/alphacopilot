@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from src.models.context import MemeContext, SignalContext, TokenContext, WalletContext, WalletHolding, WatchTodayContext
+from src.utils.converters import safe_float as _to_float, safe_int as _to_int
 
 
 def normalize_token_context(payload: dict) -> TokenContext:
@@ -107,15 +108,3 @@ def normalize_meme_context(payload: dict) -> MemeContext:
     )
 
 
-def _to_float(value) -> float:
-    try:
-        return float(value or 0)
-    except (TypeError, ValueError):
-        return 0.0
-
-
-def _to_int(value) -> int:
-    try:
-        return int(float(value or 0))
-    except (TypeError, ValueError):
-        return 0

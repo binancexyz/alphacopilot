@@ -9,7 +9,7 @@ def test_config_autoload_reads_local_env(tmp_path: Path):
     env_path = tmp_path / '.env'
     env_path.write_text('BINANCE_SQUARE_API_KEY=demo_key\n', encoding='utf-8')
 
-    config_path = Path('/root/.openclaw/workspace/bibipilot/src/config.py')
+    config_path = Path(__file__).resolve().parents[1] / 'src' / 'config.py'
     temp_config_path = tmp_path / 'config.py'
     source = config_path.read_text(encoding='utf-8').replace(
         "ROOT = Path(__file__).resolve().parents[1]",

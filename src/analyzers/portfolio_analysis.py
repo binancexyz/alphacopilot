@@ -10,6 +10,7 @@ from urllib.parse import urlencode
 from src.config import settings
 from src.models.schemas import AnalysisBrief, RiskTag
 from src.services.exposure_groups import top_groups
+from src.utils.http import make_httpx_client
 from src.services.portfolio_history import append_snapshot, describe_delta, describe_snapshot_age, describe_trend, earlier_snapshot, latest_snapshot, top_change_note
 
 BINANCE_API_BASE_URL = "https://api.binance.com"
@@ -24,11 +25,7 @@ class PortfolioFetchError(RuntimeError):
 
 
 def _httpx_client(*args, **kwargs):
-    try:
-        import httpx  # type: ignore
-    except ModuleNotFoundError as exc:
-        raise PortfolioFetchError("httpx is required for Binance account reads.") from exc
-    return httpx.Client(*args, **kwargs)
+    return make_httpx_client(error_cls=PortfolioFetchError, error_msg="httpx is required for Binance account reads.", **kwargs)
 
 
 def _signed_get(path: str, params: dict[str, Any]) -> dict[str, Any]:

@@ -1,3 +1,5 @@
+import random
+
 import src.square_diary as square_diary
 
 
@@ -13,9 +15,12 @@ def test_contextual_market_line_can_use_market_tone():
 
 def test_contextual_builder_line_can_use_posture_note():
     old_posture = square_diary.fetch_posture_note
+    old_state = random.getstate()
     try:
+        random.seed(42)
         square_diary.fetch_posture_note = lambda: 'The current posture still looks defensive, so quality matters more than volume.'
         line = square_diary.contextual_builder_line('signal and risk', 'Make market and risk posture-aware', 'builder')
     finally:
         square_diary.fetch_posture_note = old_posture
+        random.setstate(old_state)
     assert 'defensive' in line

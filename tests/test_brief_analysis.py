@@ -44,7 +44,7 @@ def test_analyze_brief_uses_binance_spot_context():
 
     assert brief.entity == 'Brief: BNB'
     assert 'BNBUSDT' in brief.quick_verdict
-    assert 'Worth watching; exchange price context looks clean enough' in brief.quick_verdict
+    assert 'Clean price context' in brief.quick_verdict
 
 
 def test_analyze_brief_handles_unmatched_signal_with_binance_spot():

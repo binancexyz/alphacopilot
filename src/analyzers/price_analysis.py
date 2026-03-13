@@ -9,6 +9,7 @@ from src.config import settings
 from src.models.schemas import AnalysisBrief, RiskTag
 from src.services.factory import get_market_data_service
 from src.services.normalizers import normalize_token_context
+from src.utils.http import make_httpx_client
 
 
 BINANCE_SPOT_BASE_URL = "https://api.binance.com"
@@ -29,11 +30,7 @@ class QuoteFetchError(RuntimeError):
 
 
 def _httpx_client(*args, **kwargs):
-    try:
-        import httpx  # type: ignore
-    except ModuleNotFoundError as exc:
-        raise QuoteFetchError("httpx is required for external market quote fetches.") from exc
-    return httpx.Client(*args, **kwargs)
+    return make_httpx_client(error_cls=QuoteFetchError, error_msg="httpx is required for external market quote fetches.", **kwargs)
 
 
 def _load_quote_cache() -> dict[str, Any]:

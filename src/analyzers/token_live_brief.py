@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+from src.analyzers.thresholds import (
+    CONCENTRATION_ELEVATED,
+    CONCENTRATION_EXTREME,
+    EXIT_RATE_HIGH,
+    EXIT_RATE_MODERATE,
+    LIQUIDITY_DEEP,
+    LIQUIDITY_MODERATE,
+    LIQUIDITY_THIN,
+)
 from src.formatters.heuristics import token_conviction, token_signal_quality
 from src.models.context import TokenContext
 from src.models.schemas import AnalysisBrief, RiskTag
@@ -63,9 +72,9 @@ def _token_watch_next(ctx: TokenContext) -> list[str]:
     else:
         watch.append("whether a clearer signal status appears instead of vague market attention")
 
-    if ctx.exit_rate >= 70:
+    if ctx.exit_rate >= EXIT_RATE_HIGH:
         watch.append("whether smart-money exit pressure cools down, because the current setup already looks late")
-    elif ctx.exit_rate >= 40:
+    elif ctx.exit_rate >= EXIT_RATE_MODERATE:
         watch.append("whether exits stabilize instead of climbing into a late-signal profile")
 
     if ctx.signal_freshness == "STALE":
@@ -90,7 +99,7 @@ def _token_state_label(ctx: TokenContext, quality: str, evidence_level: str) -> 
         return "unmatched"
     if ctx.signal_freshness == "STALE":
         return "stale"
-    if ctx.exit_rate >= 70:
+    if ctx.exit_rate >= EXIT_RATE_HIGH:
         return "late"
     if quality == "High" and ctx.smart_money_count > 0 and ctx.liquidity > 0:
         return "active"
@@ -117,10 +126,10 @@ def build_token_brief(ctx: TokenContext) -> AnalysisBrief:
         exit_note = f"Exit rate {ctx.exit_rate:.0f}%"
         risk_tags.append(RiskTag(name="Exit Pressure", level="High" if ctx.exit_rate >= 70 else "Medium" if ctx.exit_rate >= 40 else "Low", note=exit_note))
     if ctx.top_holder_concentration_pct > 0:
-        concentration_level = "High" if ctx.top_holder_concentration_pct >= 80 else "Medium" if ctx.top_holder_concentration_pct >= 60 else "Low"
+        concentration_level = "High" if ctx.top_holder_concentration_pct >= CONCENTRATION_EXTREME else "Medium" if ctx.top_holder_concentration_pct >= CONCENTRATION_ELEVATED else "Low"
         risk_tags.append(RiskTag(name="Ownership", level=concentration_level, note=f"Top-10 concentration {ctx.top_holder_concentration_pct:.1f}%"))
     if ctx.liquidity > 0:
-        liquidity_level = "High" if ctx.liquidity >= 50_000_000 else "Medium" if ctx.liquidity >= 10_000_000 else "Low"
+        liquidity_level = "High" if ctx.liquidity >= LIQUIDITY_DEEP else "Medium" if ctx.liquidity >= LIQUIDITY_MODERATE else "Low"
         risk_tags.append(RiskTag(name="Liquidity", level=liquidity_level, note=f"Visible liquidity {ctx.liquidity:,.0f}"))
 
     if state == "blocked":
@@ -140,7 +149,7 @@ def build_token_brief(ctx: TokenContext) -> AnalysisBrief:
         quick_verdict = "Active but late. Exit pressure is rising."
         conviction = "Low"
     elif state == "active":
-        if ctx.top_holder_concentration_pct >= 80:
+        if ctx.top_holder_concentration_pct >= CONCENTRATION_EXTREME:
             quick_verdict = "Active setup. Ownership risk is still heavy."
             conviction = "Medium"
         elif ctx.audit_gate == "WARN":
@@ -165,21 +174,21 @@ def build_token_brief(ctx: TokenContext) -> AnalysisBrief:
             top_risks.append("Contract-level flags still weigh on the setup.")
         if state == "unmatched":
             top_risks.append("There is no matched live smart-money signal on the current board, so conviction should stay capped.")
-        if ctx.exit_rate >= 70:
+        if ctx.exit_rate >= EXIT_RATE_HIGH:
             top_risks.append("Most tracked smart money may already be exiting, which makes the setup look late.")
-        elif ctx.exit_rate >= 40:
+        elif ctx.exit_rate >= EXIT_RATE_MODERATE:
             top_risks.append("Smart money exits are mixed already, so continuation quality may be less clean.")
         if ctx.signal_freshness == "STALE":
             top_risks.append("Signal timing is stale, so fresh confirmation matters more than the original trigger.")
         elif ctx.signal_freshness == "AGING":
             top_risks.append("Signal timing is aging and may degrade if new confirmation does not appear soon.")
-        if ctx.top_holder_concentration_pct >= 80:
+        if ctx.top_holder_concentration_pct >= CONCENTRATION_EXTREME:
             top_risks.append("Top-holder concentration is very high, so ownership quality is less clean than headline strength suggests.")
-        elif ctx.top_holder_concentration_pct >= 60:
+        elif ctx.top_holder_concentration_pct >= CONCENTRATION_ELEVATED:
             top_risks.append("Ownership concentration is elevated, so conviction should stay selective.")
         if ctx.liquidity <= 0:
             top_risks.append("Liquidity context is missing or weak, which lowers confidence.")
-        elif ctx.liquidity < 1_000_000:
+        elif ctx.liquidity < LIQUIDITY_THIN:
             top_risks.append("Liquidity is very thin, so execution quality may be weaker than the setup suggests.")
         if not top_risks:
             top_risks.append("The setup still needs confirmation before attention turns into conviction.")

@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from src.utils.converters import safe_float as _to_float, safe_int as _to_int
+
 
 def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     token_info = raw.get("query-token-info", {})
@@ -900,20 +902,6 @@ def _pick_int(data: dict[str, Any], *keys: str) -> int:
         if key in data:
             return _to_int(data.get(key))
     return 0
-
-
-def _to_float(value: Any) -> float:
-    try:
-        return float(value or 0)
-    except (TypeError, ValueError):
-        return 0.0
-
-
-def _to_int(value: Any) -> int:
-    try:
-        return int(float(value or 0))
-    except (TypeError, ValueError):
-        return 0
 
 
 def _unique(items: list[str]) -> list[str]:

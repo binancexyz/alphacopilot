@@ -69,4 +69,4 @@ def test_extract_watch_today_context_from_skill_shapes():
     }
     ctx = extract_watch_today_context(raw)
     assert ctx["top_narratives"]
-    assert "DOGE: buy (active)" in ctx["strongest_signals"]
+    assert "DOGE: BUY (active)" in ctx["strongest_signals"]

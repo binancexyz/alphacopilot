@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from src.analyzers.thresholds import (
+    CONCENTRATION_ELEVATED,
+    CONCENTRATION_EXTREME,
+    CONCENTRATION_HIGH,
+    CONCENTRATION_MEANINGFUL,
+)
 from src.formatters.heuristics import wallet_signal_quality
 from src.models.context import WalletContext
 from src.models.schemas import AnalysisBrief, RiskTag
@@ -36,11 +42,11 @@ def _format_holding_summary(ctx: WalletContext) -> str:
 
 
 def _concentration_read(ctx: WalletContext) -> str:
-    if ctx.top_concentration_pct >= 80:
+    if ctx.top_concentration_pct >= CONCENTRATION_EXTREME:
         return "extreme concentration"
-    if ctx.top_concentration_pct >= 65:
+    if ctx.top_concentration_pct >= CONCENTRATION_HIGH:
         return "high concentration"
-    if ctx.top_concentration_pct >= 45:
+    if ctx.top_concentration_pct >= CONCENTRATION_MEANINGFUL:
         return "meaningful concentration"
     if ctx.top_concentration_pct > 0:
         return "controlled concentration"
@@ -145,7 +151,7 @@ def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
         quick_verdict = "Limited read. Some structure visible."
         ctx.follow_verdict = "Unknown"
         conviction = "Low"
-    elif ctx.follow_verdict == "Track" and ctx.top_concentration_pct < 60:
+    elif ctx.follow_verdict == "Track" and ctx.top_concentration_pct < CONCENTRATION_ELEVATED:
         quick_verdict = "Trackable wallet. Useful behavior signal."
         conviction = "Medium"
     elif ctx.follow_verdict == "Track":

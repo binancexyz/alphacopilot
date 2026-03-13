@@ -41,7 +41,7 @@ install-diary-cron:
 	bash scripts/install_square_diary_cron.sh
 
 check:
-	$(PYTHON) -m py_compile src/main.py src/runtime_demo.py src/config.py src/api.py src/bridge_api.py src/square_cli.py src/analyzers/*.py src/formatters/*.py src/models/*.py src/services/*.py src/utils/*.py tests/*.py
+	$(PYTHON) -m py_compile src/main.py src/runtime_demo.py src/config.py src/api.py src/bridge_api.py src/square_cli.py src/binance_careers.py src/square_diary.py src/analyzers/*.py src/formatters/*.py src/models/*.py src/services/*.py src/utils/*.py tests/*.py
 
 test:
 	$(PYTHON) tests/run_tests.py

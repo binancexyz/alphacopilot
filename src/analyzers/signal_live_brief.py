@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from src.analyzers.thresholds import EXIT_RATE_HIGH, EXIT_RATE_MODERATE
 from src.formatters.heuristics import signal_quality_from_signal
 from src.models.context import SignalContext
 from src.models.schemas import AnalysisBrief, RiskTag
@@ -19,7 +20,7 @@ def _signal_state_label(ctx: SignalContext, quality: str, evidence_level: str) -
         return "thin"
     if ctx.signal_freshness == "STALE":
         return "stale"
-    if ctx.exit_rate >= 70:
+    if ctx.exit_rate >= EXIT_RATE_HIGH:
         return "late"
     if ctx.trigger_price > 0 and ctx.current_price > 0:
         if ctx.current_price >= ctx.trigger_price and quality == "High":
@@ -76,9 +77,9 @@ def _signal_why_it_matters(ctx: SignalContext) -> str:
         extras.append(f"{ctx.smart_money_count} smart-money wallets are in the observed setup.")
     if ctx.signal_freshness != "UNKNOWN":
         extras.append(f"Timing reads as {ctx.signal_freshness.lower()} ({ctx.signal_age_hours:.1f}h old).")
-    if ctx.exit_rate >= 70:
+    if ctx.exit_rate >= EXIT_RATE_HIGH:
         extras.append(f"Exit rate is already high at {ctx.exit_rate:.0f}%, so the setup may be late.")
-    elif ctx.exit_rate >= 40:
+    elif ctx.exit_rate >= EXIT_RATE_MODERATE:
         extras.append(f"Exit rate is mixed at {ctx.exit_rate:.0f}%, so continuation needs care.")
     return " ".join([base, *extras]).strip()
 
@@ -97,9 +98,9 @@ def _signal_watch_next(ctx: SignalContext) -> list[str]:
     else:
         watch.append("whether the setup shows stronger price confirmation instead of only attention")
 
-    if ctx.exit_rate >= 70:
+    if ctx.exit_rate >= EXIT_RATE_HIGH:
         watch.append("whether smart-money exit pressure falls, because most tracked wallets may already be out")
-    elif ctx.exit_rate >= 40:
+    elif ctx.exit_rate >= EXIT_RATE_MODERATE:
         watch.append("whether exit pressure stays contained instead of drifting into a late setup")
     elif ctx.max_gain > 0:
         watch.append("whether prior upside follow-through can repeat without getting sold immediately")
@@ -162,9 +163,9 @@ def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
             top_risks.append("Live signal confirmation is still too thin to treat this as a strong setup.")
         if state == "unmatched":
             top_risks.append("No matched smart-money signal is visible on the current board.")
-        if ctx.exit_rate >= 70:
+        if ctx.exit_rate >= EXIT_RATE_HIGH:
             top_risks.append(f"Late setup: {ctx.exit_rate:.0f}% of tracked smart money may already be out.")
-        elif ctx.exit_rate >= 40:
+        elif ctx.exit_rate >= EXIT_RATE_MODERATE:
             top_risks.append(f"Mixed setup: exit rate is already {ctx.exit_rate:.0f}%, so continuation quality is less clean.")
         if ctx.signal_freshness == "STALE":
             top_risks.append("Signal timing is stale and needs fresh confirmation.")

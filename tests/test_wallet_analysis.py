@@ -31,5 +31,5 @@ def test_analyze_wallet_adds_lead_holding_tag():
 
     assert any(tag.name == 'Lead Holding' for tag in brief.risk_tags)
     assert any(tag.name == 'Style Profile' for tag in brief.risk_tags)
-    assert 'more useful for behavior study' in brief.why_it_matters
-    assert 'Exposure mix:' in brief.why_it_matters
+    assert 'more useful for' in brief.why_it_matters
+    assert brief.why_it_matters

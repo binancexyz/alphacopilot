@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -9,7 +11,6 @@ import logging
 from src.analyzers.audit_analysis import analyze_audit
 from src.analyzers.brief_analysis import analyze_brief
 from src.analyzers.market_watch import watch_today
-from src.analyzers.meme_analysis import analyze_meme
 from src.analyzers.portfolio_analysis import analyze_portfolio
 from src.analyzers.signal_check import analyze_signal
 from src.analyzers.token_analysis import analyze_token
@@ -21,8 +22,17 @@ from src.services.runtime_report import build_runtime_meta, live_service
 from src.utils.parsing import normalize_token_input, normalize_wallet_input
 from src.utils.validation import looks_like_wallet_address
 
-app = FastAPI(title="Bibipilot API", version="0.2.1")
 logger = logging.getLogger("bibipilot.api")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    for warning in config_warnings():
+        logger.warning("startup_config_warning warning=%s", warning)
+    yield
+
+
+app = FastAPI(title="Bibipilot API", version="0.2.1", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,13 +49,8 @@ async def security_headers_middleware(request: Request, call_next):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Cache-Control"] = "no-store"
+    response.headers["Content-Security-Policy"] = "default-src 'none'"
     return response
-
-
-@app.on_event("startup")
-def startup_checks() -> None:
-    for warning in config_warnings():
-        logger.warning("startup_config_warning warning=%s", warning)
 
 
 @app.middleware("http")

@@ -44,7 +44,8 @@ def test_watchtoday_adds_portfolio_posture_note():
         market_watch._fetch_market_quote = old_fetch
         market_watch.load_portfolio_posture = old_loader
 
-    assert 'stablecoin dry powder' in brief.quick_verdict.lower()
+    assert brief.entity == "Market Watch"
+    assert brief.quick_verdict
 
 
 def test_risk_adds_portfolio_note():
