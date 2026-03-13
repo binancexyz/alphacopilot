@@ -12,9 +12,9 @@ def test_format_signal_card_keeps_setup_structure_when_thin():
     )
     rendered = format_brief(brief)
     assert "**⚡ Setup**" in rendered
-    assert "Entry zone: — thin" in rendered
-    assert "Signal age: — thin" in rendered
-    assert "Invalidation: Thin payload" in rendered or "Invalidation: — thin" in rendered
+    assert "Entry zone: — limited" in rendered
+    assert "Signal age: — limited" in rendered
+    assert "Invalidation: Needs confirmation" in rendered or "Invalidation: Thin payload" in rendered
 
 
 
@@ -32,6 +32,7 @@ def test_format_token_card_keeps_ownership_structure_when_thin():
     assert "**💼 Ownership**" in rendered
     assert "Holders: —" in rendered
     assert "Smart money: —" in rendered
+    assert "Liquidity: — limited" in rendered
 
 
 
@@ -47,6 +48,7 @@ def test_format_watchtoday_card_keeps_sections_when_thin():
     assert "No clean smart-money setup yet" in rendered
     assert "**🔥 Attention**" in rendered
     assert "Coverage is thin" in rendered
+    assert "Sparse lane coverage" in rendered
 
 
 

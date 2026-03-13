@@ -129,6 +129,8 @@ def _short_risk(text: str) -> str:
         return "Defensive market"
     if "liquidity" in cleaned.lower():
         return "Low liquidity" if "low" in cleaned.lower() or "thin" in cleaned.lower() else "Liquidity caution"
+    if "too many daily market lanes are still sparse" in cleaned.lower():
+        return "Sparse lane coverage"
     if "partial" in cleaned.lower() or "limited" in cleaned.lower() or "unsupported" in cleaned.lower():
         return "Partial validity"
     if "degrad" in cleaned.lower():
@@ -391,13 +393,13 @@ def _format_token_card(brief: AnalysisBrief) -> str:
     if liquidity_tag and liquidity_tag.note and "spread" in liquidity_tag.note.lower() and liquidity_f <= 0:
         liquidity_text = liquidity_tag.note.split("|")[0].strip()
     if liquidity_f <= 0 and liquidity_text == "—":
-        liquidity_text = "— thin"
+        liquidity_text = "— limited"
 
     parts = [_brief_header(symbol, price_f, change_f, rank_i)]
     parts.extend(["", "**⚡ Snapshot**"])
     parts.extend(_tree_lines([
         f"Signal: {signal_word}",
-        f"Trend: {trend if price_f > 0 else '— thin'}",
+        f"Trend: {trend if price_f > 0 else '— limited'}",
         f"Liquidity: {liquidity_text}",
     ]))
 
@@ -422,7 +424,7 @@ def _format_signal_card(brief: AnalysisBrief) -> str:
     price_f, change_f, rank_i, _pair = _extract_price_tag(brief)
     gate = (brief.audit_gate or "WARN").title()
     invalidation_tags = [tag for tag in brief.risk_tags if tag.name == "Invalidation" and tag.note]
-    invalidation = invalidation_tags[0].note if invalidation_tags else "— thin"
+    invalidation = invalidation_tags[0].note if invalidation_tags else "Needs confirmation"
     entry_zone = next((tag.note for tag in brief.risk_tags if tag.name == "Entry Zone" and tag.note), "")
     timing = next((tag.note for tag in brief.risk_tags if tag.name == "Signal Timing" and tag.note), "")
     exit_pressure = next((tag.note for tag in brief.risk_tags if tag.name == "Exit Pressure" and tag.note), "")
@@ -432,9 +434,9 @@ def _format_signal_card(brief: AnalysisBrief) -> str:
         strength_line = f"{strength_line} · {exit_pct} exited ⚠️" if exit_pct else strength_line
 
     setup_lines = [f"Audit: {'🔴' if gate.lower() == 'block' else '🟠' if gate.lower() == 'warn' else '🟢'} {gate}"]
-    setup_lines.append(f"Entry zone: {entry_zone or '— thin'}")
+    setup_lines.append(f"Entry zone: {entry_zone or '— limited'}")
     setup_lines.append(f"Strength: {strength_line}")
-    setup_lines.append(f"Signal age: {_freshness_label(timing) if timing else '— thin'}")
+    setup_lines.append(f"Signal age: {_freshness_label(timing) if timing else '— limited'}")
     setup_lines.append(f"Invalidation: {_short_risk(invalidation)}")
 
     parts = [_signal_header(symbol, price_f, change_f, rank_i)]
