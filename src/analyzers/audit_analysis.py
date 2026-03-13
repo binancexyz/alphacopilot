@@ -49,10 +49,10 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
 
     if audit_gate == "BLOCK":
         tertiary = "Structure: Weak"
-    elif audit_limited:
-        tertiary = "Structure: Partial"
     elif risk_level.lower() == "low":
         tertiary = "Structure: Stable"
+    elif audit_limited:
+        tertiary = "Structure: Partial"
     else:
         tertiary = f"Structure: {risk_level} risk"
 
