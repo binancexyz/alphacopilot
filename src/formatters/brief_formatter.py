@@ -121,6 +121,7 @@ def _short_risk(text: str) -> str:
         "Too much live token context is still missing, so this read should stay provisional": "Thin payload",
         "Live signal confirmation is still too thin to treat this as a strong setup": "Thin payload",
         "Live market quote temporarily unavailable, so this brief is using thinner fallback context": "Thin payload",
+        "Runtime detail: HTTP live mode requires the optional dependency 'httpx'. Install requirements.txt or use file:// live mode": "Runtime dependency missing",
     }
     for old, new in replacements.items():
         if old.lower() in cleaned.lower():
@@ -133,6 +134,8 @@ def _short_risk(text: str) -> str:
         return "Sparse lane coverage"
     if "partial" in cleaned.lower() or "limited" in cleaned.lower() or "unsupported" in cleaned.lower():
         return "Partial validity"
+    if "httpx" in cleaned.lower() or "optional dependency" in cleaned.lower():
+        return "Runtime dependency missing"
     if "degrad" in cleaned.lower():
         return "Degraded payload"
     return cleaned
@@ -287,6 +290,8 @@ def _format_compact_brief_card(brief: AnalysisBrief) -> str:
     }
     trend = _trend_from_change(change_f, top_risk)
     liquidity_text = _liquidity_label(liquidity_f)
+    if liquidity_f <= 0 and liquidity_text == "—":
+        liquidity_text = "— limited"
     confidence = brief.signal_quality or "Low"
 
     parts = [_brief_header(symbol or name, price_f, change_f, rank_i)]
@@ -301,7 +306,7 @@ def _format_compact_brief_card(brief: AnalysisBrief) -> str:
     source_tag = next((tag for tag in brief.risk_tags if tag.name == 'Source' and tag.note), None)
     if source_tag and source_tag.note == 'Secondary market data':
         footer_bits.append('Thin context' if price_f <= 0 or liquidity_f <= 0 else 'Market-only read')
-    elif liquidity_f <= 0:
+    elif liquidity_f <= 0 and _short_risk(top_risk or '').lower() != 'thin payload':
         footer_bits.append('Thin liquidity')
     parts.extend(["", f"**⚠️ {' · '.join(list(dict.fromkeys(footer_bits))[:2])}**"])
     return "\n".join(parts).strip() + "\n"
@@ -406,8 +411,15 @@ def _format_token_card(brief: AnalysisBrief) -> str:
     ownership_lines: list[str] = []
     if brief.beginner_note and "research summary" not in brief.beginner_note.lower():
         ownership_lines = [line for line in brief.beginner_note.splitlines()[:3] if line.strip()]
-    if not ownership_lines:
-        ownership_lines = ["Holders: —", "Smart money: —", "Top-10 concentration: —"]
+    while len(ownership_lines) < 3:
+        if not any(line.startswith("Holders:") for line in ownership_lines):
+            ownership_lines.append("Holders: —")
+        elif not any(line.startswith("Smart money:") for line in ownership_lines):
+            ownership_lines.append("Smart money: —")
+        elif not any(line.startswith("Top-10 concentration:") for line in ownership_lines):
+            ownership_lines.append("Top-10 concentration: —")
+        else:
+            break
     ownership_title = "**💼 Ownership**"
     parts.extend(["", ownership_title])
     parts.extend(_tree_lines(ownership_lines[:3]))
