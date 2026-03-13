@@ -103,7 +103,8 @@ def _short_risk(text: str) -> str:
         "Current live wallet context is too thin to support a strong behavior judgment": "Thin payload",
         "Current live wallet evidence is limited, so this read should be treated as provisional rather than definitive": "Thin payload",
         "No matched live smart-money signal is visible on the current board, so this signal read is watchlist-only": "No smart-money follow-through",
-        "There is no matched live smart-money signal on the current board, so conviction should stay capped": "No smart-money follow-through",
+        "There is no matched live smart-money signal on the current board, so conviction should stay capped": "No signal match",
+        "No matched live smart-money signal is visible on the current board, so this token read stays capped": "No signal match",
         "Too much live token context is still missing, so this read should stay provisional": "Thin payload",
         "Live signal confirmation is still too thin to treat this as a strong setup": "Thin payload",
         "Live market quote temporarily unavailable, so this brief is using thinner fallback context": "Thin payload",
@@ -142,19 +143,31 @@ def _strength_word(value: str) -> str:
 
 
 def _extract_price_tag(brief: AnalysisBrief) -> tuple[float, float, int, str]:
+    header_note = next((tag.note for tag in brief.risk_tags if tag.name == "Header Market" and tag.note), "")
+    price = 0.0
+    change = 0.0
+    rank = 0
+    if header_note:
+        try:
+            raw_price, raw_change, raw_rank = [p.strip() for p in header_note.split("|", 2)]
+            price = float(raw_price or 0)
+            change = float(raw_change or 0)
+            rank = int(raw_rank or 0)
+        except Exception:
+            pass
+
     note = next((tag.note for tag in brief.risk_tags if tag.name == "Binance Spot" and tag.note), "")
     if not note:
-        return 0.0, 0.0, 0, ""
+        return price, change, rank, ""
     parts = [p.strip() for p in note.split("|")]
     pair = parts[0] if parts else ""
-    change = 0.0
     for part in parts[1:]:
         if part.startswith("24h"):
             try:
                 change = float(part.replace("24h", "").strip().replace("%", ""))
             except ValueError:
                 pass
-    return 0.0, change, 0, pair
+    return price, change, rank, pair
 
 
 def _format_price_card(brief: AnalysisBrief) -> str:
@@ -362,8 +375,11 @@ def _format_wallet_card(brief: AnalysisBrief) -> str:
     short_address = address if len(address) <= 10 else f"{address[:6]}…{address[-5:]}"
 
     behavior_lines = []
+    thin_wallet = any("thin" in (risk or "").lower() for risk in brief.top_risks[:2]) or "too thin" in (brief.quick_verdict or "").lower()
     watch = brief.what_to_watch_next[:3]
-    if watch:
+    if thin_wallet:
+        behavior_lines = ["Activity: Static", "Top move: No rotation visible", "Drift: No change detected"]
+    elif watch:
         labels = ["Activity", "Top move", "Drift"]
         for idx, item in enumerate(watch[:3]):
             cleaned = item.replace('whether ', '').replace('the wallet ', '').rstrip('.')
@@ -377,6 +393,7 @@ def _format_wallet_card(brief: AnalysisBrief) -> str:
     dot_level = "Low" if follow == "Unknown" else "Medium" if follow == "Track" else "Low"
     parts.extend(["", f"**🧠 Verdict {_dots(dot_level)}**\n{brief.quick_verdict}"])
     risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Thin payload"]
+    risk_bits = ["Thin payload" if "thin" in bit.lower() or "wallet payload" in bit.lower() else bit for bit in risk_bits]
     if follow == "Unknown" and "not a follow signal" not in " ".join(risk_bits).lower():
         risk_bits.append("Not a follow signal")
     parts.extend(["", f"**⚠️ {' · '.join(risk_bits[:2])}**"])
@@ -415,6 +432,25 @@ def _format_watchtoday_card(brief: AnalysisBrief) -> str:
         board_verdict = board_verdict.split(". ", 1)[0].rstrip(".") + "."
     parts.extend(["", f"**🧠 Board {_dots(brief.signal_quality)}**\n{board_verdict}"])
     risk_bits = [_short_risk(risk) for risk in brief.top_risks[:2]] or ["Attention ≠ signal"]
+    if len(risk_bits) >= 2:
+        left, right = risk_bits[0], risk_bits[1]
+        left_token = left.split()[0].rstrip(':') if left else ''
+        right_token = right.split()[0].rstrip(':') if right else ''
+        if left_token and left_token == right_token:
+            merged_tail = []
+            if "concentration" in left.lower() or "holder" in left.lower():
+                merged_tail.append("concentration")
+            if "audit" in left.lower() or "caution" in left.lower():
+                merged_tail.append("audit ⚠️")
+            if "concentration" in right.lower() or "holder" in right.lower():
+                merged_tail.append("concentration")
+            if "audit" in right.lower() or "caution" in right.lower():
+                merged_tail.append("audit ⚠️")
+            dedup_tail = []
+            for item in merged_tail:
+                if item not in dedup_tail:
+                    dedup_tail.append(item)
+            risk_bits = [f"{left_token}: {' + '.join(dedup_tail)}"] if dedup_tail else [left]
     if attention and signals:
         risk_bits.insert(0, "Attention ≠ signal")
     parts.extend(["", f"**⚠️ {' · '.join(dict.fromkeys(risk_bits))}**"])

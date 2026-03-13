@@ -19,6 +19,12 @@ def analyze_token(symbol: str) -> AnalysisBrief:
     except Exception:
         quote, source = None, ""
 
+    if quote:
+        price = float(quote.get("price") or 0)
+        change = float(quote.get("percent_change_24h") or 0)
+        rank = int(quote.get("rank") or 0)
+        brief.risk_tags.insert(0, RiskTag(name="Header Market", level="Info", note=f"{price}|{change}|{rank}"))
+
     if quote and source == "Binance Spot":
         pair = str(quote.get("exchange_symbol") or symbol)
         spread = float(quote.get("spread_pct") or 0)
