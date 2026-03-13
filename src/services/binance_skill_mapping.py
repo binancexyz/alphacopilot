@@ -1,50 +1,56 @@
 from __future__ import annotations
 
 """
-Mapping notes for live Binance Skills Hub integration.
+Canonical command-to-skill mapping for live Binance Skills integration.
 
-This module is intentionally lightweight for now: it documents the expected
-skill-to-context relationship in code so future implementation stays grounded.
-
-Latest assumption update:
-- prefer Binance Skills/runtime invocation as the primary integration model
-- treat `square-post` as a required publishing/output capability
-- treat `spot` as a deferred higher-risk execution capability
+This module is used both by the bridge layer and by runtime/extractor logic
+that needs to understand which skills are expected for a given command.
 """
 
-TOKEN_SKILLS = [
-    "query-token-info",
-    "crypto-market-rank",
-    "trading-signal",
-    "query-token-audit",
-]
+COMMAND_SKILL_MAP: dict[str, list[str]] = {
+    "token": [
+        "query-token-info",
+        "crypto-market-rank",
+        "trading-signal",
+        "query-token-audit",
+    ],
+    "wallet": [
+        "query-address-info",
+    ],
+    "watchtoday": [
+        "crypto-market-rank",
+        "meme-rush",
+        "trading-signal",
+    ],
+    "signal": [
+        "trading-signal",
+        "query-token-info",
+        "query-token-audit",
+    ],
+    "audit": [
+        "query-token-info",
+        "query-token-audit",
+    ],
+    "meme": [
+        "query-token-info",
+        "query-token-audit",
+        "trading-signal",
+        "meme-rush",
+        "crypto-market-rank",
+    ],
+}
 
-WALLET_SKILLS = [
-    "query-address-info",
-    "query-token-info",
-    "query-token-audit",
-]
+OPTIONAL_COMMAND_SKILL_MAP: dict[str, list[str]] = {
+    "wallet": [
+        "query-token-info",
+        "crypto-market-rank",
+        "query-token-audit",
+    ],
+}
 
-WATCH_TODAY_SKILLS = [
-    "crypto-market-rank",
-    "meme-rush",
-    "trading-signal",
-]
-
-SIGNAL_SKILLS = [
-    "trading-signal",
-    "query-token-info",
-    "query-token-audit",
-]
-
-AUDIT_SKILLS = [
-    "query-token-info",
-    "query-token-audit",
-]
-
-MEME_SKILLS = [
-    "query-token-info",
-    "query-token-audit",
-    "trading-signal",
-    "meme-rush",
-]
+TOKEN_SKILLS = COMMAND_SKILL_MAP["token"]
+WALLET_SKILLS = COMMAND_SKILL_MAP["wallet"]
+WATCH_TODAY_SKILLS = COMMAND_SKILL_MAP["watchtoday"]
+SIGNAL_SKILLS = COMMAND_SKILL_MAP["signal"]
+AUDIT_SKILLS = COMMAND_SKILL_MAP["audit"]
+MEME_SKILLS = COMMAND_SKILL_MAP["meme"]

@@ -1,4 +1,10 @@
-from src.services.live_extractors import extract_signal_context, extract_token_context, extract_wallet_context, extract_watch_today_context
+from src.services.live_extractors import (
+    extract_audit_context,
+    extract_signal_context,
+    extract_token_context,
+    extract_wallet_context,
+    extract_watch_today_context,
+)
 from src.services.live_payload_examples import TOKEN_RAW_EXAMPLE
 
 
@@ -30,6 +36,16 @@ def test_extract_signal_context():
     assert ctx["token"] == "DOGE"
     assert ctx["signal_status"] == "active"
     assert ctx["current_price"] == 0.15
+
+
+def test_extract_audit_context_preserves_validity_flags():
+    raw = {
+        "query-token-info": {"metadata": {"symbol": "BNB", "name": "BNB"}},
+        "query-token-audit": {"data": {"hasResult": True, "isSupported": True, "riskLevel": 1, "riskLevelEnum": "LOW", "riskItems": []}},
+    }
+    ctx = extract_audit_context(raw, "BNB")
+    assert ctx["has_result"] is True
+    assert ctx["is_supported"] is True
 
 
 def test_extract_wallet_context_from_address_list():

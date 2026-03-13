@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from src.services.binance_skill_mapping import COMMAND_SKILL_MAP
 from src.utils.converters import safe_float as _to_float, safe_int as _to_int
 
 
@@ -28,7 +29,7 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     resolved_signal_status = signal.get("status") or signal.get("direction") or ("watch" if _first_item(signal.get("data")) else "unmatched")
     top_holder_concentration_pct = _pick_number(_best_symbol_match((market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []), _normalize_match_key(resolved_symbol)) or {}, "holdersTop10Percent", "top10HoldersPercentage")
 
-    return {
+    context = {
         "symbol": resolved_symbol,
         "display_name": search_item.get("name") or metadata.get("name") or search_item.get("symbol") or symbol,
         "price": _pick_number(dynamic, "price") or _pick_number(search_item, "price"),
@@ -47,6 +48,8 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         "audit_gate": audit_gate,
         "blocked_reason": blocked_reason,
     }
+    context.update(_bridge_runtime_context(raw, "token"))
+    return context
 
 
 def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
@@ -64,7 +67,7 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
             holdings_count = len(top_holdings)
         if not major_risks and not top_holdings and portfolio_value <= 0:
             major_risks = ["Thin payload."]
-        return {
+        context = {
             "address": address,
             "portfolio_value": portfolio_value,
             "holdings_count": holdings_count,
@@ -76,6 +79,8 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
             "style_profile": str(address_info.get("style_profile", "")),
             "exposure_breakdown": [str(x) for x in address_info.get("exposure_breakdown", [])],
         }
+        context.update(_bridge_runtime_context(raw, "wallet"))
+        return context
 
     holdings = []
     portfolio_value = 0.0
@@ -142,7 +147,7 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
     else:
         follow_verdict = "Don't follow"
 
-    return {
+    context = {
         "address": address,
         "portfolio_value": portfolio_value,
         "holdings_count": len(items),
@@ -156,6 +161,8 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
         "style_profile": style_profile,
         "exposure_breakdown": exposure_breakdown,
     }
+    context.update(_bridge_runtime_context(raw, "wallet"))
+    return context
 
 
 def extract_watch_today_context(raw: dict[str, Any]) -> dict[str, Any]:
@@ -189,7 +196,7 @@ def extract_watch_today_context(raw: dict[str, Any]) -> dict[str, Any]:
     if not top_picks:
         top_picks = _extract_top_picks(trending_now, strongest_signals, top_narratives, exchange_board)
 
-    return {
+    context = {
         "top_narratives": top_narratives,
         "strongest_signals": strongest_signals,
         "risk_zones": risk_zones,
@@ -202,6 +209,8 @@ def extract_watch_today_context(raw: dict[str, Any]) -> dict[str, Any]:
         "top_picks": top_picks,
         "exchange_board": exchange_board,
     }
+    context.update(_bridge_runtime_context(raw, "watchtoday"))
+    return context
 
 
 def extract_signal_context(raw: dict[str, Any], token: str) -> dict[str, Any]:
@@ -220,7 +229,7 @@ def extract_signal_context(raw: dict[str, Any], token: str) -> dict[str, Any]:
     signal_freshness = _signal_freshness(signal_age_hours)
     audit_gate, blocked_reason = _audit_gate_state(audit_payload, audit_flags)
 
-    return {
+    context = {
         "token": first_signal.get("ticker") or token,
         "signal_status": status,
         "trigger_price": _pick_number(first_signal, "alertPrice", "trigger_price"),
@@ -236,6 +245,8 @@ def extract_signal_context(raw: dict[str, Any], token: str) -> dict[str, Any]:
         "audit_gate": audit_gate,
         "blocked_reason": blocked_reason,
     }
+    context.update(_bridge_runtime_context(raw, "signal"))
+    return context
 
 
 def extract_audit_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
@@ -260,7 +271,7 @@ def extract_audit_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     if not summary_bits:
         summary_bits.append(blocked_reason or "Audit output is limited right now.")
 
-    return {
+    context = {
         "symbol": display_symbol,
         "display_name": display_name,
         "audit_gate": audit_gate,
@@ -269,7 +280,11 @@ def extract_audit_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         "major_risks": _merge_risks(audit_risks),
         "risk_level": risk_level,
         "audit_summary": "; ".join(summary_bits),
+        "has_result": bool(audit_payload.get("hasResult")),
+        "is_supported": bool(audit_payload.get("isSupported")),
     }
+    context.update(_bridge_runtime_context(raw, "audit"))
+    return context
 
 
 def extract_meme_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
@@ -331,7 +346,7 @@ def extract_meme_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     if not meme_like:
         risks.insert(0, "This asset does not currently read as a clear meme candidate from the available live context.")
 
-    return {
+    context = {
         "symbol": token.get("symbol", symbol),
         "display_name": display_name,
         "price": token.get("price", 0.0),
@@ -353,6 +368,36 @@ def extract_meme_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         "meme_score": meme_score,
         "social_brief": social_brief,
         "top_holder_concentration_pct": top_holder_concentration_pct,
+    }
+    context.update(_bridge_runtime_context(raw, "meme"))
+    return context
+
+
+def _bridge_meta(raw: dict[str, Any]) -> dict[str, Any]:
+    meta = raw.get("__bridge_meta__")
+    return meta if isinstance(meta, dict) else {}
+
+
+def _bridge_runtime_context(raw: dict[str, Any], command: str) -> dict[str, str]:
+    meta = _bridge_meta(raw)
+    status = str(meta.get("status") or "").lower()
+    failed_skills = [str(x) for x in meta.get("failedSkills", []) if str(x).strip()]
+    expected = COMMAND_SKILL_MAP.get(command, [])
+    relevant = [name for name in failed_skills if not expected or name in expected] or failed_skills
+
+    if "partial" not in status and not relevant:
+        return {}
+
+    if relevant:
+        detail = ", ".join(relevant[:3])
+        warning = f"Live {command} payload is partial: missing {detail}."
+    else:
+        notes = [str(x) for x in meta.get("notes", []) if str(x).strip()]
+        warning = notes[0] if notes else f"Live {command} payload is only partially populated right now."
+
+    return {
+        "runtime_state": "partial_live",
+        "runtime_warning": warning,
     }
 
 
@@ -450,7 +495,7 @@ def _extract_signal_risks(signal: dict[str, Any]) -> list[str]:
 
 def _extract_meme_risks(meme_rush: dict[str, Any]) -> list[str]:
     risks = list(meme_rush.get("risks", []) or [])
-    items = meme_rush.get("data", []) or meme_rush.get("tokens", []) or []
+    items = meme_rush.get("tokens", []) or meme_rush.get("data", []) or []
     for item in items[:5]:
         if _to_int(item.get("tagDevWashTrading")) == 1:
             risks.append(f"{item.get('symbol', 'Token')} shows dev wash-trading risk.")
@@ -569,7 +614,7 @@ def _extract_top_narratives(market_rank: dict[str, Any], meme_rush: dict[str, An
         brief = item.get("socialHypeInfo", {}).get("socialSummaryBriefTranslated") or item.get("socialHypeInfo", {}).get("socialSummaryBrief")
         if brief:
             out.append(brief)
-    topics = meme_rush.get("data", []) or []
+    topics = meme_rush.get("topics", []) or meme_rush.get("data", []) or []
     for topic in topics[:3]:
         name = topic.get("name", {}).get("topicNameEn") or topic.get("name", {}).get("topicNameCn") or topic.get("type")
         if name:
@@ -584,7 +629,7 @@ def _extract_top_narratives(market_rank: dict[str, Any], meme_rush: dict[str, An
 
 
 def _extract_topic_summary(meme_rush: dict[str, Any]) -> str:
-    topics = meme_rush.get("data", []) or []
+    topics = meme_rush.get("topics", []) or meme_rush.get("data", []) or []
     if topics:
         top = topics[0]
         name = top.get("name", {}).get("topicNameEn") or top.get("type") or "topic"
@@ -709,6 +754,20 @@ def _extract_smart_money_flow(market_rank: dict[str, Any], signal: dict[str, Any
         return direct[:3]
 
     out: list[str] = []
+    inflow_items = market_rank.get("smart_money_inflow", []) or []
+    for item in inflow_items[:3]:
+        symbol = item.get("symbol") or item.get("tokenName") or "Token"
+        traders = _to_int(item.get("traders"))
+        inflow = _pick_number(item, "inflow")
+        bits = [str(symbol)]
+        if traders > 0:
+            bits.append(f"{traders} smart-money wallets")
+        if inflow > 0:
+            bits.append(f"inflow {_human_money_short(inflow)}")
+        out.append(" — ".join(bits))
+    if out:
+        return _unique(out)[:3]
+
     items = signal.get("data", []) or []
     for item in items[:3]:
         ticker = item.get("ticker") or "Token"
@@ -755,7 +814,7 @@ def _extract_meme_watch(meme_rush: dict[str, Any]) -> list[str]:
         return direct[:3]
 
     out: list[str] = []
-    items = meme_rush.get("data", []) or meme_rush.get("tokens", []) or []
+    items = meme_rush.get("tokens", []) or meme_rush.get("data", []) or []
     for item in items[:3]:
         symbol = item.get("symbol") or item.get("name", {}).get("topicNameEn") or item.get("type") or "Token"
         progress = _pick_number(item, "progress")
@@ -799,7 +858,8 @@ def _human_money_short(value: float) -> str:
 
 def _extract_risk_zones(market_rank: dict[str, Any], meme_rush: dict[str, Any]) -> list[str]:
     zones = list(market_rank.get("risk_zones", []) or [])
-    for item in meme_rush.get("data", [])[:5] or []:
+    items = meme_rush.get("tokens", []) or meme_rush.get("data", []) or []
+    for item in items[:5]:
         if _to_int(item.get("tagDevWashTrading")) == 1 or _to_int(item.get("tagInsiderWashTrading")) == 1:
             zones.append(f"{item.get('symbol', 'Token')} shows wash-trading related caution.")
         if _to_int(item.get("migrateStatus")) == 0 and _pick_number(item, "progress") >= 90:

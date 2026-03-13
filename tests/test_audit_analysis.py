@@ -1,4 +1,5 @@
 import src.analyzers.audit_analysis as audit_analysis
+from src.services.live_extractors import extract_audit_context
 
 
 class DummyService:
@@ -52,3 +53,19 @@ def test_analyze_audit_marks_valid_supported_payload():
         audit_analysis.get_market_data_service = old_service
 
     assert any(tag.name == 'Audit Validity' and tag.level == 'Valid' for tag in brief.risk_tags)
+
+
+def test_analyze_audit_respects_validity_flags_from_extracted_live_payload():
+    raw = {
+        "query-token-info": {"metadata": {"symbol": "BNB", "name": "BNB"}},
+        "query-token-audit": {"data": {"hasResult": True, "isSupported": True, "riskLevel": 1, "riskLevelEnum": "LOW", "riskItems": []}},
+    }
+    extracted = extract_audit_context(raw, "BNB")
+    old_service = audit_analysis.get_market_data_service
+    audit_analysis.get_market_data_service = lambda: DummyService(extracted)
+    try:
+        brief = audit_analysis.analyze_audit("BNB")
+    finally:
+        audit_analysis.get_market_data_service = old_service
+
+    assert any(tag.name == "Audit Validity" and tag.level == "Valid" for tag in brief.risk_tags)

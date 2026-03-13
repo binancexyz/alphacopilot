@@ -116,7 +116,7 @@ class LiveMarketDataService:
                 continue
             if resolved.exists() and resolved.is_file():
                 with open(resolved, "r", encoding="utf-8") as f:
-                    return json.load(f)
+                    return self._unwrap_bridge_payload(json.load(f))
         raise FileNotFoundError(
             "No live payload file found for "
             f"command={command!r} entity={entity!r}. Checked: {', '.join(str(p) for p in candidates)}"
@@ -163,9 +163,7 @@ class LiveMarketDataService:
         if not isinstance(payload, dict):
             raise RuntimeError(f"Live adapter returned non-object JSON for {command!r}: {type(payload).__name__}")
 
-        if "raw" in payload and isinstance(payload["raw"], dict):
-            return payload["raw"]
-        return payload
+        return self._unwrap_bridge_payload(payload)
 
     def _candidate_paths(self, base_path: Path, command: str, entity: str = "") -> list[Path]:
         slug = self._slug(entity)
@@ -181,6 +179,15 @@ class LiveMarketDataService:
             )
         candidates.append(base_path / f"{command}.json")
         return candidates
+
+    def _unwrap_bridge_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
+        if "raw" in payload and isinstance(payload["raw"], dict):
+            raw = dict(payload["raw"])
+            meta = payload.get("meta")
+            if isinstance(meta, dict):
+                raw["__bridge_meta__"] = meta
+            return raw
+        return payload
 
     @staticmethod
     def _slug(value: str) -> str:

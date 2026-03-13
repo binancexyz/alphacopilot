@@ -5,6 +5,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from tests.test_extractors import (
+    test_extract_audit_context_preserves_validity_flags,
     test_extract_signal_context,
     test_extract_token_context,
     test_extract_wallet_context_from_address_list,
@@ -15,6 +16,7 @@ from tests.test_live_service import (
     test_live_service_marks_bridge_unavailable_runtime_state,
     test_live_service_marks_partial_watch_board,
     test_live_service_supports_nested_command_paths,
+    test_live_service_unwraps_bridge_envelope_and_surfaces_partial_skill_warning,
     test_live_service_watchtoday_and_wallet_file_modes,
 )
 from tests.test_square_posts import (
@@ -40,7 +42,13 @@ from tests.test_analyzer_return_types import test_analyzers_return_analysis_brie
 from tests.test_audit_analysis import (
     test_analyze_audit_marks_limited_validity_when_payload_is_partial,
     test_analyze_audit_marks_valid_supported_payload,
+    test_analyze_audit_respects_validity_flags_from_extracted_live_payload,
 )
+from tests.test_skill_bridge import (
+    test_fetch_live_bundle_builds_wallet_payload_with_skill_refs,
+    test_fetch_live_bundle_marks_partial_failure_without_dropping_other_skill_data,
+)
+from tests.test_skill_registry import test_skill_registry_resolves_query_token_info_reference
 from tests.test_audit_judgment_states import (
     test_audit_does_not_imply_clean_when_result_is_unsupported,
     test_audit_marks_blocked_structural_risk,
@@ -197,6 +205,7 @@ def main() -> None:
     test_normalize_signal_context()
     test_extract_token_context()
     test_extract_signal_context()
+    test_extract_audit_context_preserves_validity_flags()
     test_extract_wallet_context_from_address_list()
     test_extract_watch_today_context_from_skill_shapes()
 
@@ -212,6 +221,7 @@ def main() -> None:
     test_live_service_loads_token_payload_from_file_directory(Path(tempfile.mkdtemp()))
     test_live_service_supports_nested_command_paths(Path(tempfile.mkdtemp()))
     test_live_service_watchtoday_and_wallet_file_modes(Path(tempfile.mkdtemp()))
+    test_live_service_unwraps_bridge_envelope_and_surfaces_partial_skill_warning(Path(tempfile.mkdtemp()))
     test_live_service_marks_bridge_unavailable_runtime_state()
     test_live_service_marks_partial_watch_board()
 
@@ -226,6 +236,12 @@ def main() -> None:
     # --- audit analysis ---
     test_analyze_audit_marks_limited_validity_when_payload_is_partial()
     test_analyze_audit_marks_valid_supported_payload()
+    test_analyze_audit_respects_validity_flags_from_extracted_live_payload()
+
+    # --- skill registry + bridge ---
+    test_skill_registry_resolves_query_token_info_reference()
+    test_fetch_live_bundle_builds_wallet_payload_with_skill_refs()
+    test_fetch_live_bundle_marks_partial_failure_without_dropping_other_skill_data()
 
     # --- audit judgment states ---
     test_audit_marks_blocked_structural_risk()

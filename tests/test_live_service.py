@@ -100,3 +100,20 @@ def test_live_service_marks_partial_watch_board():
     service = LiveMarketDataService(base_url="file:///definitely/missing/path")
     out = service._apply_fallbacks("watchtoday", {"top_narratives": ["AI"], "major_risks": []})
     assert out["major_risks"][0].startswith("Today’s live board is only lightly populated")
+
+
+def test_live_service_unwraps_bridge_envelope_and_surfaces_partial_skill_warning(tmp_path: Path):
+    envelope = {
+        "raw": WATCHTODAY_RAW,
+        "meta": {
+            "status": "partial-live",
+            "failedSkills": ["meme-rush"],
+            "notes": ["Partial live bundle returned with 1 failed skill call(s)."],
+        },
+    }
+    _write_json(tmp_path / "watchtoday.json", envelope)
+    service = LiveMarketDataService(base_url=f"file://{tmp_path}")
+
+    out = service.get_watch_today_context()
+
+    assert out["major_risks"][0].startswith("Live watchtoday payload is partial: missing meme-rush")
