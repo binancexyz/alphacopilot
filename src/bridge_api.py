@@ -42,7 +42,7 @@ def health() -> dict[str, str]:
 
 @app.get("/runtime", response_model=BridgeResponse)
 def runtime(
-    command: str = Query(..., description="token|signal|wallet|watchtoday|audit|meme"),
+    command: str = Query(..., description="token|signal|wallet|watchtoday|audit|meme|portfolio"),
     entity: str = Query("", description="symbol or address when relevant"),
 ) -> BridgeResponse:
     command_key = command.strip().lower()
@@ -50,7 +50,7 @@ def runtime(
     if skills is None:
         raise HTTPException(status_code=400, detail=f"Unsupported command: {command}")
 
-    if command_key in {"token", "signal", "audit", "meme"} and not entity:
+    if command_key in {"token", "signal", "audit", "meme", "alpha", "futures"} and not entity:
         raise HTTPException(status_code=400, detail=f"command={command_key} requires entity")
     if command_key == "wallet" and not entity:
         raise HTTPException(status_code=400, detail="command=wallet requires entity")

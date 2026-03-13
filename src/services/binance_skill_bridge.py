@@ -41,11 +41,54 @@ def fetch_live_bundle(command: str, entity: str = "") -> BridgeBundle:
                 failed_skills,
                 errors,
             )
+        elif command_key == "alpha":
+            symbol = normalize_token_input(entity)
+            _run_skill(
+                raw,
+                "alpha",
+                lambda: _fetch_alpha_bundle(client, base, symbol),
+                failed_skills,
+                errors,
+            )
+            token_result = _capture_skill(
+                lambda: _fetch_token_info_bundle(client, base, chain_id, symbol),
+                failed_skills,
+                errors,
+                "query-token-info",
+            )
+            if token_result is not None:
+                raw["query-token-info"] = token_result[0]
+                contract_address = token_result[1]
+                audit_result = _capture_skill(
+                    lambda: _fetch_audit_bundle(client, base, chain_id, contract_address),
+                    failed_skills,
+                    errors,
+                    "query-token-audit",
+                )
+                if audit_result is not None:
+                    raw["query-token-audit"] = audit_result
+        elif command_key == "futures":
+            symbol = normalize_token_input(entity)
+            _run_skill(
+                raw,
+                "derivatives-trading-usds-futures",
+                lambda: _fetch_futures_bundle(client, symbol),
+                failed_skills,
+                errors,
+            )
+            token_result = _capture_skill(
+                lambda: _fetch_token_info_bundle(client, base, chain_id, symbol),
+                failed_skills,
+                errors,
+                "query-token-info",
+            )
+            if token_result is not None:
+                raw["query-token-info"] = token_result[0]
         elif command_key == "watchtoday":
             _run_skill(
                 raw,
                 "crypto-market-rank",
-                lambda: _fetch_market_rank_bundle(client, base, chain_id, include_social=True, include_inflow=True, notes=notes),
+                lambda: _fetch_market_rank_bundle(client, base, chain_id, include_social=True, include_inflow=True, include_pnl_rank=True, notes=notes),
                 failed_skills,
                 errors,
             )
@@ -60,6 +103,28 @@ def fetch_live_bundle(command: str, entity: str = "") -> BridgeBundle:
                 raw,
                 "meme-rush",
                 lambda: _fetch_watchtoday_meme_rush_bundle(client, base, chain_id, notes),
+                failed_skills,
+                errors,
+            )
+            _run_skill(
+                raw,
+                "derivatives-trading-usds-futures",
+                lambda: _fetch_futures_watchtoday_bundle(client, notes),
+                failed_skills,
+                errors,
+            )
+        elif command_key == "portfolio":
+            _run_skill(
+                raw,
+                "assets",
+                lambda: _fetch_assets_portfolio(client),
+                failed_skills,
+                errors,
+            )
+            _run_skill(
+                raw,
+                "margin-trading",
+                lambda: _fetch_margin_account(client),
                 failed_skills,
                 errors,
             )
@@ -80,7 +145,7 @@ def fetch_live_bundle(command: str, entity: str = "") -> BridgeBundle:
 
             if command_key in {"token", "meme"}:
                 market_result = _capture_skill(
-                    lambda: _fetch_market_rank_bundle(client, base, chain_id, include_social=(command_key == "meme"), include_inflow=False, notes=notes),
+                    lambda: _fetch_market_rank_bundle(client, base, chain_id, include_social=(command_key == "meme"), include_inflow=(command_key == "token"), notes=notes),
                     failed_skills,
                     errors,
                     "crypto-market-rank",
@@ -117,6 +182,36 @@ def fetch_live_bundle(command: str, entity: str = "") -> BridgeBundle:
                 )
                 if meme_result is not None:
                     raw["meme-rush"] = meme_result
+
+            if command_key in {"token", "alpha"}:
+                spot_result = _capture_skill(
+                    lambda: _fetch_spot_bundle(client, symbol, notes),
+                    failed_skills,
+                    errors,
+                    "spot",
+                )
+                if spot_result is not None:
+                    raw["spot"] = spot_result
+
+            if command_key in {"token"}:
+                alpha_result = _capture_skill(
+                    lambda: _fetch_alpha_bundle(client, base, symbol),
+                    failed_skills,
+                    errors,
+                    "alpha",
+                )
+                if alpha_result is not None:
+                    raw["alpha"] = alpha_result
+
+            if command_key in {"token"}:
+                futures_result = _capture_skill(
+                    lambda: _fetch_futures_bundle(client, symbol),
+                    failed_skills,
+                    errors,
+                    "derivatives-trading-usds-futures",
+                )
+                if futures_result is not None:
+                    raw["derivatives-trading-usds-futures"] = futures_result
 
     if not raw and failed_skills:
         notes.insert(0, "No live skill calls succeeded for this request.")
@@ -176,6 +271,21 @@ def _fetch_wallet_positions(client, base: str, chain_id: str, address: str) -> d
     )
 
 
+def _fetch_token_kline(client, chain_id: str, contract_address: str, interval: str = "4h", limit: int = 100) -> dict[str, Any]:
+    platform_map = {"56": "bsc", "1": "ethereum", "CT_501": "solana", "8453": "base"}
+    platform = platform_map.get(str(chain_id))
+    if not platform or not contract_address:
+        return {}
+    return _fetch_json(
+        client,
+        "GET",
+        "https://dquery.sintral.io/u-kline/v1/k-line/candles",
+        "query-token-info",
+        headers=_skill_headers("query-token-info"),
+        params={"address": contract_address, "platform": platform, "interval": interval, "limit": limit}
+    )
+
+
 def _fetch_token_info_bundle(client, base: str, chain_id: str, symbol: str) -> tuple[dict[str, Any], str]:
     search_json = _fetch_json(
         client,
@@ -211,15 +321,23 @@ def _fetch_token_info_bundle(client, base: str, chain_id: str, symbol: str) -> t
         params={"chainId": chain_id, "contractAddress": contract},
     )
 
+    kline_json = {}
+    try:
+        kline_json = _fetch_token_kline(client, chain_id, contract)
+    except Exception:
+        pass
+
     return (
         {
             "search": search_items,
             "metadata": metadata_json.get("data", {}),
             "dynamic": dynamic_json.get("data", {}),
+            "kline": kline_json.get("data", []),
             "_raw": {
                 "search": search_json,
                 "metadata": metadata_json,
                 "dynamic": dynamic_json,
+                "kline": kline_json,
             },
         },
         contract,
@@ -273,6 +391,7 @@ def _fetch_market_rank_bundle(
     *,
     include_social: bool,
     include_inflow: bool,
+    include_pnl_rank: bool = False,
     notes: list[str],
 ) -> dict[str, Any]:
     unified_json = _fetch_json(
@@ -322,6 +441,15 @@ def _fetch_market_rank_bundle(
             out["_raw"]["smartMoneyInflowRank"] = inflow_json
         except Exception as exc:
             notes.append(f"crypto-market-rank inflow call failed: {_short_error(exc)}")
+
+    if include_pnl_rank:
+        try:
+            pnl_json = _fetch_address_pnl_rank(client, base, chain_id)
+            pnl_data = pnl_json.get("data", {})
+            out["top_traders"] = pnl_data.get("data", []) or []
+            out["_raw"]["addressPnlRank"] = pnl_json
+        except Exception as exc:
+            notes.append(f"crypto-market-rank address PnL call failed: {_short_error(exc)}")
 
     return out
 
@@ -399,6 +527,420 @@ def _fetch_topic_rush_list(client, base: str, chain_id: str, *, rank_type: int, 
         headers=_skill_headers("meme-rush"),
         params={"chainId": chain_id, "rankType": rank_type, "sort": sort, "asc": "false"},
     )
+
+
+# ---------- Address PnL Leaderboard (crypto-market-rank API 5) ----------
+
+
+def _fetch_address_pnl_rank(client, base: str, chain_id: str, *, period: str = "7d", tag: str = "ALL") -> dict[str, Any]:
+    return _fetch_json(
+        client,
+        "GET",
+        f"{base}/bapi/defi/v1/public/wallet-direct/market/leaderboard/query",
+        "crypto-market-rank",
+        headers=_skill_headers("crypto-market-rank"),
+        params={"chainId": chain_id, "period": period, "tag": tag, "pageNo": 1, "pageSize": 10, "sortBy": 0, "orderBy": 0},
+    )
+
+
+# ---------- Alpha skill fetchers (public, no auth) ----------
+
+
+def _fetch_alpha_token_list(client, base: str) -> dict[str, Any]:
+    return _fetch_json(
+        client,
+        "GET",
+        f"{base}/bapi/defi/v1/public/wallet-direct/buw/wallet/cex/alpha/all/token/list",
+        "alpha",
+        headers=_skill_headers("alpha"),
+    )
+
+
+def _fetch_alpha_ticker(client, base: str, symbol: str) -> dict[str, Any]:
+    return _fetch_json(
+        client,
+        "GET",
+        f"{base}/bapi/defi/v1/public/alpha-trade/ticker",
+        "alpha",
+        headers=_skill_headers("alpha"),
+        params={"symbol": symbol},
+    )
+
+
+def _fetch_alpha_bundle(client, base: str, symbol: str) -> dict[str, Any]:
+    token_list_json = _fetch_alpha_token_list(client, base)
+    token_list_items = token_list_json.get("data") or []
+    alpha_symbol = _resolve_alpha_symbol(token_list_items, symbol)
+
+    out: dict[str, Any] = {
+        "token_list": token_list_items,
+        "is_alpha_listed": alpha_symbol is not None,
+        "_raw": {"tokenList": token_list_json},
+    }
+
+    if alpha_symbol:
+        try:
+            ticker_json = _fetch_alpha_ticker(client, base, alpha_symbol)
+            out["ticker"] = ticker_json.get("data", ticker_json)
+            out["_raw"]["ticker"] = ticker_json
+        except Exception:
+            pass
+
+        try:
+            kline_json = _fetch_alpha_kline(client, base, alpha_symbol)
+            out["kline"] = kline_json.get("data", [])
+            out["_raw"]["kline"] = kline_json
+        except Exception:
+            pass
+
+    return out
+
+def _fetch_alpha_kline(client, base: str, symbol: str, interval: str = "4h", limit: int = 20) -> dict[str, Any]:
+    return _fetch_json(
+        client,
+        "GET",
+        f"{base}/bapi/defi/v1/public/alpha-trade/klines",
+        "alpha",
+        headers=_skill_headers("alpha"),
+        params={"symbol": symbol.upper(), "interval": interval, "limit": limit},
+    )
+
+
+def _resolve_alpha_symbol(token_list: list[dict[str, Any]], symbol: str) -> str | None:
+    target = _normalize_match_key(symbol)
+    for item in token_list:
+        item_symbol = str(item.get("symbol") or item.get("ticker") or "")
+        if _normalize_match_key(item_symbol) == target:
+            return str(item.get("symbol") or item_symbol)
+        item_name = str(item.get("name") or item.get("tokenName") or "")
+        if _normalize_match_key(item_name) == target:
+            return str(item.get("symbol") or item_symbol)
+    return None
+
+
+# ---------- Portfolio skill fetchers (authenticated) ----------
+
+import hmac
+import hashlib
+import time
+from urllib.parse import urlencode
+
+def _fetch_signed_json(
+    client,
+    method: str,
+    base: str,
+    path: str,
+    skill_name: str,
+    *,
+    headers: dict[str, str],
+    params: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    api_key = settings.binance_api_key.strip()
+    api_secret = settings.binance_api_secret.strip()
+    if not api_key or not api_secret:
+        raise RuntimeError(f"{skill_name} requires BINANCE_API_KEY and BINANCE_API_SECRET")
+
+    payload = dict(params or {})
+    payload.setdefault("timestamp", int(time.time() * 1000))
+    payload.setdefault("recvWindow", 10000)
+    query = urlencode(payload)
+    signature = hmac.new(api_secret.encode("utf-8"), query.encode("utf-8"), hashlib.sha256).hexdigest()
+    
+    auth_headers = dict(headers)
+    auth_headers["X-MBX-APIKEY"] = api_key
+
+    url = f"{base}{path}?{query}&signature={signature}"
+    return _fetch_json(client, method, url, skill_name, headers=auth_headers)
+
+def _fetch_assets_portfolio(client) -> dict[str, Any]:
+    base = "https://api.binance.com"
+    payload = _fetch_signed_json(
+        client,
+        "POST",
+        base,
+        "/sapi/v3/asset/getUserAsset",
+        "assets",
+        headers=_skill_headers("assets"),
+    )
+    # The /sapi/v3/asset/getUserAsset endpoint returns a list directly, 
+    # but _fetch_json enforces a dict return unless we bypass it.
+    # However, _fetch_json actually just does response.json(). 
+    # Let's handle the list return properly.
+    return {"data": payload} if isinstance(payload, list) else payload
+
+def _fetch_margin_account(client) -> dict[str, Any]:
+    base = "https://api.binance.com"
+    return _fetch_signed_json(
+        client,
+        "GET",
+        base,
+        "/sapi/v1/margin/account",
+        "margin-trading",
+        headers=_skill_headers("margin-trading"),
+    )
+
+
+# ---------- Spot skill fetchers (public, no auth) ----------
+
+
+def _fetch_spot_ticker_24h(client, symbol: str) -> dict[str, Any]:
+    spot_symbol = f"{symbol.upper()}USDT"
+    response = client.get(
+        "https://api.binance.com/api/v3/ticker/24hr",
+        params={"symbol": spot_symbol},
+        headers={"User-Agent": "binance-spot/1.0.2 (Skill)", "Accept-Encoding": "identity"},
+    )
+    response.raise_for_status()
+    payload = response.json()
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"spot ticker returned non-object JSON: {type(payload).__name__}")
+    return payload
+
+
+def _fetch_spot_depth(client, symbol: str, limit: int = 100) -> dict[str, Any]:
+    spot_symbol = f"{symbol.upper()}USDT"
+    response = client.get(
+        "https://api.binance.com/api/v3/depth",
+        params={"symbol": spot_symbol, "limit": limit},
+        headers={"User-Agent": "binance-spot/1.0.2 (Skill)", "Accept-Encoding": "identity"},
+    )
+    response.raise_for_status()
+    payload = response.json()
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"spot depth returned non-object JSON: {type(payload).__name__}")
+    return payload
+
+
+def _fetch_spot_bundle(client, symbol: str, notes: list[str]) -> dict[str, Any]:
+    out = {}
+    
+    try:
+        out["ticker"] = _fetch_spot_ticker_24h(client, symbol)
+    except Exception as exc:
+        notes.append(f"spot ticker failed: {_short_error(exc)}")
+        
+    try:
+        out["depth"] = _fetch_spot_depth(client, symbol)
+    except Exception:
+        pass
+        
+    try:
+        out["kline"] = _fetch_spot_kline(client, symbol)
+    except Exception:
+        pass
+        
+    try:
+        out["recent_trades"] = _fetch_spot_trades(client, symbol)
+    except Exception:
+        pass
+        
+    return out
+
+def _fetch_spot_kline(client, symbol: str, interval: str = "4h", limit: int = 20) -> dict[str, Any]:
+    spot_symbol = f"{symbol.upper()}USDT"
+    response = client.get(
+        "https://api.binance.com/api/v3/klines",
+        params={"symbol": spot_symbol, "interval": interval, "limit": limit},
+        headers={"User-Agent": "binance-spot/1.0.2 (Skill)", "Accept-Encoding": "identity"},
+    )
+    response.raise_for_status()
+    payload = response.json()
+    return {"data": payload} if isinstance(payload, list) else payload
+
+def _fetch_spot_trades(client, symbol: str, limit: int = 20) -> dict[str, Any]:
+    spot_symbol = f"{symbol.upper()}USDT"
+    response = client.get(
+        "https://api.binance.com/api/v3/trades",
+        params={"symbol": spot_symbol, "limit": limit},
+        headers={"User-Agent": "binance-spot/1.0.2 (Skill)", "Accept-Encoding": "identity"},
+    )
+    response.raise_for_status()
+    payload = response.json()
+    return {"data": payload} if isinstance(payload, list) else payload
+
+
+# ---------- Futures skill fetchers (public, no auth) ----------
+
+_FAPI_BASE = "https://fapi.binance.com"
+_FUTURES_HEADERS = {"User-Agent": "binance-derivatives-trading-usds-futures/1.0.0 (Skill)", "Accept-Encoding": "identity"}
+
+
+def _fetch_futures_funding_rate(client, symbol: str) -> dict[str, Any]:
+    response = client.get(
+        f"{_FAPI_BASE}/fapi/v1/fundingRate",
+        params={"symbol": f"{symbol.upper()}USDT", "limit": 3},
+        headers=_FUTURES_HEADERS,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    return {"data": payload} if isinstance(payload, list) else payload
+
+
+def _fetch_futures_open_interest(client, symbol: str) -> dict[str, Any]:
+    response = client.get(
+        f"{_FAPI_BASE}/fapi/v1/openInterest",
+        params={"symbol": f"{symbol.upper()}USDT"},
+        headers=_FUTURES_HEADERS,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"futures openInterest returned non-object JSON: {type(payload).__name__}")
+    return payload
+
+
+def _fetch_futures_long_short_ratio(client, symbol: str) -> dict[str, Any]:
+    response = client.get(
+        f"{_FAPI_BASE}/futures/data/globalLongShortAccountRatio",
+        params={"symbol": f"{symbol.upper()}USDT", "period": "1h", "limit": 5},
+        headers=_FUTURES_HEADERS,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    return {"data": payload} if isinstance(payload, list) else payload
+
+
+def _fetch_futures_mark_price(client, symbol: str) -> dict[str, Any]:
+    response = client.get(
+        f"{_FAPI_BASE}/fapi/v1/premiumIndex",
+        params={"symbol": f"{symbol.upper()}USDT"},
+        headers=_FUTURES_HEADERS,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"futures premiumIndex returned non-object JSON: {type(payload).__name__}")
+    return payload
+
+
+def _fetch_futures_taker_volume(client, symbol: str) -> dict[str, Any]:
+    response = client.get(
+        f"{_FAPI_BASE}/futures/data/takerlongshortRatio",
+        params={"symbol": f"{symbol.upper()}USDT", "period": "1d", "limit": 1},
+        headers=_FUTURES_HEADERS,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    return {"data": payload} if isinstance(payload, list) else payload
+
+
+def _fetch_futures_top_trader_ls(client, symbol: str) -> dict[str, Any]:
+    response = client.get(
+        f"{_FAPI_BASE}/futures/data/topLongShortPositionRatio",
+        params={"symbol": f"{symbol.upper()}USDT", "period": "1d", "limit": 1},
+        headers=_FUTURES_HEADERS,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    return {"data": payload} if isinstance(payload, list) else payload
+
+
+def _fetch_futures_bundle(client, symbol: str) -> dict[str, Any]:
+    out: dict[str, Any] = {"_raw": {}}
+
+    try:
+        mark = _fetch_futures_mark_price(client, symbol)
+        out["mark_price"] = mark
+        out["_raw"]["markPrice"] = mark
+    except Exception:
+        pass
+
+    try:
+        funding = _fetch_futures_funding_rate(client, symbol)
+        out["funding_rate"] = funding
+        out["_raw"]["fundingRate"] = funding
+    except Exception:
+        pass
+
+    try:
+        oi = _fetch_futures_open_interest(client, symbol)
+        out["open_interest"] = oi
+        out["_raw"]["openInterest"] = oi
+    except Exception:
+        pass
+
+    try:
+        ls = _fetch_futures_long_short_ratio(client, symbol)
+        out["long_short_ratio"] = ls
+        out["_raw"]["longShortRatio"] = ls
+    except Exception:
+        pass
+
+    try:
+        taker = _fetch_futures_taker_volume(client, symbol)
+        out["taker_volume"] = taker
+        out["_raw"]["takerVolume"] = taker
+    except Exception:
+        pass
+
+    try:
+        top_ls = _fetch_futures_top_trader_ls(client, symbol)
+        out["top_trader_ls"] = top_ls
+        out["_raw"]["topTraderLS"] = top_ls
+    except Exception:
+        pass
+
+    try:
+        kline = _fetch_futures_kline(client, symbol)
+        out["kline"] = kline
+        out["_raw"]["kline"] = kline
+    except Exception:
+        pass
+
+    try:
+        ticker = _fetch_futures_ticker_24h(client, symbol)
+        out["ticker"] = ticker
+        out["_raw"]["ticker"] = ticker
+    except Exception:
+        pass
+
+    if not out.get("mark_price") and not out.get("funding_rate"):
+        raise RuntimeError(f"No futures data returned for {symbol}")
+
+    return out
+
+def _fetch_futures_kline(client, symbol: str, interval: str = "4h", limit: int = 20) -> dict[str, Any]:
+    response = client.get(
+        f"{_FAPI_BASE}/fapi/v1/klines",
+        params={"symbol": f"{symbol.upper()}USDT", "interval": interval, "limit": limit},
+        headers=_FUTURES_HEADERS,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    return {"data": payload} if isinstance(payload, list) else payload
+
+def _fetch_futures_ticker_24h(client, symbol: str) -> dict[str, Any]:
+    response = client.get(
+        f"{_FAPI_BASE}/fapi/v1/ticker/24hr",
+        params={"symbol": f"{symbol.upper()}USDT"},
+        headers=_FUTURES_HEADERS,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"futures ticker returned non-object JSON: {type(payload).__name__}")
+    return payload
+
+
+def _fetch_futures_watchtoday_bundle(client, notes: list[str]) -> dict[str, Any]:
+    out: dict[str, Any] = {"_raw": {}}
+    top_symbols = ["BTC", "ETH", "BNB", "SOL"]
+    for sym in top_symbols:
+        try:
+            mark = _fetch_futures_mark_price(client, sym)
+            funding = _fetch_futures_funding_rate(client, sym)
+            rate_items = funding.get("data", []) if isinstance(funding.get("data"), list) else []
+            last_rate = float(rate_items[-1].get("fundingRate", 0)) if rate_items else 0.0
+            out[sym] = {
+                "mark_price": float(mark.get("markPrice", 0)),
+                "index_price": float(mark.get("indexPrice", 0)),
+                "funding_rate": last_rate,
+            }
+        except Exception as exc:
+            notes.append(f"futures {sym} data failed: {_short_error(exc)}")
+    if not out or all(k.startswith("_") for k in out):
+        raise RuntimeError("No futures data returned for watchtoday.")
+    return out
 
 
 def _fetch_json(

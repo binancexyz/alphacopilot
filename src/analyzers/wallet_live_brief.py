@@ -54,6 +54,10 @@ def _concentration_read(ctx: WalletContext) -> str:
 
 
 def _activity_read(ctx: WalletContext) -> str:
+    if ctx.volatility_24h >= 15:
+        return f"highly volatile 24h at {ctx.volatility_24h:.1f}% volatility"
+    if ctx.volatility_24h >= 8:
+        return f"active 24h volatility at {ctx.volatility_24h:.1f}%"
     if ctx.change_24h >= 10:
         return f"very active 24h change at {ctx.change_24h:+.1f}%"
     if ctx.change_24h >= 3:

@@ -8,7 +8,9 @@ from typing import Any
 from src.config import settings
 from src.services.fallbacks import missing_context_warning
 from src.services.live_extractors import (
+    extract_alpha_context,
     extract_audit_context,
+    extract_futures_context,
     extract_meme_context,
     extract_signal_context,
     extract_token_context,
@@ -89,6 +91,30 @@ class LiveMarketDataService:
             return self._apply_fallbacks("meme", context)
         except Exception as exc:
             return self._apply_fallbacks("meme", self._bridge_unavailable_context("meme", symbol, str(exc)))
+
+    def get_alpha_context(self, symbol: str) -> NormalizedDict:
+        try:
+            raw = self._load_payload("alpha", symbol)
+            context = extract_alpha_context(raw, symbol)
+            return self._apply_fallbacks("alpha", context)
+        except Exception as exc:
+            return self._apply_fallbacks("alpha", self._bridge_unavailable_context("alpha", symbol, str(exc)))
+
+    def get_futures_context(self, symbol: str) -> NormalizedDict:
+        try:
+            raw = self._load_payload("futures", symbol)
+            context = extract_futures_context(raw, symbol)
+            return self._apply_fallbacks("futures", context)
+        except Exception as exc:
+            return self._apply_fallbacks("futures", self._bridge_unavailable_context("futures", symbol, str(exc)))
+
+    def get_portfolio_context(self) -> NormalizedDict:
+        try:
+            raw = self._load_payload("portfolio")
+            # We skip 'extractors' for portfolio because it operates natively on the raw dict in 'portfolio_analysis.py'
+            return self._apply_fallbacks("portfolio", raw)
+        except Exception as exc:
+            return self._apply_fallbacks("portfolio", self._bridge_unavailable_context("portfolio", "account", str(exc)))
 
     def _load_payload(self, command: str, entity: str = "") -> dict[str, Any]:
         if not self.base_url:
@@ -242,6 +268,13 @@ class LiveMarketDataService:
     def _bridge_unavailable_context(self, command: str, entity: str, detail: str) -> dict[str, Any]:
         warning = f"Live bridge is unavailable for {command}; using degraded context."
         sanitized = self._sanitize_runtime_detail(detail)
+        if command == "portfolio":
+            return {
+                "_raw": {},
+                "runtime_state": "bridge_unavailable",
+                "runtime_warning": warning,
+                "major_risks": [warning, sanitized]
+            }
         if command == "token":
             return {
                 "symbol": entity or "UNKNOWN",

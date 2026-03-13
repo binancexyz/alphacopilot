@@ -38,6 +38,7 @@ class WalletContext:
     top_holdings: list[WalletHolding] = field(default_factory=list)
     top_concentration_pct: float = 0.0
     change_24h: float = 0.0
+    volatility_24h: float = 0.0
     notable_exposures: list[str] = field(default_factory=list)
     major_risks: list[str] = field(default_factory=list)
     follow_verdict: str = "Unknown"

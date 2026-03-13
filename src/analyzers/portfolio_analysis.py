@@ -1,73 +1,16 @@
 from __future__ import annotations
 
-import hashlib
-import hmac
-import time
 from decimal import Decimal
 from typing import Any
-from urllib.parse import urlencode
 
-from src.config import settings
 from src.models.schemas import AnalysisBrief, RiskTag
 from src.services.exposure_groups import top_groups
-from src.utils.http import make_httpx_client
 from src.services.portfolio_history import append_snapshot, describe_delta, describe_snapshot_age, describe_trend, earlier_snapshot, latest_snapshot, top_change_note
+from src.services.live_service import LiveMarketDataService
+from src.config import settings
 
-BINANCE_API_BASE_URL = "https://api.binance.com"
-ACCOUNT_INFO_URL = "/api/v3/account"
-PRICE_TICKER_URL = "/api/v3/ticker/price"
 STABLES = {"USDT", "USDC", "BUSD", "FDUSD", "TUSD", "USDP", "DAI"}
 LD_PREFIXES = ("LD",)
-
-
-class PortfolioFetchError(RuntimeError):
-    pass
-
-
-def _httpx_client(*args, **kwargs):
-    return make_httpx_client(error_cls=PortfolioFetchError, error_msg="httpx is required for Binance account reads.", **kwargs)
-
-
-def _signed_get(path: str, params: dict[str, Any]) -> dict[str, Any]:
-    api_key = settings.binance_api_key.strip()
-    api_secret = settings.binance_api_secret.strip()
-    if not api_key or not api_secret:
-        raise PortfolioFetchError("BINANCE_API_KEY and BINANCE_API_SECRET are required for /portfolio.")
-
-    payload = dict(params)
-    payload.setdefault("timestamp", int(time.time() * 1000))
-    payload.setdefault("recvWindow", 10000)
-    query = urlencode(payload)
-    signature = hmac.new(api_secret.encode("utf-8"), query.encode("utf-8"), hashlib.sha256).hexdigest()
-    headers = {"X-MBX-APIKEY": api_key}
-
-    with _httpx_client(timeout=20.0, follow_redirects=True) as client:
-        resp = client.get(f"{BINANCE_API_BASE_URL}{path}?{query}&signature={signature}", headers=headers)
-        resp.raise_for_status()
-        data = resp.json()
-        if not isinstance(data, dict):
-            raise PortfolioFetchError("Unexpected Binance account response shape.")
-        return data
-
-
-def _load_prices() -> dict[str, Decimal]:
-    with _httpx_client(timeout=20.0, follow_redirects=True) as client:
-        resp = client.get(f"{BINANCE_API_BASE_URL}{PRICE_TICKER_URL}")
-        resp.raise_for_status()
-        payload = resp.json() or []
-    prices: dict[str, Decimal] = {}
-    for item in payload:
-        if not isinstance(item, dict):
-            continue
-        symbol = str(item.get("symbol") or "")
-        try:
-            price = Decimal(str(item.get("price") or "0"))
-        except Exception:
-            continue
-        if symbol and price > 0:
-            prices[symbol] = price
-    return prices
-
 
 def _normalize_asset(asset: str) -> tuple[str, bool]:
     normalized = asset.upper().strip()
@@ -79,29 +22,21 @@ def _normalize_asset(asset: str) -> tuple[str, bool]:
             break
     return normalized, wrapped
 
-
-def _asset_usd_price(asset: str, prices: dict[str, Decimal]) -> Decimal:
-    if asset in STABLES:
-        return Decimal("1")
-    direct_pairs = [f"{asset}USDT", f"{asset}USDC", f"{asset}FDUSD", f"{asset}BUSD"]
-    for pair in direct_pairs:
-        if pair in prices:
-            return prices[pair]
-    if asset == "BTC":
-        btc_usdt = prices.get("BTCUSDT") or prices.get("BTCUSDC")
-        return btc_usdt or Decimal("0")
-    btc_pair = f"{asset}BTC"
-    btc_usdt = prices.get("BTCUSDT") or prices.get("BTCUSDC")
-    if btc_pair in prices and btc_usdt:
-        return prices[btc_pair] * btc_usdt
-    return Decimal("0")
-
-
 def get_portfolio_snapshot() -> dict[str, Any]:
-    account = _signed_get(ACCOUNT_INFO_URL, {})
-    prices = _load_prices()
+    live_service = LiveMarketDataService(
+        base_url=settings.binance_skills_base_url,
+        api_key=settings.binance_api_key,
+        api_secret=settings.binance_api_secret,
+    )
+    
+    # We load "portfolio" which relies on the skills "assets" and "margin-trading"
+    context = live_service.get_portfolio_context()
+    
+    # We expect context to carry over raw responses or normalized prices
+    account = context.get("_raw", {}).get("assets", {}).get("data", [])
+    prices = context.get("prices", {})  # We will construct this in extractors/bridge
 
-    balances = account.get("balances") or []
+    balances = account if isinstance(account, list) else []
     merged: dict[str, dict[str, Any]] = {}
     unmapped_assets: list[str] = []
     total_value = Decimal("0")
@@ -115,7 +50,7 @@ def get_portfolio_snapshot() -> dict[str, Any]:
         qty = free + locked
         if qty <= 0:
             continue
-        usd_price = _asset_usd_price(normalized_asset, prices)
+        usd_price = Decimal(str(prices.get(normalized_asset) or "0"))
         usd_value = qty * usd_price
         total_value += usd_value
         slot = merged.setdefault(normalized_asset, {
@@ -282,6 +217,7 @@ def analyze_portfolio() -> AnalysisBrief:
         why_it_matters=why,
         what_to_watch_next=watch_items[:3],
         risk_tags=snapshot["tags"],
+        beginner_note="\n".join(snapshot["top_lines"]) if snapshot["top_lines"] else None
     )
     summary_lines: list[str] = []
     if previous_age:
@@ -292,8 +228,6 @@ def analyze_portfolio() -> AnalysisBrief:
         summary_lines.append(delta_summary)
     if trend_summary:
         summary_lines.append(f"Short trend: {trend_summary}")
-    if snapshot["top_lines"]:
-        brief.beginner_note = "\n".join(snapshot["top_lines"])
     if summary_lines:
         brief.what_to_watch_next = summary_lines[:2] + brief.what_to_watch_next[:2]
     return brief

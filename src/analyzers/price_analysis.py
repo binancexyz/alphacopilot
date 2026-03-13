@@ -100,6 +100,7 @@ def _fetch_binance_spot_quote(symbol: str) -> dict[str, Any] | None:
         ticker = None
         book = None
         avg = None
+        trading_days = None
         for root in (BINANCE_SPOT_MARKET_DATA_URL, BINANCE_SPOT_BASE_URL):
             try:
                 ticker_resp = client.get(root.rstrip("/") + BINANCE_TICKER_24HR_URL, params={"symbol": chosen_symbol})
@@ -111,17 +112,41 @@ def _fetch_binance_spot_quote(symbol: str) -> dict[str, Any] | None:
                 avg_resp = client.get(root.rstrip("/") + BINANCE_AVG_PRICE_URL, params={"symbol": chosen_symbol})
                 avg_resp.raise_for_status()
                 avg = avg_resp.json() or {}
+                kline_resp = client.get(root.rstrip("/") + "/api/v3/klines", params={"symbol": chosen_symbol, "interval": "1d", "limit": 1000})
+                kline_resp.raise_for_status()
+                trading_days = len(kline_resp.json() or [])
                 break
             except Exception:
                 continue
 
     if not ticker:
         return None
+        
+    taker_buy_sell_ratio = 0.0
+    top_trader_long_short_ratio = 0.0
+    
+    with _httpx_client(timeout=10.0, follow_redirects=True) as client:
+        try:
+            taker_resp = client.get("https://fapi.binance.com/futures/data/takerlongshortRatio", params={"symbol": chosen_symbol, "period": "1d", "limit": 1})
+            taker_resp.raise_for_status()
+            taker_data = taker_resp.json()
+            if taker_data and isinstance(taker_data, list):
+                taker_buy_sell_ratio = float(taker_data[-1].get("buySellRatio") or 0)
+                
+            top_resp = client.get("https://fapi.binance.com/futures/data/topLongShortAccountRatio", params={"symbol": chosen_symbol, "period": "1d", "limit": 1})
+            top_resp.raise_for_status()
+            top_data = top_resp.json()
+            if top_data and isinstance(top_data, list):
+                top_trader_long_short_ratio = float(top_data[-1].get("longShortRatio") or 0)
+        except Exception:
+            pass
 
     weighted_price = float(ticker.get("weightedAvgPrice") or 0)
     avg_price = float((avg or {}).get("price") or 0)
     bid_price = float((book or {}).get("bidPrice") or 0)
     ask_price = float((book or {}).get("askPrice") or 0)
+    bid_qty = float((book or {}).get("bidQty") or 0)
+    ask_qty = float((book or {}).get("askQty") or 0)
     spread_pct = 0.0
     if bid_price > 0 and ask_price > 0 and ask_price >= bid_price:
         midpoint = (bid_price + ask_price) / 2
@@ -146,7 +171,12 @@ def _fetch_binance_spot_quote(symbol: str) -> dict[str, Any] | None:
         "avg_price": avg_price,
         "bid_price": bid_price,
         "ask_price": ask_price,
+        "bid_qty": bid_qty,
+        "ask_qty": ask_qty,
         "spread_pct": spread_pct,
+        "trading_days": trading_days,
+        "taker_buy_sell_ratio": taker_buy_sell_ratio,
+        "top_trader_long_short_ratio": top_trader_long_short_ratio,
     }
 
 

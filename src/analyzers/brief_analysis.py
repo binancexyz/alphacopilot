@@ -79,8 +79,24 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
     if quote_source:
         level = "Low" if quote_source == "Binance Spot" else "Info"
         tags.append(RiskTag(name="Source", level=level, note=quote_source if quote_source == "Binance Spot" else "Secondary market data"))
+    
     if quote_source == "Binance Spot" and exchange_symbol:
         tags.append(RiskTag(name="Binance Spot", level="Low", note=exchange_symbol))
+        bid_qty = float(quote.get("bid_qty") or 0)
+        ask_qty = float(quote.get("ask_qty") or 0)
+        trading_days = quote.get("trading_days")
+        
+        if bid_qty > 0 and ask_qty > 0:
+            if bid_qty > ask_qty * 3:
+                tags.append(RiskTag(name="Order Book", level="Low", note="Bid depth significantly outweighs ask depth (3x+)"))
+            elif ask_qty > bid_qty * 3:
+                tags.append(RiskTag(name="Order Book", level="Medium", note="Ask depth significantly outweighs bid depth (3x+)"))
+
+        if trading_days is not None:
+            if trading_days <= 14:
+                tags.append(RiskTag(name="Maturity", level="High", note=f"Very fresh market ({trading_days} days of history)"))
+            elif trading_days >= 365:
+                tags.append(RiskTag(name="Maturity", level="Low", note=f"Vintage market ({trading_days}+ days)"))
 
     return AnalysisBrief(
         entity=f"Brief: {display_symbol}",

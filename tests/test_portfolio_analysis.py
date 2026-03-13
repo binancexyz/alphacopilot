@@ -1,40 +1,23 @@
 import src.analyzers.portfolio_analysis as portfolio_analysis
 
 
-class DummyClient:
+import src.analyzers.portfolio_analysis as portfolio_analysis
+
+class DummyLiveService:
     def __init__(self, responses):
         self.responses = responses
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc, tb):
-        return False
-
-    def get(self, url, headers=None):
-        class Resp:
-            def __init__(self, payload):
-                self.payload = payload
-
-            def raise_for_status(self):
-                return None
-
-            def json(self):
-                return self.payload
-        if "/api/v3/account" in url:
-            return Resp(self.responses["account"])
-        if "/api/v3/ticker/price" in url:
-            return Resp(self.responses["prices"])
-        raise AssertionError(url)
+        
+    def get_portfolio_context(self):
+        return {
+            "_raw": {
+                "assets": {"data": self.responses["account"]["balances"]}
+            },
+            "prices": self.responses["prices_dict"]
+        }
 
 
 def test_analyze_portfolio_builds_balanced_snapshot():
-    old_client = portfolio_analysis._httpx_client
-    old_key = portfolio_analysis.settings.binance_api_key
-    old_secret = portfolio_analysis.settings.binance_api_secret
-    portfolio_analysis.settings.binance_api_key = "k"
-    portfolio_analysis.settings.binance_api_secret = "s"
-    portfolio_analysis._httpx_client = lambda *a, **k: DummyClient({
+    responses = {
         "account": {
             "balances": [
                 {"asset": "USDT", "free": "1000", "locked": "0"},
@@ -42,17 +25,18 @@ def test_analyze_portfolio_builds_balanced_snapshot():
                 {"asset": "BTC", "free": "0.01", "locked": "0"},
             ]
         },
-        "prices": [
-            {"symbol": "BNBUSDT", "price": "600"},
-            {"symbol": "BTCUSDT", "price": "80000"},
-        ],
-    })
+        "prices_dict": {
+            "BNB": "600",
+            "BTC": "80000",
+            "USDT": "1",
+        },
+    }
+    old_service = portfolio_analysis.LiveMarketDataService
     try:
+        portfolio_analysis.LiveMarketDataService = lambda **kwargs: DummyLiveService(responses)
         brief = portfolio_analysis.analyze_portfolio()
     finally:
-        portfolio_analysis._httpx_client = old_client
-        portfolio_analysis.settings.binance_api_key = old_key
-        portfolio_analysis.settings.binance_api_secret = old_secret
+        portfolio_analysis.LiveMarketDataService = old_service
 
     assert brief.entity == "Portfolio: Binance Spot"
     assert "Estimated visible Spot value" in brief.why_it_matters
@@ -65,29 +49,25 @@ def test_analyze_portfolio_builds_balanced_snapshot():
 
 
 def test_analyze_portfolio_normalizes_ld_assets():
-    old_client = portfolio_analysis._httpx_client
-    old_key = portfolio_analysis.settings.binance_api_key
-    old_secret = portfolio_analysis.settings.binance_api_secret
-    portfolio_analysis.settings.binance_api_key = "k"
-    portfolio_analysis.settings.binance_api_secret = "s"
-    portfolio_analysis._httpx_client = lambda *a, **k: DummyClient({
+    responses = {
         "account": {
             "balances": [
                 {"asset": "LDUSDT", "free": "10", "locked": "0"},
                 {"asset": "LDETH", "free": "1", "locked": "0"},
             ]
         },
-        "prices": [
-            {"symbol": "ETHUSDT", "price": "2000"},
-            {"symbol": "BTCUSDT", "price": "80000"},
-        ],
-    })
+        "prices_dict": {
+            "ETH": "2000",
+            "BTC": "80000",
+            "USDT": "1",
+        },
+    }
+    old_service = portfolio_analysis.LiveMarketDataService
     try:
+        portfolio_analysis.LiveMarketDataService = lambda **kwargs: DummyLiveService(responses)
         brief = portfolio_analysis.analyze_portfolio()
     finally:
-        portfolio_analysis._httpx_client = old_client
-        portfolio_analysis.settings.binance_api_key = old_key
-        portfolio_analysis.settings.binance_api_secret = old_secret
+        portfolio_analysis.LiveMarketDataService = old_service
 
     note = brief.beginner_note or ""
     assert "USDT" in note

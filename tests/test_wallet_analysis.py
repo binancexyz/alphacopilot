@@ -13,6 +13,7 @@ class DummyService:
             ],
             'top_concentration_pct': 38.5,
             'change_24h': 5.1,
+            'volatility_24h': 16.5,
             'notable_exposures': ['AI', 'L1'],
             'follow_verdict': 'Track',
             'style_read': 'Narrative bias: AI, L1 | Style profile: selective diversified momentum-seeking | Risk posture: diversified',

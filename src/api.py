@@ -158,6 +158,37 @@ def watchtoday(request: Request, _: None = Depends(enforce_api_guard)) -> BriefR
     return _brief_response("watchtoday", "market", watch_today())
 
 
+@app.get("/alpha", response_model=BriefResponse)
+def alpha(request: Request, _: None = Depends(enforce_api_guard), symbol: str = Query(..., min_length=1, max_length=20, description="Token symbol, e.g. BNB")) -> BriefResponse:
+    normalized = normalize_token_input(symbol)
+    svc = live_service()
+    context = svc.get_alpha_context(normalized)
+    return BriefResponse(
+        command="alpha",
+        entity=normalized,
+        mode=settings.app_mode,
+        rendered=format_brief(context),
+        warning=_mode_warning(),
+        runtime_state=context.get("runtime_state"),
+        runtime=None,
+    )
+
+
+@app.get("/futures", response_model=BriefResponse)
+def futures(request: Request, _: None = Depends(enforce_api_guard), symbol: str = Query(..., min_length=1, max_length=20, description="Token symbol, e.g. BTC")) -> BriefResponse:
+    normalized = normalize_token_input(symbol)
+    svc = live_service()
+    context = svc.get_futures_context(normalized)
+    return BriefResponse(
+        command="futures",
+        entity=normalized,
+        mode=settings.app_mode,
+        rendered=format_brief(context),
+        warning=_mode_warning(),
+        runtime_state=context.get("runtime_state"),
+        runtime=None,
+    )
+
 def _mode_warning() -> str | None:
     if settings.app_mode == "mock":
         return "Running in mock mode; outputs are scaffold/demo quality, not live market calls."

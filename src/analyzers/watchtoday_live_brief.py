@@ -123,8 +123,14 @@ def build_watchtoday_brief(ctx: WatchTodayContext) -> AnalysisBrief:
 
     signal_count = len(ctx.strongest_signals)
     attention_count = len(ctx.trending_now)
-    if signal_count >= 3:
+    smart_money_count = len(ctx.smart_money_flow)
+    
+    if signal_count >= 3 and smart_money_count >= 2:
+        quick_verdict = "Heavy smart money accumulation. High conviction board."
+    elif signal_count >= 3:
         quick_verdict = "Strong board. High selectivity needed."
+    elif smart_money_count >= 3 and attention_count == 0:
+        quick_verdict = "Smart money moving quietly. Watch closely."
     elif signal_count >= 1 and attention_count >= 1:
         quick_verdict = "Moderate board. Be selective." if len(sparse) < 2 else "Moderate board. selective rather than complete."
     elif signal_count >= 1 and attention_count == 0:

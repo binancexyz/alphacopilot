@@ -151,7 +151,11 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
                 if tag.name in {"Participation Quality", "Lifecycle"}:
                     suffix = f": {tag.note}" if tag.note else ""
                     meme_tags.append(f"{tag.name}: {tag.level}{suffix}")
-            meme_lines = meme_tags[:2]
+                if tag.name == "Bonding Progress":
+                    meme_tags.append(f"{tag.name}: {tag.note}")
+                if tag.name == "DEX Migration":
+                    meme_tags.append(f"{tag.name}: {tag.note}")
+            meme_lines = meme_tags[:4]
             if meme_lines:
                 sections.append(BriefSection(title="🧪 Meme Lens", content="\n".join(f"- {line}" for line in meme_lines if line)))
     except Exception:

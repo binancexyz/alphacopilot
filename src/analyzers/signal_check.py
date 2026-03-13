@@ -44,6 +44,20 @@ def analyze_signal(token: str) -> AnalysisBrief:
             brief.top_risks.insert(0, f"Binance Spot price is live via {pair}, but the signal itself is still unmatched on the smart-money board.")
         elif brief.why_it_matters:
             brief.why_it_matters += f" Binance Spot confirms active pricing on {pair} with a {change:+.2f}% 24h move."
+            
+        # Add new ratio checks if they exist in the futures quote (this requires an update to the price fetcher too if they aren't parsed)
+        taker_ratio = float(quote.get("taker_buy_sell_ratio") or 0)
+        top_trader_ratio = float(quote.get("top_trader_long_short_ratio") or 0)
+        
+        if taker_ratio > 1.2:
+            brief.risk_tags.append(RiskTag(name="Taker Ratio", level="Medium", note=f"Aggressive taker buy volume ({taker_ratio:.2f})"))
+        elif taker_ratio > 0 and taker_ratio < 0.8:
+            brief.risk_tags.append(RiskTag(name="Taker Ratio", level="High", note=f"Aggressive taker sell volume ({taker_ratio:.2f})"))
+            
+        if top_trader_ratio > 1.5:
+            brief.risk_tags.append(RiskTag(name="Top Traders", level="Medium", note=f"Top traders leaning long ({top_trader_ratio:.2f})"))
+        elif top_trader_ratio > 0 and top_trader_ratio < 0.7:
+            brief.risk_tags.append(RiskTag(name="Top Traders", level="High", note=f"Top traders leaning short ({top_trader_ratio:.2f})"))
 
     append_posture_note_to_brief(brief, signal_context.token)
 

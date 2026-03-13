@@ -38,6 +38,7 @@ def normalize_wallet_context(payload: dict) -> WalletContext:
         top_holdings=holdings,
         top_concentration_pct=_to_float(payload.get("top_concentration_pct")),
         change_24h=_to_float(payload.get("change_24h")),
+        volatility_24h=_to_float(payload.get("volatility_24h")),
         notable_exposures=[str(x) for x in payload.get("notable_exposures", [])],
         major_risks=[str(x) for x in payload.get("major_risks", [])],
         follow_verdict=str(payload.get("follow_verdict", "Unknown")),

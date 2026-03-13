@@ -48,7 +48,105 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         "audit_gate": audit_gate,
         "blocked_reason": blocked_reason,
     }
+
+    # --- Dynamic data enrichment (buy/sell pressure, momentum, holder quality) ---
+    if dynamic:
+        vol_buy = _pick_number(dynamic, "volume24hBuy")
+        vol_sell = _pick_number(dynamic, "volume24hSell")
+        if vol_buy + vol_sell > 0:
+            context["buy_sell_ratio"] = round(vol_buy / (vol_buy + vol_sell), 3)
+        context["volume_5m"] = _pick_number(dynamic, "volume5m")
+        context["volume_1h"] = _pick_number(dynamic, "volume1h")
+        context["volume_4h"] = _pick_number(dynamic, "volume4h")
+        context["volume_24h"] = _pick_number(dynamic, "volume24h")
+        context["pct_change_5m"] = _pick_number(dynamic, "percentChange5m")
+        context["pct_change_1h"] = _pick_number(dynamic, "percentChange1h")
+        context["pct_change_4h"] = _pick_number(dynamic, "percentChange4h")
+        context["pct_change_24h"] = _pick_number(dynamic, "percentChange24h")
+        context["tx_count_24h"] = _pick_int(dynamic, "count24h")
+        context["tx_buy_count_24h"] = _pick_int(dynamic, "count24hBuy")
+        context["tx_sell_count_24h"] = _pick_int(dynamic, "count24hSell")
+        context["fdv"] = _pick_number(dynamic, "fdv")
+        context["market_cap"] = _pick_number(dynamic, "marketCap")
+        context["circulating_supply"] = _pick_number(dynamic, "circulatingSupply")
+        context["total_supply"] = _pick_number(dynamic, "totalSupply")
+        context["price_high_24h"] = _pick_number(dynamic, "priceHigh24h")
+        context["price_low_24h"] = _pick_number(dynamic, "priceLow24h")
+        context["kol_holders"] = _pick_int(dynamic, "kolHolders")
+        context["kol_holding_pct"] = _pick_number(dynamic, "kolHoldingPercent")
+        context["pro_holders"] = _pick_int(dynamic, "proHolders")
+        context["pro_holding_pct"] = _pick_number(dynamic, "proHoldingPercent")
+        context["smart_money_holders"] = _pick_int(dynamic, "smartMoneyHolders")
+        context["smart_money_holding_pct"] = _pick_number(dynamic, "smartMoneyHoldingPercent")
+
+    # --- Smart money inflow match ---
+    smart_money_inflow = market_rank.get("smart_money_inflow", []) or []
+    if smart_money_inflow:
+        target = _normalize_match_key(resolved_symbol)
+        for item in smart_money_inflow:
+            item_symbol = _normalize_match_key(str(item.get("tokenName") or item.get("symbol") or ""))
+            if item_symbol and item_symbol == target:
+                context["smart_money_inflow_usd"] = _pick_number(item, "inflow")
+                context["smart_money_inflow_traders"] = _pick_int(item, "traders")
+                break
     context.update(_bridge_runtime_context(raw, "token"))
+
+    spot = raw.get("spot", {})
+    if spot:
+        ticker = spot.get("ticker", spot)
+        context["cex_price"] = _pick_number(ticker, "lastPrice")
+        context["cex_volume_24h"] = _pick_number(ticker, "volume", "quoteVolume")
+        context["cex_price_change_pct_24h"] = _pick_number(ticker, "priceChangePercent")
+        depth = spot.get("depth", {})
+        if depth:
+            bids = depth.get("bids", [])
+            asks = depth.get("asks", [])
+            if bids:
+                context["spot_bid_depth"] = len(bids)
+                context["spot_top_bid"] = _to_float(bids[0][0]) if bids and len(bids[0]) > 0 else 0.0
+            if asks:
+                context["spot_ask_depth"] = len(asks)
+                context["spot_top_ask"] = _to_float(asks[0][0]) if asks and len(asks[0]) > 0 else 0.0
+
+        s_kline = spot.get("kline", {}).get("data", []) if isinstance(spot.get("kline", {}), dict) else spot.get("kline", [])
+        if s_kline:
+            context["spot_kline_candles"] = len(s_kline)
+            if len(s_kline) > 0 and len(s_kline[-1]) >= 5:
+                context["spot_kline_latest_close"] = _to_float(s_kline[-1][4])
+
+        s_trades = spot.get("recent_trades", {}).get("data", []) if isinstance(spot.get("recent_trades", {}), dict) else spot.get("recent_trades", [])
+        if s_trades:
+            context["spot_recent_trades_count"] = len(s_trades)
+
+    # --- K-Line (candlestick) data ---
+    token_payload = raw.get("query-token-info", {})
+    kline = token_payload.get("kline", [])
+    if kline:
+        context["kline_candles"] = len(kline)
+        if len(kline) > 0:
+            latest = kline[-1]
+            if len(latest) >= 5:
+                context["kline_latest_close"] = _to_float(latest[3])
+                context["kline_latest_volume"] = _to_float(latest[4])
+
+    alpha_data = raw.get("alpha", {})
+    if alpha_data:
+        context["is_alpha_listed"] = bool(alpha_data.get("is_alpha_listed", False))
+        ticker = alpha_data.get("ticker", {})
+        if ticker:
+            context["alpha_price"] = _pick_number(ticker, "lastPrice", "price")
+            context["alpha_volume_24h"] = _pick_number(ticker, "volume", "quoteVolume")
+            
+        a_kline = alpha_data.get("kline", [])
+        if a_kline:
+            context["alpha_kline_candles"] = len(a_kline)
+            if len(a_kline) > 0 and len(a_kline[-1]) >= 5:
+                context["alpha_kline_latest_close"] = _to_float(a_kline[-1][4])
+
+    futures = raw.get("derivatives-trading-usds-futures", {})
+    if futures:
+        _enrich_futures_sentiment(context, futures)
+
     return context
 
 
@@ -107,11 +205,15 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
             top_holdings.append({"symbol": item["symbol"], "weight_pct": (item["value"] / portfolio_value) * 100})
 
     change_24h = 0.0
+    volatility_24h = 0.0
     if portfolio_value > 0:
-        weighted = 0.0
+        weighted_change = 0.0
+        weighted_volatility = 0.0
         for item in holdings:
-            weighted += item["value"] * item["change_24h"]
-        change_24h = weighted / portfolio_value
+            weighted_change += item["value"] * item["change_24h"]
+            weighted_volatility += item["value"] * abs(item["change_24h"])
+        change_24h = weighted_change / portfolio_value
+        volatility_24h = weighted_volatility / portfolio_value
 
     top_concentration_pct = (biggest / portfolio_value) * 100 if portfolio_value > 0 else 0.0
     notable_exposures = [name for name, value in sorted(exposure_weights.items(), key=lambda pair: pair[1], reverse=True) if value > 0][:5]
@@ -125,6 +227,8 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
         risks.append("Wallet is highly concentrated in one token or theme.")
     if portfolio_value > 0 and len(exposure_weights) <= 1 and len(items) >= 3:
         risks.append("Wallet diversification is weaker than the holding count first suggests because exposures cluster into one theme.")
+    if volatility_24h >= 15:
+        risks.append(f"Aggregate wallet volatility is very high at {volatility_24h:.1f}%.")
 
     style_profile = _wallet_style_profile(top_concentration_pct, len(items), exposure_weights, change_24h)
     style_bits: list[str] = []
@@ -154,6 +258,7 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
         "top_holdings": top_holdings,
         "top_concentration_pct": top_concentration_pct,
         "change_24h": change_24h,
+        "volatility_24h": volatility_24h,
         "notable_exposures": notable_exposures[:5],
         "major_risks": risks,
         "follow_verdict": follow_verdict,
@@ -210,6 +315,47 @@ def extract_watch_today_context(raw: dict[str, Any]) -> dict[str, Any]:
         "exchange_board": exchange_board,
     }
     context.update(_bridge_runtime_context(raw, "watchtoday"))
+
+    futures = raw.get("derivatives-trading-usds-futures", {})
+    if futures:
+        futures_lines: list[str] = []
+        for sym in ("BTC", "ETH", "BNB", "SOL"):
+            data = futures.get(sym)
+            if not isinstance(data, dict):
+                continue
+            rate = data.get("funding_rate", 0.0)
+            sentiment = "bullish" if rate < -0.0001 else "bearish" if rate > 0.0003 else "neutral"
+            rate_pct = rate * 100
+            futures_lines.append(f"{sym} funding {rate_pct:+.4f}% ({sentiment})")
+        if futures_lines:
+            context["futures_sentiment"] = futures_lines
+            risk_zones = context.get("risk_zones", [])
+            for line in futures_lines:
+                if "bearish" in line:
+                    risk_zones.append(f"{line} — elevated short squeeze or crowded longs risk")
+            context["risk_zones"] = risk_zones
+
+    # --- Top traders from address PnL leaderboard ---
+    top_traders_raw = market_rank.get("top_traders", []) or []
+    if top_traders_raw:
+        top_traders_lines: list[str] = []
+        for trader in top_traders_raw[:5]:
+            label = trader.get("addressLabel") or _short_addr(str(trader.get("address", "")))
+            pnl = _pick_number(trader, "realizedPnl")
+            win_rate = _pick_number(trader, "winRate")
+            top_tokens = trader.get("topEarningTokens", []) or []
+            top_symbols = [str(t.get("tokenSymbol", "")) for t in top_tokens[:3] if t.get("tokenSymbol")]
+            parts = [str(label)]
+            if pnl:
+                parts.append(f"PnL {_human_money_short(pnl)}")
+            if win_rate:
+                parts.append(f"WR {win_rate:.0f}%")
+            if top_symbols:
+                parts.append(f"top: {', '.join(top_symbols)}")
+            top_traders_lines.append(" — ".join(parts))
+        if top_traders_lines:
+            context["top_traders"] = top_traders_lines
+
     return context
 
 
@@ -371,6 +517,160 @@ def extract_meme_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     }
     context.update(_bridge_runtime_context(raw, "meme"))
     return context
+
+
+def extract_alpha_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
+    alpha = raw.get("alpha", {})
+    token_info = raw.get("query-token-info", {})
+    audit = raw.get("query-token-audit", {})
+    spot = raw.get("spot", {})
+
+    metadata = token_info.get("metadata", {})
+    search_item = _best_token_match(token_info.get("search"), symbol, metadata) or metadata or token_info
+    resolved_symbol = str(search_item.get("symbol") or metadata.get("symbol") or symbol)
+    display_name = str(search_item.get("name") or metadata.get("name") or resolved_symbol)
+    audit_payload = audit.get("data", audit)
+    audit_flags, audit_risks = _extract_audit_flags_and_risks(audit_payload)
+    audit_gate, blocked_reason = _audit_gate_state(audit_payload, audit_flags)
+
+    is_alpha_listed = bool(alpha.get("is_alpha_listed", False))
+    ticker = alpha.get("ticker", {})
+
+    context: dict[str, Any] = {
+        "symbol": resolved_symbol,
+        "display_name": display_name,
+        "is_alpha_listed": is_alpha_listed,
+        "alpha_price": _pick_number(ticker, "lastPrice", "price"),
+        "alpha_volume_24h": _pick_number(ticker, "volume", "quoteVolume"),
+        "alpha_price_change_24h": _pick_number(ticker, "priceChangePercent"),
+        "alpha_high_24h": _pick_number(ticker, "highPrice"),
+        "alpha_low_24h": _pick_number(ticker, "lowPrice"),
+        "audit_gate": audit_gate,
+        "blocked_reason": blocked_reason,
+        "audit_flags": audit_flags,
+        "major_risks": _merge_risks(audit_risks),
+    }
+
+    if spot:
+        context["cex_price"] = _pick_number(spot, "lastPrice")
+        context["cex_volume_24h"] = _pick_number(spot, "volume", "quoteVolume")
+
+    context.update(_bridge_runtime_context(raw, "alpha"))
+    return context
+
+
+def extract_futures_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
+    futures = raw.get("derivatives-trading-usds-futures", {})
+    token_info = raw.get("query-token-info", {})
+    metadata = token_info.get("metadata", {})
+    search_item = _best_token_match(token_info.get("search"), symbol, metadata) or metadata or token_info
+    resolved_symbol = str(search_item.get("symbol") or metadata.get("symbol") or symbol)
+
+    mark = futures.get("mark_price", {})
+    funding = futures.get("funding_rate", {})
+    oi = futures.get("open_interest", {})
+    ls = futures.get("long_short_ratio", {})
+    taker = futures.get("taker_volume", {})
+    top_ls = futures.get("top_trader_ls", {})
+
+    rate_items = funding.get("data", []) if isinstance(funding.get("data"), list) else []
+    last_rate = float(rate_items[-1].get("fundingRate", 0)) if rate_items else 0.0
+    long_short_items = ls.get("data", []) if isinstance(ls.get("data"), list) else []
+    last_ls_ratio = float(long_short_items[-1].get("longShortRatio", 1.0)) if long_short_items else 1.0
+
+    taker_items = taker.get("data", []) if isinstance(taker.get("data"), list) else []
+    last_taker_ratio = float(taker_items[-1].get("buySellRatio", 1.0)) if taker_items else 1.0
+    last_taker_buy = float(taker_items[-1].get("buyVol", 0.0)) if taker_items else 0.0
+    last_taker_sell = float(taker_items[-1].get("sellVol", 0.0)) if taker_items else 0.0
+
+    top_ls_items = top_ls.get("data", []) if isinstance(top_ls.get("data"), list) else []
+    last_top_ls_ratio = float(top_ls_items[-1].get("longShortRatio", 1.0)) if top_ls_items else 1.0
+
+    if last_rate < -0.0001:
+        funding_sentiment = "bullish"
+    elif last_rate > 0.0003:
+        funding_sentiment = "bearish"
+    else:
+        funding_sentiment = "neutral"
+
+    risks: list[str] = []
+    if abs(last_rate) > 0.001:
+        risks.append(f"Funding rate is extreme at {last_rate * 100:+.4f}% — liquidation cascades possible.")
+    if last_ls_ratio > 2.5:
+        risks.append(f"Long/short ratio is {last_ls_ratio:.2f} — crowded longs risk.")
+    elif last_ls_ratio < 0.5:
+        risks.append(f"Long/short ratio is {last_ls_ratio:.2f} — crowded shorts risk.")
+
+    context: dict[str, Any] = {
+        "symbol": resolved_symbol,
+        "funding_rate": last_rate,
+        "funding_rate_sentiment": funding_sentiment,
+        "open_interest": _to_float(oi.get("openInterest")),
+        "long_short_ratio": last_ls_ratio,
+        "taker_buy_sell_ratio": last_taker_ratio,
+        "taker_buy_volume_1d": last_taker_buy,
+        "taker_sell_volume_1d": last_taker_sell,
+        "top_trader_long_short_ratio": last_top_ls_ratio,
+        "mark_price": _to_float(mark.get("markPrice")),
+        "index_price": _to_float(mark.get("indexPrice")),
+        "major_risks": risks,
+    }
+    context.update(_bridge_runtime_context(raw, "futures"))
+    return context
+
+
+def _enrich_futures_sentiment(context: dict[str, Any], futures: dict[str, Any]) -> None:
+    mark = futures.get("mark_price", {})
+    funding = futures.get("funding_rate", {})
+    oi = futures.get("open_interest", {})
+    ls = futures.get("long_short_ratio", {})
+    taker = futures.get("taker_volume", {})
+    top_ls = futures.get("top_trader_ls", {})
+    ticker = futures.get("ticker", {})
+    kline = futures.get("kline", {}).get("data", []) if isinstance(futures.get("kline", {}), dict) else futures.get("kline", [])
+
+    rate_items = funding.get("data", []) if isinstance(funding.get("data"), list) else []
+    last_rate = float(rate_items[-1].get("fundingRate", 0)) if rate_items else 0.0
+    long_short_items = ls.get("data", []) if isinstance(ls.get("data"), list) else []
+    last_ls_ratio = float(long_short_items[-1].get("longShortRatio", 1.0)) if long_short_items else 1.0
+
+    taker_items = taker.get("data", []) if isinstance(taker.get("data"), list) else []
+    last_taker_ratio = float(taker_items[-1].get("buySellRatio", 1.0)) if taker_items else 1.0
+    last_taker_buy = float(taker_items[-1].get("buyVol", 0.0)) if taker_items else 0.0
+    last_taker_sell = float(taker_items[-1].get("sellVol", 0.0)) if taker_items else 0.0
+
+    top_ls_items = top_ls.get("data", []) if isinstance(top_ls.get("data"), list) else []
+    last_top_ls_ratio = float(top_ls_items[-1].get("longShortRatio", 1.0)) if top_ls_items else 1.0
+
+    context["futures_funding_rate"] = last_rate
+    context["futures_open_interest"] = _to_float(oi.get("openInterest"))
+    context["futures_long_short_ratio"] = last_ls_ratio
+    context["futures_taker_buy_sell_ratio"] = last_taker_ratio
+    context["futures_taker_buy_volume_1d"] = last_taker_buy
+    context["futures_taker_sell_volume_1d"] = last_taker_sell
+    context["futures_top_trader_long_short_ratio"] = last_top_ls_ratio
+    context["futures_mark_price"] = _to_float(mark.get("markPrice"))
+    
+    if ticker:
+        context["futures_ticker_volume_24h"] = _pick_number(ticker, "volume", "quoteVolume")
+        context["futures_price_change_pct_24h"] = _pick_number(ticker, "priceChangePercent")
+        
+    if kline:
+        context["futures_kline_candles"] = len(kline)
+        if len(kline) > 0 and len(kline[-1]) >= 5:
+            context["futures_kline_latest_close"] = _to_float(kline[-1][4])
+
+    if last_rate < -0.0001:
+        context["futures_sentiment"] = "bullish"
+    elif last_rate > 0.0003:
+        context["futures_sentiment"] = "bearish"
+    else:
+        context["futures_sentiment"] = "neutral"
+
+    risks = list(context.get("major_risks", []))
+    if abs(last_rate) > 0.001:
+        risks.append(f"Futures funding rate extreme ({last_rate * 100:+.4f}%) — liquidation risk.")
+    context["major_risks"] = _unique(risks)
 
 
 def _bridge_meta(raw: dict[str, Any]) -> dict[str, Any]:
@@ -854,6 +1154,12 @@ def _human_money_short(value: float) -> str:
     if value > 0:
         return f"${value:.0f}"
     return "n/a"
+
+
+def _short_addr(address: str) -> str:
+    if len(address) > 12:
+        return f"{address[:6]}…{address[-4:]}"
+    return address or "unknown"
 
 
 def _extract_risk_zones(market_rank: dict[str, Any], meme_rush: dict[str, Any]) -> list[str]:

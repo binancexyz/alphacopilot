@@ -8,6 +8,11 @@ that needs to understand which skills are expected for a given command.
 """
 
 COMMAND_SKILL_MAP: dict[str, list[str]] = {
+    "alpha": [
+        "alpha",
+        "query-token-info",
+        "query-token-audit",
+    ],
     "token": [
         "query-token-info",
         "crypto-market-rank",
@@ -38,6 +43,14 @@ COMMAND_SKILL_MAP: dict[str, list[str]] = {
         "meme-rush",
         "crypto-market-rank",
     ],
+    "futures": [
+        "derivatives-trading-usds-futures",
+        "query-token-info",
+    ],
+    "portfolio": [
+        "assets",
+        "margin-trading",
+    ]
 }
 
 OPTIONAL_COMMAND_SKILL_MAP: dict[str, list[str]] = {
@@ -46,11 +59,22 @@ OPTIONAL_COMMAND_SKILL_MAP: dict[str, list[str]] = {
         "crypto-market-rank",
         "query-token-audit",
     ],
+    "token": [
+        "alpha",
+        "spot",
+        "derivatives-trading-usds-futures",
+    ],
+    "watchtoday": [
+        "derivatives-trading-usds-futures",
+    ],
 }
 
+ALPHA_SKILLS = COMMAND_SKILL_MAP["alpha"]
 TOKEN_SKILLS = COMMAND_SKILL_MAP["token"]
 WALLET_SKILLS = COMMAND_SKILL_MAP["wallet"]
 WATCH_TODAY_SKILLS = COMMAND_SKILL_MAP["watchtoday"]
 SIGNAL_SKILLS = COMMAND_SKILL_MAP["signal"]
 AUDIT_SKILLS = COMMAND_SKILL_MAP["audit"]
 MEME_SKILLS = COMMAND_SKILL_MAP["meme"]
+FUTURES_SKILLS = COMMAND_SKILL_MAP["futures"]
+PORTFOLIO_SKILLS = COMMAND_SKILL_MAP["portfolio"]
