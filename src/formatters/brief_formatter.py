@@ -156,6 +156,19 @@ def _trend_from_change(change: float, top_risk: str = "") -> str:
     return "Defensive drift"
 
 
+def _liquidity_label(liquidity: float) -> str:
+    if liquidity <= 0:
+        return "—"
+    amount = _human_money(liquidity)
+    if liquidity < 1_000_000:
+        return f"{amount} ⚠️ very thin"
+    if liquidity < 10_000_000:
+        return f"{amount} ⚠️ thin"
+    if liquidity < 50_000_000:
+        return f"{amount} 🟡 moderate"
+    return f"{amount} ✅ deep"
+
+
 def _extract_price_tag(brief: AnalysisBrief) -> tuple[float, float, int, str]:
     header_note = next((tag.note for tag in brief.risk_tags if tag.name == "Header Market" and tag.note), "")
     price = 0.0
@@ -247,7 +260,7 @@ def _format_compact_brief_card(brief: AnalysisBrief) -> str:
         "unknown": "No clear entry",
     }
     trend = _trend_from_change(change_f, top_risk)
-    liquidity_text = "—" if liquidity_f <= 0 else f"{_human_money(liquidity_f)} {'✅' if liquidity_f >= 1_000_000_000 else ''}".rstrip()
+    liquidity_text = _liquidity_label(liquidity_f)
     confidence = brief.signal_quality or "Low"
 
     parts = [_brief_header(symbol or name, price_f, change_f, rank_i)]
@@ -330,6 +343,11 @@ def _format_audit_card(brief: AnalysisBrief) -> str:
 def _format_token_card(brief: AnalysisBrief) -> str:
     symbol = brief.entity.replace("Token:", "").strip()
     price_f, change_f, rank_i, pair = _extract_price_tag(brief)
+    liquidity_f = 0.0
+    try:
+        liquidity_f = float((brief.why_it_matters or '').split('liquidity ')[1].split()[0]) if 'liquidity ' in (brief.why_it_matters or '').lower() else 0.0
+    except Exception:
+        liquidity_f = 0.0
     gate = brief.audit_gate or "WARN"
     signal_word = "No clear entry"
     lower_why = (brief.why_it_matters or "").lower()
@@ -340,8 +358,10 @@ def _format_token_card(brief: AnalysisBrief) -> str:
 
     trend = _trend_from_change(change_f)
     liquidity_tag = next((tag for tag in brief.risk_tags if tag.name == "Binance Spot"), None)
-    liquidity_text = pair or "—"
-    if liquidity_tag and liquidity_tag.note and "spread" in liquidity_tag.note.lower():
+    liquidity_text = _liquidity_label(liquidity_f)
+    if pair and liquidity_f <= 0:
+        liquidity_text = pair
+    if liquidity_tag and liquidity_tag.note and "spread" in liquidity_tag.note.lower() and liquidity_f <= 0:
         liquidity_text = liquidity_tag.note.split("|")[0].strip()
 
     parts = [_brief_header(symbol, price_f, change_f, rank_i)]
