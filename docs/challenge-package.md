@@ -28,13 +28,12 @@ But seeing activity is not the same as knowing:
 Bibipilot closes that gap.
 
 It uses Binance Skills as the evidence layer, then adds a judgment layer on top:
-- `/price` for compact market truth
-- `/brief` for fast synthesis
-- `/risk` and `/audit` for safety-first clarity
-- `/token` and `/signal` for conviction and timing
-- `/wallet` for follow-or-ignore judgment
+- `/brief` for the flagship asset read
+- `/brief ... deep` for richer asset judgment
+- `/signal` for conviction and timing
+- `/audit` for safety-first clarity
+- `/holdings` for posture and wallet-behavior judgment
 - `/watchtoday` for daily market prioritization
-- `/meme` for fast meme-style scans
 
 Then it closes the loop by publishing Binance Square posts directly.
 
@@ -142,16 +141,16 @@ This sequence shows range, product shape, and publishing reality without wasting
 
 ### Demo order
 
-#### 1. `/price BNB`
-**Why first:** instant grounding.
-Show the clean, premium market card with source/context framing.
+#### 1. `/brief BNB`
+**Why first:** instant flagship surface.
+Show the clean, premium compact asset read.
 
 **Judge takeaway:** this is fast, readable, and product-like.
 
-#### 2. `/brief BTC`
-**Why second:** show minimal synthesis.
+#### 2. `/brief BNB deep`
+**Why second:** show richer asset judgment.
 
-**Judge takeaway:** Bibipilot can compress context, not just dump fields.
+**Judge takeaway:** Bibipilot can go beyond compression into deeper conviction/risk framing.
 
 #### 3. `/audit BNB`
 **Why third:** prove safety is first-class.
@@ -164,10 +163,10 @@ If no matched signal exists, that is still a useful truth.
 
 **Judge takeaway:** the product distinguishes between weak evidence and no evidence.
 
-#### 5. `/holdings <address>`
-**Why fifth:** show opinionated judgment.
+#### 5. `/holdings`
+**Why fifth:** show opinionated posture judgment.
 
-**Judge takeaway:** Bibipilot can interpret behavior, not just list holdings.
+**Judge takeaway:** Bibipilot can interpret ownership/posture, not just list balances.
 
 #### 6. `/watchtoday`
 **Why sixth:** show market-board intelligence.

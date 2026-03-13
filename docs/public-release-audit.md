@@ -15,12 +15,12 @@ It is public-facing hygiene and curation.
 
 ### 1. README command examples
 Verified successfully:
-- `/price BNB`
 - `/brief BTC`
+- `/brief BNB deep`
 - `/audit BNB`
 - `/signal BNB`
+- `/holdings`
 - `/watchtoday`
-- `/meme DOGE`
 
 ### 2. Example payload safety
 Reviewed example payloads used in the repo and did not find obvious private account data in the checked public example.

@@ -8,10 +8,12 @@
 - [ ] choose final quote post
 
 ## Demo sequence
-1. `/token BNB`
-2. `/signal DOGE`
-3. `/wallet 0x123...`
-4. `/watchtoday`
+1. `/brief BNB`
+2. `/brief BNB deep`
+3. `/signal DOGE`
+4. `/audit BNB`
+5. `/holdings`
+6. `/watchtoday`
 
 ## Closing line
 "Most crypto tools show movement. Bibipilot helps users decide whether that movement is actually worth conviction."

@@ -47,15 +47,11 @@ It helps decide:
 ### 1. Real command surface
 Bibipilot is not a one-shot prompt demo.
 It has a product-like command layer:
-- `/price`
 - `/brief`
-- `/risk`
-- `/audit`
-- `/token`
 - `/signal`
-- `/wallet`
+- `/audit`
+- `/holdings`
 - `/watchtoday`
-- `/meme`
 
 ### 2. Real judgment layer
 Examples:
@@ -91,11 +87,11 @@ So instead of just showing crypto movement, Bibipilot helps answer what is worth
 
 ## Best live demo order
 
-### 1. `/price BNB`
-**Proves:** fast, compact market truth
+### 1. `/brief BNB`
+**Proves:** fast, compact flagship surface
 
-### 2. `/brief BTC`
-**Proves:** compression and synthesis
+### 2. `/brief BNB deep`
+**Proves:** deeper asset judgment
 
 ### 3. `/audit BNB`
 **Proves:** security-first command surface
@@ -103,8 +99,8 @@ So instead of just showing crypto movement, Bibipilot helps answer what is worth
 ### 4. `/signal BNB`
 **Proves:** timing logic and honest handling of weak/no match cases
 
-### 5. `/holdings <address>`
-**Proves:** opinionated behavior interpretation
+### 5. `/holdings`
+**Proves:** posture interpretation and ownership intelligence
 
 ### 6. `/watchtoday`
 **Proves:** market-board prioritization with live lanes
@@ -116,11 +112,11 @@ So instead of just showing crypto movement, Bibipilot helps answer what is worth
 
 ## What each demo step should make judges feel
 
-- `/price` -> clean and usable
 - `/brief` -> efficient and product-like
+- `/brief deep` -> richer and more judgment-heavy
 - `/audit` -> trustworthy
 - `/signal` -> thoughtful, not hypey
-- `/wallet` -> opinionated and useful
+- `/holdings` -> opinionated and useful
 - `/watchtoday` -> broad but structured
 - Square proof -> complete product loop
 
