@@ -6,12 +6,12 @@ If work pauses here, the project can still be resumed cleanly.
 - `docs/maintainer-summary.md`
 - `docs/INDEX.md`
 - `docs/live-integration-checklist.md`
-- `docs/token-live-design.md`
+- `docs/commands-overview.md`
 
 ## What is already true
 - repo is public/pushed
 - checks pass
-- the command surface is now reduced to a canonical 5-command map across CLI and API
+- the command surface is now a live 7-command map across CLI and API
 - the main command family has upgraded premium output formatting
 - docs are extensive and the high-visibility summaries are updated
 

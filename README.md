@@ -54,24 +54,24 @@ Bibipilot is designed for that gap. It does not try to be a full autonomous trad
 
 ## What it does
 
-Bibipilot now has a clean **5-command canonical surface**:
+Bibipilot now has a clean **7-command live surface**:
 
 | Command | What it answers |
 |---------|------------------|
 | `/brief <symbol>` | What matters about this asset right now? |
 | `/signal <symbol>` | Is this setup real, risky, or breaking down? |
+| `/audit <symbol>` | Is this structurally safe enough to trust? |
 | `/holdings [address]` | What is this posture telling me? |
 | `/watchtoday` | What deserves attention across the market today? |
-| `/audit <symbol>` | Is this structurally safe enough to trust? |
+| `/alpha [symbol]` | What is happening on Binance Alpha right now? |
+| `/futures <symbol>` | What is Binance Futures positioning saying right now? |
 
-That gives Bibipilot a very simple product story:
-- **`/brief`** = flagship default read
-- **`/signal`** = setup + risk + invalidation
-- **`/holdings`** = private posture or external wallet behavior
-- **`/watchtoday`** = market board
-- **`/audit`** = safety read
+That gives Bibipilot a simple product story:
+- **Research** → `/brief`, `/watchtoday`, `/alpha`
+- **Judgment** → `/signal`, `/audit`
+- **Posture** → `/holdings`, `/futures`
 
-`/brief <symbol> deep` is the richer asset-judgment path when you want more than the compact default answer.
+`/brief <symbol> deep` remains the richer asset-judgment path when you want more than the compact default answer.
 
 For the cleanest one-page public explanation, see [`docs/public-command-card.md`](docs/public-command-card.md).
 
@@ -245,7 +245,7 @@ uvicorn src.api:app --host 0.0.0.0 --port 8000
 ### Endpoints
 
 Current note:
-- the **CLI/product surface** and **REST API** are now aligned around the same canonical five-command map
+- the **CLI/product surface** and **REST API** are aligned around the same live command map
 
 | Method | Path | Purpose |
 |--------|------|---------|
@@ -258,6 +258,9 @@ Current note:
 | GET | `/holdings` | Private portfolio posture |
 | GET | `/holdings?address=0x...` | Wallet behavior read |
 | GET | `/watchtoday` | Daily market board |
+| GET | `/alpha` | Binance Alpha overview |
+| GET | `/alpha?symbol=RIVER` | Binance Alpha token detail |
+| GET | `/futures?symbol=BTC` | Binance Futures positioning |
 
 ### Security middleware
 - Optional API key authentication (`X-API-Key` header, HMAC timing-safe comparison)
@@ -444,10 +447,10 @@ bibipilot/
 ### Deep dives
 | Document | Purpose |
 |----------|---------|
-| [`docs/binance-spot-integration.md`](docs/binance-spot-integration.md) | Exchange data grounding |
 | [`docs/skill-command-matrix.md`](docs/skill-command-matrix.md) | Skills-to-commands mapping |
+| [`docs/live-command-mapping.md`](docs/live-command-mapping.md) | Live bridge command-to-skill routing |
 | [`docs/demo-script.md`](docs/demo-script.md) | Complete demo walkthrough |
-| [`docs/roadmap.md`](docs/roadmap.md) | Product roadmap |
+| [`docs/command-architecture.md`](docs/command-architecture.md) | Research / judgment / posture split |
 | [`examples/current-output-examples.md`](examples/current-output-examples.md) | Fresh CLI output examples |
 
 ### Tech stack

@@ -5,10 +5,13 @@ Use these commands in chat:
 - `/brief <symbol>` — quick asset read
 - `/brief <symbol> deep` — deeper asset read
 - `/signal <symbol>` — setup + invalidation + risk
+- `/audit <symbol>` — safety check
 - `/holdings` — your posture
 - `/holdings <address>` — wallet behavior
 - `/watchtoday` — market board
-- `/audit <symbol>` — safety check
+- `/alpha` — Binance Alpha board
+- `/alpha <symbol>` — Binance Alpha token detail
+- `/futures <symbol>` — Binance Futures positioning
 
 ## Best daily flow
 

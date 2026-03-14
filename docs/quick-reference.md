@@ -2,22 +2,24 @@
 
 ## Commands
 
-### Canonical
+### Live surface
 | Command | Purpose |
 |---------|---------|
 | `/brief <symbol>` | Fast default asset read; can go deeper when data supports it |
 | `/signal <symbol>` | Setup validation with invalidation and risk merged in |
+| `/audit <symbol>` | Security-first token read with conditional meme lens |
 | `/holdings [address]` | Portfolio posture or external wallet behavior |
 | `/watchtoday` | Daily board with smart-money signals first and attention separated cleanly |
-| `/audit <symbol>` | Security-first token read with conditional meme lens |
+| `/alpha [symbol]` | Binance Alpha board by default, token detail optionally |
+| `/futures <symbol>` | Binance Futures positioning and leverage context |
 
 For a cleaner public-facing one-page version, see [`public-command-card.md`](public-command-card.md).
 
 ## API Endpoints (v0.2.1)
 
 Current note:
-- canonical **CLI/product commands** are `brief`, `signal`, `holdings`, `watchtoday`, and `audit`
-- the API now matches that same canonical surface
+- live **CLI/product commands** are `brief`, `signal`, `audit`, `holdings`, `watchtoday`, `alpha`, and `futures`
+- the API matches that same live surface
 
 | Method | Path | Purpose |
 |--------|------|---------|
@@ -30,6 +32,9 @@ Current note:
 | GET | `/holdings` | Private portfolio posture |
 | GET | `/holdings?address=0x...` | Wallet analysis brief |
 | GET | `/watchtoday` | Daily market board |
+| GET | `/alpha` | Binance Alpha overview |
+| GET | `/alpha?symbol=RIVER` | Binance Alpha token detail |
+| GET | `/futures?symbol=BTC` | Binance Futures positioning |
 
 ## Product promise
 **Less noise. Better conviction.**
@@ -65,7 +70,7 @@ python3 src/square_diary.py night-diary          # scheduled diary
 - [`docs/architecture.md`](architecture.md)
 - [`docs/commands-overview.md`](commands-overview.md)
 - [`docs/demo-script.md`](demo-script.md)
-- [`docs/binance-spot-integration.md`](binance-spot-integration.md)
+- [`docs/live-command-mapping.md`](live-command-mapping.md)
 - [`docs/deployment.md`](deployment.md)
 
 ## Local checks

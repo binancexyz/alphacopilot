@@ -1,6 +1,6 @@
 # Commands Overview
 
-## Canonical commands
+## Live command surface
 
 ### `/brief <symbol>`
 **Purpose:** Default asset read.
@@ -22,6 +22,17 @@
 - Better canonical home for the old `/risk` surface
 
 **Example:** `python3 src/main.py signal DOGE`
+
+---
+
+### `/audit <symbol>`
+**Purpose:** Safety read.
+- Contract/security posture
+- Audit gate
+- Risk level
+- Meme lens folded into findings/context when useful
+
+**Example:** `python3 src/main.py audit BNB`
 
 ---
 
@@ -48,19 +59,30 @@
 
 ---
 
-### `/audit <symbol>`
-**Purpose:** Safety read.
-- Contract/security posture
-- Audit gate
-- Risk level
-- Meme lens folded into findings/context when useful
+### `/alpha [symbol]`
+**Purpose:** Binance Alpha discovery surface.
+- No argument → live Binance Alpha board
+- Optional symbol → token-specific Alpha detail
+- Discovery / board / Alpha-token context
 
-**Example:** `python3 src/main.py audit BNB`
+**Examples:**
+- `python3 src/main.py alpha`
+- `python3 src/main.py alpha RIVER`
+
+---
+
+### `/futures <symbol>`
+**Purpose:** Binance Futures positioning surface.
+- Funding / open interest / ratio context
+- Perp posture rather than spot discovery
+- Best used after `/brief` or alongside `/signal`
+
+**Example:** `python3 src/main.py futures BTC`
 
 ---
 
 ## Compatibility commands
-These still work, but they are no longer the public command map.
+These are legacy or folded surfaces, not the public command map.
 
 - `/token <symbol>` → use `/brief <symbol> deep`
 - `/portfolio` → use `/holdings`
@@ -73,8 +95,16 @@ These still work, but they are no longer the public command map.
 
 ---
 
+## Product grouping
+- **Research** → `/brief`, `/watchtoday`, `/alpha`
+- **Judgment** → `/signal`, `/audit`
+- **Posture** → `/holdings`, `/futures`
+
+---
+
 ## Output shape
 - Structured section-based layout
+- Explicit live-trust labeling (`✅ Live now`, `🟡 Partial live / degraded`, `🔴 Mock / not live`)
 - Read / Verdict / Risks / Watch blocks where appropriate
 - Context / Source / Validity tags when relevant
 - Explicit invalidation in `/signal`

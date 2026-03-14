@@ -9,19 +9,19 @@ A one-page public command reference for Bibipilot.
 | `/brief <symbol>` | Fast default asset read | Quick first-pass judgment |
 | `/brief <symbol> deep` | Richer asset read under the same brief family | Deeper asset judgment |
 | `/signal <symbol>` | Setup quality, invalidation, and risk | Timing / setup checks |
+| `/audit <symbol>` | Safety-first asset check | Structural trust / caution |
 | `/holdings` | Private Binance Spot posture | Your account posture |
 | `/holdings <address>` | External wallet behavior read | Public wallet study |
 | `/watchtoday` | Daily market board | What matters today |
-| `/audit <symbol>` | Safety-first asset check | Structural trust / caution |
+| `/alpha` | Binance Alpha overview board | Discovery / board read |
+| `/alpha <symbol>` | Binance Alpha token detail | Alpha-token drill-down |
+| `/futures <symbol>` | Binance Futures positioning read | Perp / leverage posture |
 
 ## Product Map
 
-- **`/brief`** = flagship default read
-- **`/brief deep`** = richer brief, not a separate product
-- **`/signal`** = setup + invalidation + risk
-- **`/holdings`** = ownership / posture
-- **`/watchtoday`** = market board
-- **`/audit`** = safety read
+- **Research** → `/brief`, `/brief deep`, `/watchtoday`, `/alpha`
+- **Judgment** → `/signal`, `/audit`
+- **Posture** → `/holdings`, `/futures`
 
 ## Output Shape
 
@@ -40,10 +40,12 @@ Most commands follow the same compact pattern:
 ### Main state blocks by command
 - `/brief` → `⚡ Snapshot`
 - `/signal` → `⚡ Setup`
+- `/audit` → `⚡ Findings`
 - `/holdings` → `⚡ Posture`
 - `/holdings <address>` → `⚡ Behavior`
 - `/watchtoday` → `⚡ Signals` + `🔥 Attention`
-- `/audit` → `⚡ Findings`
+- `/alpha` → Alpha board / Alpha market snapshot
+- `/futures` → Futures positioning snapshot
 
 ## Real Current Example Shapes
 
