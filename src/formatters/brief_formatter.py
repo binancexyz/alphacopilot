@@ -654,10 +654,10 @@ def _format_portfolio_card(brief: AnalysisBrief) -> str:
     if marker in why:
         total_value = why.split(marker, 1)[1].split(" ", 1)[0].rstrip(".")
 
+    dust_state = "dust" in (brief.quick_verdict or "").lower() or any(tag.name == "Dust State" for tag in brief.risk_tags)
     stable_tag = next((tag for tag in brief.risk_tags if tag.name == "Stablecoin Share" and tag.note), None)
-    concentration_tag = next((tag for tag in brief.risk_tags if tag.name == "Top Concentration" and tag.note), None)
-    top_lines = brief.beginner_note.splitlines()[:3] if brief.beginner_note else []
-    top_asset = top_lines[0].split("~", 1)[0].strip() if top_lines else "—"
+    top_lines = brief.beginner_note.splitlines()[:5] if brief.beginner_note else []
+    top_asset = top_lines[0].split("~", 1)[0].replace("Dust balance —", "").strip() if top_lines else "—"
     posture = brief.signal_quality or "Defensive"
     risk_pct = "—"
     if "risk assets are " in why:
@@ -671,6 +671,8 @@ def _format_portfolio_card(brief: AnalysisBrief) -> str:
     parts.extend(["", "**⚡ Posture**"])
     if unavailable:
         posture_lines = ["Stables: —", "Risk: —", "Top asset: —"]
+    elif dust_state:
+        posture_lines = ["Stables: dust-only 💵", "Risk: near-zero", f"Top asset: {top_asset or '—'}"]
     else:
         posture_lines = [
             f"Stables: {stable_tag.note} 💵" if stable_tag else "Stables: —",
@@ -681,7 +683,7 @@ def _format_portfolio_card(brief: AnalysisBrief) -> str:
 
     parts.extend(["", "**💼 Top Holdings**"])
     if top_lines:
-        parts.extend(_tree_lines(top_lines))
+        parts.extend(_tree_lines(top_lines[:3]))
     else:
         parts.extend(_tree_lines(["No priced holdings visible", "Read-only snapshot unavailable"] if unavailable else ["No priced holdings visible", "Waiting for fuller snapshot"]))
 

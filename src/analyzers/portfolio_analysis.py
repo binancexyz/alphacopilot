@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import Any
 
 from src.models.schemas import AnalysisBrief, RiskTag
+from src.services.binance_skill_bridge import fetch_live_bundle
 from src.services.exposure_groups import top_groups
 from src.services.portfolio_history import append_snapshot, describe_delta, describe_snapshot_age, describe_trend, earlier_snapshot, latest_snapshot, top_change_note
 from src.services.live_service import LiveMarketDataService
@@ -31,6 +32,10 @@ def _asset_qty(item: dict[str, Any]) -> Decimal:
 
 def _asset_btc_value(item: dict[str, Any]) -> Decimal:
     return Decimal(str(item.get("btcValuation") or "0"))
+
+
+def _is_dust_position(qty: Decimal, usd_value: Decimal) -> bool:
+    return qty > 0 and usd_value < Decimal("1")
 
 
 def _infer_btc_price(balances: list[dict[str, Any]], prices: dict[str, Any]) -> Decimal:
@@ -117,6 +122,15 @@ def get_portfolio_snapshot() -> dict[str, Any]:
     margin_account = raw_context.get("margin-trading", {})
     prices = context.get("prices", {})
 
+    if not account:
+        try:
+            bundle = fetch_live_bundle("portfolio", "")
+            raw_context = bundle.raw or raw_context
+            account = raw_context.get("assets", {}).get("data", [])
+            margin_account = raw_context.get("margin-trading", margin_account)
+        except Exception:
+            pass
+
     balances = account if isinstance(account, list) else []
     btc_price = _infer_btc_price(balances, prices)
     merged: dict[str, dict[str, Any]] = {}
@@ -162,6 +176,7 @@ def get_portfolio_snapshot() -> dict[str, Any]:
 
     enriched = sorted(merged.values(), key=lambda x: x["usd_value"], reverse=True)
     priced_assets = [item for item in enriched if item["usd_value"] > 0]
+    dust_assets = [item for item in enriched if item["qty"] > 0 and item["usd_value"] <= 0]
     margin = _margin_snapshot(margin_account, prices, btc_price)
     margin_net_value = margin["net_equity_value"]
     borrowed_value = margin["borrowed_value"]
@@ -204,7 +219,11 @@ def get_portfolio_snapshot() -> dict[str, Any]:
 
     concentration = top_weights[0] if top_weights else 0.0
     borrowed_pct = (float(borrowed_value) / float(total_value) * 100) if total_value > 0 and borrowed_value > 0 else 0.0
-    if total_value <= 0:
+    dust_asset_count = sum(1 for item in enriched if _is_dust_position(item["qty"], item["usd_value"])) + len(dust_assets)
+    if total_value <= 0 and (enriched or dust_assets):
+        verdict = "Only dust-sized Spot balances are visible. No meaningful active exposure."
+        quality = "Dust"
+    elif total_value <= 0:
         verdict = "Thin snapshot. No visible balance value."
         quality = "Thin"
     elif borrowed_pct >= 20:
@@ -228,7 +247,9 @@ def get_portfolio_snapshot() -> dict[str, Any]:
     posture_note = "levered risk-on" if borrowed_pct >= 20 else "defensive" if stable_pct >= 55 else "risk-on" if stable_pct <= 20 else "mixed"
 
     risk_lines: list[str] = []
-    if total_value <= 0:
+    if total_value <= 0 and (enriched or dust_assets):
+        risk_lines.append("Only dust-sized Spot balances were visible, so there is no meaningful active portfolio exposure to judge.")
+    elif total_value <= 0:
         risk_lines.append("No priced Spot balances were visible, so the portfolio read stays incomplete.")
     if concentration >= 70:
         risk_lines.append("Top holding concentration is high enough that one move can dominate portfolio performance.")
@@ -250,13 +271,32 @@ def get_portfolio_snapshot() -> dict[str, Any]:
     if not risk_lines:
         risk_lines.append("This is an estimated read-only snapshot, not a full PnL or cost-basis analysis.")
 
+    dust_lines: list[str] = []
+    if total_value <= 0:
+        for item in enriched[:5]:
+            qty = item["qty"]
+            if qty <= 0:
+                continue
+            dust_lines.append(f"{item['asset']} {qty.normalize()}")
+        for item in dust_assets[:5]:
+            qty = item["qty"]
+            if qty <= 0:
+                continue
+            dust_lines.append(f"{item['asset']} {qty.normalize()}")
+
     lead_groups = ", ".join(f"{name} {pct:.1f}%" for name, pct in group_mix[:3]) if group_mix else "no clear grouped exposure yet"
-    why = (
-        f"Estimated visible Spot value is about ${float(total_value):,.2f} across {available_assets} priced asset(s). "
-        f"Stablecoins are {stable_pct:.1f}% of the priced snapshot and risk assets are {risk_pct:.1f}%. "
-        f"Top concentration is {concentration:.1f}%{' with some locked balances in play' if locked_assets else ''}, which makes the current posture look {posture_note}. "
-        f"Lead exposure groups: {lead_groups}."
-    )
+    if total_value <= 0 and dust_lines:
+        why = (
+            f"Only residual Spot balances are visible right now ({', '.join(dust_lines[:3])}). "
+            f"That is a dust-state account, not a meaningful active portfolio."
+        )
+    else:
+        why = (
+            f"Estimated visible Spot value is about ${float(total_value):,.2f} across {available_assets} priced asset(s). "
+            f"Stablecoins are {stable_pct:.1f}% of the priced snapshot and risk assets are {risk_pct:.1f}%. "
+            f"Top concentration is {concentration:.1f}%{' with some locked balances in play' if locked_assets else ''}, which makes the current posture look {posture_note}. "
+            f"Lead exposure groups: {lead_groups}."
+        )
     if margin_net_value != 0:
         why += f" Cross-margin net equity contributes about ${float(margin_net_value):,.2f}."
     if borrowed_value > 0:
@@ -267,6 +307,8 @@ def get_portfolio_snapshot() -> dict[str, Any]:
         RiskTag(name="Source", level="Binance API", note="signed account read + live price map"),
         RiskTag(name="Assets", level=str(available_assets), note="priced balances"),
     ]
+    if total_value <= 0 and dust_lines:
+        tags.append(RiskTag(name="Dust State", level="Info", note=f"{len(dust_lines)} residual balance(s) visible"))
     if concentration > 0:
         tags.append(RiskTag(name="Top Concentration", level="High" if concentration >= 70 else "Medium" if concentration >= 40 else "Low", note=f"{concentration:.1f}%"))
     tags.append(RiskTag(name="Stablecoin Share", level="High" if stable_pct >= 55 else "Medium" if stable_pct >= 20 else "Low", note=f"{stable_pct:.1f}%"))
@@ -277,6 +319,9 @@ def get_portfolio_snapshot() -> dict[str, Any]:
         if borrowed_value > 0:
             margin_note += f" | borrowed ${float(borrowed_value):,.2f}"
         tags.append(RiskTag(name="Margin Exposure", level="High" if borrowed_pct >= 20 else "Medium" if borrowed_value > 0 else "Low", note=margin_note))
+
+    if total_value <= 0 and dust_lines:
+        top_lines = [f"Dust balance — {line}" for line in dust_lines[:5]]
 
     return {
         "verdict": verdict,
