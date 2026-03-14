@@ -6,7 +6,10 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from tests.test_extractors import (
     test_extract_audit_context_preserves_validity_flags,
+    test_extract_audit_context_normalizes_snake_case_validity_flags,
     test_extract_signal_context,
+    test_extract_signal_context_enriches_market_and_futures_fields,
+    test_extract_signal_context_marks_fresh_when_signal_has_data_but_age_is_missing,
     test_extract_token_context,
     test_extract_wallet_context_from_address_list,
     test_extract_watch_today_context_from_skill_shapes,
@@ -40,8 +43,10 @@ from tests.test_runtime_bridge_templates import (
 )
 from tests.test_analyzer_return_types import test_analyzers_return_analysis_brief_instances
 from tests.test_audit_analysis import (
+    test_analyze_audit_adds_signal_lens_when_smart_money_is_active,
     test_analyze_audit_marks_limited_validity_when_payload_is_partial,
     test_analyze_audit_marks_valid_supported_payload,
+    test_analyze_audit_pulls_bonding_curve_data_from_meme_lens,
     test_analyze_audit_respects_validity_flags_from_extracted_live_payload,
 )
 from tests.test_skill_bridge import (
@@ -93,6 +98,7 @@ from tests.test_market_watch import test_watch_today_adds_exchange_board_from_bi
 from tests.test_meme_analysis import test_analyze_meme_includes_evidence_quality
 from tests.test_portfolio_analysis import (
     test_analyze_portfolio_builds_balanced_snapshot,
+    test_analyze_portfolio_includes_margin_exposure,
     test_analyze_portfolio_normalizes_ld_assets,
 )
 from tests.test_portfolio_history import (
@@ -134,6 +140,7 @@ from tests.test_runtime_report import (
 )
 from tests.test_signal_check import test_analyze_signal_adds_binance_spot_unmatched_note
 from tests.test_signal_heuristics import (
+    test_signal_quality_penalizes_thin_and_crowded_futures_setup,
     test_signal_quality_triggered_without_context_is_not_auto_high,
     test_signal_quality_watch_without_context_stays_low,
 )
@@ -186,6 +193,7 @@ from tests.test_token_risk_compression import (
 from tests.test_wallet_analysis import test_analyze_wallet_adds_lead_holding_tag
 from tests.test_wallet_live_brief import test_build_wallet_brief
 from tests.test_wallet_live_extractors import (
+    test_extract_wallet_context_adds_audit_overlay_when_holdings_are_flagged,
     test_extract_wallet_context_builds_style_profile_and_exposures,
 )
 from tests.test_watchtoday_live_brief import (
@@ -205,8 +213,12 @@ def main() -> None:
     test_normalize_signal_context()
     test_extract_token_context()
     test_extract_signal_context()
+    test_extract_signal_context_enriches_market_and_futures_fields()
+    test_extract_signal_context_marks_fresh_when_signal_has_data_but_age_is_missing()
     test_extract_audit_context_preserves_validity_flags()
+    test_extract_audit_context_normalizes_snake_case_validity_flags()
     test_extract_wallet_context_from_address_list()
+    test_extract_wallet_context_adds_audit_overlay_when_holdings_are_flagged()
     test_extract_watch_today_context_from_skill_shapes()
 
     # --- runtime bridge templates ---
@@ -237,6 +249,8 @@ def main() -> None:
     test_analyze_audit_marks_limited_validity_when_payload_is_partial()
     test_analyze_audit_marks_valid_supported_payload()
     test_analyze_audit_respects_validity_flags_from_extracted_live_payload()
+    test_analyze_audit_pulls_bonding_curve_data_from_meme_lens()
+    test_analyze_audit_adds_signal_lens_when_smart_money_is_active()
 
     # --- skill registry + bridge ---
     test_skill_registry_resolves_query_token_info_reference()
@@ -300,6 +314,7 @@ def main() -> None:
     # --- portfolio analysis ---
     test_analyze_portfolio_builds_balanced_snapshot()
     test_analyze_portfolio_normalizes_ld_assets()
+    test_analyze_portfolio_includes_margin_exposure()
 
     # --- portfolio history (tmp_path adapted) ---
     test_describe_delta_detects_material_changes()
@@ -349,6 +364,7 @@ def main() -> None:
     # --- signal heuristics ---
     test_signal_quality_triggered_without_context_is_not_auto_high()
     test_signal_quality_watch_without_context_stays_low()
+    test_signal_quality_penalizes_thin_and_crowded_futures_setup()
 
     # --- signal judgment states ---
     test_signal_quality_high_for_fresh_trigger_holding_setup()

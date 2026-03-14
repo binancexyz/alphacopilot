@@ -116,3 +116,29 @@ def test_analyze_audit_pulls_bonding_curve_data_from_meme_lens():
     # Check that Bonding Progress made it into the text
     assert "Bonding Progress:" in meme_section.content
     assert "95.5%" in meme_section.content
+
+
+def test_analyze_audit_adds_signal_lens_when_smart_money_is_active():
+    old_service = audit_analysis.get_market_data_service
+    audit_analysis.get_market_data_service = lambda: DummyService({
+        'symbol': 'DOGE',
+        'display_name': 'DOGE',
+        'audit_gate': 'BLOCK',
+        'blocked_reason': 'Critical audit flags detected.',
+        'audit_summary': 'Risk level 5 (HIGH)',
+        'risk_level': 'High',
+        'audit_flags': ['Risk level 5 (HIGH)'],
+        'major_risks': ['SCAM_RISK: Honeypot risk detected.'],
+        'has_result': True,
+        'is_supported': True,
+        'signal_status': 'active',
+        'smart_money_count': 3,
+        'signal_freshness': 'FRESH',
+    })
+    try:
+        brief = audit_analysis.analyze_audit('DOGE')
+    finally:
+        audit_analysis.get_market_data_service = old_service
+
+    assert any(section.title == '📡 Signal Lens' for section in brief.sections)
+    assert 'Smart money is still active' in brief.quick_verdict

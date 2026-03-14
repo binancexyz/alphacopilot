@@ -54,8 +54,16 @@ def _token_why_it_matters(ctx: TokenContext) -> str:
         pieces.append(ctx.market_rank_context)
     if ctx.smart_money_count > 0:
         pieces.append(f"{ctx.smart_money_count} smart-money wallets are visible in the current setup.")
+    if ctx.smart_money_inflow_usd > 0:
+        pieces.append(f"Smart-money inflow is visible at roughly ${ctx.smart_money_inflow_usd:,.0f}.")
     if ctx.signal_freshness != "UNKNOWN":
         pieces.append(f"Signal timing reads as {ctx.signal_freshness.lower()} ({ctx.signal_age_hours:.1f}h old).")
+    if ctx.kline_trend:
+        pieces.append(f"4h K-line trend reads {ctx.kline_trend} and price is {'above' if ctx.kline_above_ma20 else 'below'} the recent MA20.")
+    if ctx.is_meme_candidate and ctx.meme_lifecycle:
+        pieces.append(f"Meme lifecycle reads {ctx.meme_lifecycle} with bonding progress near {ctx.meme_bonded_progress:.0f}%.")
+    if ctx.top_trader_interest:
+        pieces.append("Top-trader PnL tables also show this symbol among recent top earners.")
     if not pieces:
         pieces.append(_token_price_line(ctx))
     return " ".join(pieces[:3]).strip()
@@ -67,7 +75,7 @@ def _token_watch_next(ctx: TokenContext) -> list[str]:
         watch.append("do not treat the signal as actionable unless the audit picture changes materially")
         return watch
 
-    if ctx.signal_status in {"watch", "bullish", "triggered"}:
+    if ctx.signal_status in {"watch", "bullish", "triggered", "active"}:
         watch.append("whether the current signal status improves from attention into real follow-through")
     else:
         watch.append("whether a clearer signal status appears instead of vague market attention")
@@ -103,7 +111,7 @@ def _token_state_label(ctx: TokenContext, quality: str, evidence_level: str) -> 
         return "late"
     if quality == "High" and ctx.smart_money_count > 0 and ctx.liquidity > 0:
         return "active"
-    if quality in {"High", "Medium"} and ctx.signal_status in {"watch", "bullish", "triggered"}:
+    if quality in {"High", "Medium"} and ctx.signal_status in {"watch", "bullish", "triggered", "active"}:
         return "early"
     return "fragile"
 
@@ -131,6 +139,20 @@ def build_token_brief(ctx: TokenContext) -> AnalysisBrief:
     if ctx.liquidity > 0:
         liquidity_level = "High" if ctx.liquidity >= LIQUIDITY_DEEP else "Medium" if ctx.liquidity >= LIQUIDITY_MODERATE else "Low"
         risk_tags.append(RiskTag(name="Liquidity", level=liquidity_level, note=f"Visible liquidity {ctx.liquidity:,.0f}"))
+    if ctx.futures_sentiment or ctx.futures_funding_rate != 0 or ctx.futures_long_short_ratio not in {0.0, 1.0}:
+        futures_level = "High" if abs(ctx.futures_funding_rate) > 0.001 or ctx.futures_long_short_ratio > 2.5 or (0 < ctx.futures_long_short_ratio < 0.5) else "Medium"
+        futures_note = []
+        if ctx.futures_sentiment:
+            futures_note.append(ctx.futures_sentiment.title())
+        if ctx.futures_funding_rate != 0:
+            futures_note.append(f"funding {ctx.futures_funding_rate * 100:+.4f}%")
+        if ctx.futures_long_short_ratio > 0:
+            futures_note.append(f"L/S {ctx.futures_long_short_ratio:.2f}")
+        risk_tags.append(RiskTag(name="Futures Sentiment", level=futures_level, note=" | ".join(futures_note)))
+    if ctx.is_meme_candidate and ctx.meme_lifecycle:
+        risk_tags.append(RiskTag(name="Meme Lifecycle", level="Medium", note=f"{ctx.meme_lifecycle} | {ctx.meme_bonded_progress:.0f}% bonded"))
+    if ctx.top_trader_interest:
+        risk_tags.append(RiskTag(name="Top Trader Interest", level="Medium", note="Visible on top-earning trader tables"))
 
     if state == "blocked":
         quick_verdict = "Blocked. Audit risk is too high."

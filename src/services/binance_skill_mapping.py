@@ -31,10 +31,13 @@ COMMAND_SKILL_MAP: dict[str, list[str]] = {
         "trading-signal",
         "query-token-info",
         "query-token-audit",
+        "crypto-market-rank",
+        "derivatives-trading-usds-futures",
     ],
     "audit": [
         "query-token-info",
         "query-token-audit",
+        "trading-signal",
     ],
     "meme": [
         "query-token-info",
@@ -62,6 +65,11 @@ OPTIONAL_COMMAND_SKILL_MAP: dict[str, list[str]] = {
     "token": [
         "alpha",
         "spot",
+        "derivatives-trading-usds-futures",
+        "meme-rush",
+    ],
+    "signal": [
+        "crypto-market-rank",
         "derivatives-trading-usds-futures",
     ],
     "watchtoday": [

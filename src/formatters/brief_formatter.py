@@ -403,6 +403,11 @@ def _format_audit_card(brief: AnalysisBrief) -> str:
         parts.extend(["", "**🧪 Meme Lens**"])
         parts.append(_treeify_block(meme_content))
 
+    signal_content = _section_content(brief, "signal lens")
+    if signal_content.strip():
+        parts.extend(["", "**📡 Signal Lens**"])
+        parts.append(_treeify_block(signal_content))
+
     verdict_text = verdict or "Partial read. Stay cautious."
     parts.extend(["", f"**🧠 Verdict {_dots(risk_level if gate != 'BLOCK' else 'Low')}**\n{verdict_text}"])
     footer_bits = []

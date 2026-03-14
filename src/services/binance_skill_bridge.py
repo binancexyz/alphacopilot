@@ -143,9 +143,16 @@ def fetch_live_bundle(command: str, entity: str = "") -> BridgeBundle:
                 token_payload, contract_address = token_result
                 raw["query-token-info"] = token_payload
 
-            if command_key in {"token", "meme"}:
+            if command_key in {"token", "meme", "signal"}:
                 market_result = _capture_skill(
-                    lambda: _fetch_market_rank_bundle(client, base, chain_id, include_social=(command_key == "meme"), include_inflow=(command_key == "token"), notes=notes),
+                    lambda: _fetch_market_rank_bundle(
+                        client,
+                        base,
+                        chain_id,
+                        include_social=(command_key in {"meme", "signal"}),
+                        include_inflow=(command_key in {"token", "signal"}),
+                        notes=notes,
+                    ),
                     failed_skills,
                     errors,
                     "crypto-market-rank",
@@ -153,7 +160,7 @@ def fetch_live_bundle(command: str, entity: str = "") -> BridgeBundle:
                 if market_result is not None:
                     raw["crypto-market-rank"] = market_result
 
-            if command_key in {"token", "signal", "meme"}:
+            if command_key in {"token", "signal", "meme", "audit"}:
                 signal_result = _capture_skill(
                     lambda: _fetch_token_signal_bundle(client, base, chain_id, symbol, contract_address),
                     failed_skills,
@@ -173,7 +180,7 @@ def fetch_live_bundle(command: str, entity: str = "") -> BridgeBundle:
                 if audit_result is not None:
                     raw["query-token-audit"] = audit_result
 
-            if command_key == "meme":
+            if command_key == "meme" or (command_key == "token" and _looks_like_meme_candidate(symbol, token_payload)):
                 meme_result = _capture_skill(
                     lambda: _fetch_token_meme_rush_bundle(client, base, chain_id, symbol, notes),
                     failed_skills,
@@ -203,7 +210,7 @@ def fetch_live_bundle(command: str, entity: str = "") -> BridgeBundle:
                 if alpha_result is not None:
                     raw["alpha"] = alpha_result
 
-            if command_key in {"token"}:
+            if command_key in {"token", "signal"}:
                 futures_result = _capture_skill(
                     lambda: _fetch_futures_bundle(client, symbol),
                     failed_skills,
@@ -252,6 +259,24 @@ def _capture_skill(loader, failed_skills: list[str], errors: dict[str, str], ski
             failed_skills.append(skill_name)
         errors[skill_name] = _short_error(exc)
         return None
+
+
+def _looks_like_meme_candidate(symbol: str, token_payload: dict[str, Any] | None) -> bool:
+    if not token_payload:
+        return False
+
+    known_meme_symbols = {"DOGE", "SHIB", "PEPE", "BONK", "FLOKI", "WIF"}
+    if symbol.upper() in known_meme_symbols:
+        return True
+
+    metadata = token_payload.get("metadata", {}) if isinstance(token_payload, dict) else {}
+    search = token_payload.get("search", []) if isinstance(token_payload, dict) else []
+    tag_values: list[str] = []
+    for source in ((metadata.get("tokenTag") or {}), *((item.get("tokenTag") or {}) for item in search if isinstance(item, dict))):
+        if isinstance(source, dict):
+            tag_values.extend(str(key).lower() for key in source.keys())
+
+    return any(tag in {"meme", "community", "dog", "frog"} for tag in tag_values)
 
 
 def _fetch_wallet_positions(client, base: str, chain_id: str, address: str) -> dict[str, Any]:

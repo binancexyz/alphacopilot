@@ -5,6 +5,8 @@ from src.analyzers.thresholds import (
     CONCENTRATION_HIGH,
     EXIT_RATE_HIGH,
     EXIT_RATE_MODERATE,
+    LIQUIDITY_DEEP,
+    LIQUIDITY_THIN,
 )
 from src.models.context import SignalContext, TokenContext, WalletContext, WatchTodayContext
 
@@ -15,7 +17,7 @@ def token_signal_quality(ctx: TokenContext) -> str:
         score += 1
     if ctx.holders > 0:
         score += 1
-    if ctx.signal_status in {"watch", "bullish", "triggered"}:
+    if ctx.signal_status in {"watch", "bullish", "triggered", "active"}:
         score += 1
     if ctx.signal_status == "unmatched":
         score -= 1
@@ -26,6 +28,10 @@ def token_signal_quality(ctx: TokenContext) -> str:
     elif ctx.signal_freshness == "STALE":
         score -= 1
     if ctx.exit_rate >= EXIT_RATE_HIGH:
+        score -= 1
+    if abs(ctx.futures_funding_rate) > 0.001:
+        score -= 1
+    if ctx.futures_long_short_ratio > 2.5 or (0 < ctx.futures_long_short_ratio < 0.5):
         score -= 1
 
     if score >= 4:
@@ -56,6 +62,8 @@ def signal_quality_from_signal(ctx: SignalContext) -> str:
         score += 1
     elif ctx.signal_status in {"triggered", "bullish"}:
         score += 2
+    elif ctx.signal_status == "active":
+        score += 2
 
     if ctx.trigger_price > 0 and ctx.current_price > 0:
         if ctx.current_price >= ctx.trigger_price:
@@ -84,6 +92,16 @@ def signal_quality_from_signal(ctx: SignalContext) -> str:
         score -= 1
     if ctx.audit_gate == "WARN":
         score -= 1
+    if ctx.liquidity >= LIQUIDITY_DEEP:
+        score += 1
+    elif 0 < ctx.liquidity < LIQUIDITY_THIN:
+        score -= 1
+    if abs(ctx.funding_rate) > 0.001:
+        score -= 1
+    if ctx.long_short_ratio > 2.5 or (0 < ctx.long_short_ratio < 0.5):
+        score -= 1
+    if ctx.smart_money_inflow_usd >= 100_000:
+        score += 1
 
     if score >= 4:
         return "High"
@@ -107,6 +125,8 @@ def wallet_signal_quality(ctx: WalletContext) -> str:
     if concentration >= CONCENTRATION_EXTREME:
         score -= 2
     elif concentration >= CONCENTRATION_HIGH:
+        score -= 1
+    if ctx.risky_holdings_count > 0:
         score -= 1
 
     if score >= 3:

@@ -22,6 +22,86 @@ def _normalize_asset(asset: str) -> tuple[str, bool]:
             break
     return normalized, wrapped
 
+
+def _asset_qty(item: dict[str, Any]) -> Decimal:
+    free = Decimal(str(item.get("free") or "0"))
+    locked = Decimal(str(item.get("locked") or "0"))
+    return free + locked
+
+
+def _asset_btc_value(item: dict[str, Any]) -> Decimal:
+    return Decimal(str(item.get("btcValuation") or "0"))
+
+
+def _infer_btc_price(balances: list[dict[str, Any]], prices: dict[str, Any]) -> Decimal:
+    explicit = Decimal(str(prices.get("BTC") or prices.get("WBTC") or "0"))
+    if explicit > 0:
+        return explicit
+
+    for item in balances:
+        raw_asset = str(item.get("asset") or "").upper()
+        normalized_asset, _ = _normalize_asset(raw_asset)
+        qty = _asset_qty(item)
+        btc_value = _asset_btc_value(item)
+        if normalized_asset in STABLES and qty > 0 and btc_value > 0:
+            return qty / btc_value
+    return Decimal("0")
+
+
+def _margin_snapshot(margin_account: dict[str, Any], prices: dict[str, Any], btc_price: Decimal) -> dict[str, Any]:
+    if not isinstance(margin_account, dict):
+        return {
+            "borrowed_value": Decimal("0"),
+            "net_equity_value": Decimal("0"),
+            "interest_value": Decimal("0"),
+            "positions": 0,
+            "margin_level": Decimal("0"),
+        }
+
+    borrowed_value = Decimal("0")
+    net_equity_value = Decimal("0")
+    interest_value = Decimal("0")
+    positions = 0
+    user_assets = margin_account.get("userAssets", []) if isinstance(margin_account.get("userAssets"), list) else []
+
+    for item in user_assets:
+        if not isinstance(item, dict):
+            continue
+        asset = str(item.get("asset") or "").upper()
+        normalized_asset, _ = _normalize_asset(asset)
+        borrowed = Decimal(str(item.get("borrowed") or "0"))
+        interest = Decimal(str(item.get("interest") or "0"))
+        net_asset = Decimal(str(item.get("netAsset") or "0"))
+        if borrowed > 0 or interest > 0 or net_asset != 0:
+            positions += 1
+
+        usd_price = Decimal(str(prices.get(normalized_asset) or "0"))
+        if usd_price <= 0:
+            if normalized_asset in STABLES:
+                usd_price = Decimal("1")
+            elif normalized_asset == "BTC" and btc_price > 0:
+                usd_price = btc_price
+
+        if usd_price > 0:
+            borrowed_value += borrowed * usd_price
+            interest_value += interest * usd_price
+            net_equity_value += net_asset * usd_price
+
+    total_liability_btc = Decimal(str(margin_account.get("totalLiabilityOfBtc") or "0"))
+    total_net_asset_btc = Decimal(str(margin_account.get("totalNetAssetOfBtc") or "0"))
+    if borrowed_value <= 0 and total_liability_btc > 0 and btc_price > 0:
+        borrowed_value = total_liability_btc * btc_price
+    if net_equity_value == 0 and total_net_asset_btc != 0 and btc_price > 0:
+        net_equity_value = total_net_asset_btc * btc_price
+
+    return {
+        "borrowed_value": borrowed_value,
+        "net_equity_value": net_equity_value,
+        "interest_value": interest_value,
+        "positions": positions,
+        "margin_level": Decimal(str(margin_account.get("marginLevel") or "0")),
+    }
+
 def get_portfolio_snapshot() -> dict[str, Any]:
     live_service = LiveMarketDataService(
         base_url=settings.binance_skills_base_url,
@@ -32,27 +112,35 @@ def get_portfolio_snapshot() -> dict[str, Any]:
     # We load "portfolio" which relies on the skills "assets" and "margin-trading"
     context = live_service.get_portfolio_context()
     
-    # We expect context to carry over raw responses or normalized prices
-    account = context.get("_raw", {}).get("assets", {}).get("data", [])
-    prices = context.get("prices", {})  # We will construct this in extractors/bridge
+    raw_context = context.get("_raw", context)
+    account = raw_context.get("assets", {}).get("data", [])
+    margin_account = raw_context.get("margin-trading", {})
+    prices = context.get("prices", {})
 
     balances = account if isinstance(account, list) else []
+    btc_price = _infer_btc_price(balances, prices)
     merged: dict[str, dict[str, Any]] = {}
     unmapped_assets: list[str] = []
-    total_value = Decimal("0")
+    spot_total_value = Decimal("0")
     for item in balances:
         if not isinstance(item, dict):
             continue
         raw_asset = str(item.get("asset") or "").upper()
         normalized_asset, wrapped = _normalize_asset(raw_asset)
-        free = Decimal(str(item.get("free") or "0"))
         locked = Decimal(str(item.get("locked") or "0"))
-        qty = free + locked
+        qty = _asset_qty(item)
         if qty <= 0:
             continue
         usd_price = Decimal(str(prices.get(normalized_asset) or "0"))
-        usd_value = qty * usd_price
-        total_value += usd_value
+        usd_value = Decimal("0")
+        if usd_price > 0:
+            usd_value = qty * usd_price
+        elif btc_price > 0 and _asset_btc_value(item) > 0:
+            usd_value = _asset_btc_value(item) * btc_price
+            if usd_value > 0 and qty > 0:
+                usd_price = usd_value / qty
+
+        spot_total_value += usd_value
         slot = merged.setdefault(normalized_asset, {
             "asset": normalized_asset,
             "raw_assets": set(),
@@ -69,31 +157,59 @@ def get_portfolio_snapshot() -> dict[str, Any]:
         if usd_price > 0:
             slot["usd_price"] = usd_price
             slot["usd_value"] += usd_value
-        else:
+        elif usd_value <= 0:
             unmapped_assets.append(raw_asset)
 
     enriched = sorted(merged.values(), key=lambda x: x["usd_value"], reverse=True)
     priced_assets = [item for item in enriched if item["usd_value"] > 0]
+    margin = _margin_snapshot(margin_account, prices, btc_price)
+    margin_net_value = margin["net_equity_value"]
+    borrowed_value = margin["borrowed_value"]
+    interest_value = margin["interest_value"]
+    margin_positions = int(margin["positions"])
+    margin_level = margin["margin_level"]
+
+    total_value = spot_total_value + margin_net_value
+    if total_value <= 0 and spot_total_value > 0:
+        total_value = spot_total_value
+
     stable_value = sum(item["usd_value"] for item in priced_assets if item["asset"] in STABLES)
-    risk_value = sum(item["usd_value"] for item in priced_assets if item["asset"] not in STABLES)
+    risk_value = sum(item["usd_value"] for item in priced_assets if item["asset"] not in STABLES) + max(margin_net_value, Decimal("0"))
     stable_pct = (float(stable_value) / float(total_value) * 100) if total_value > 0 else 0.0
     risk_pct = (float(risk_value) / float(total_value) * 100) if total_value > 0 else 0.0
     group_mix = top_groups({"asset": item["asset"], "usd_value": float(item["usd_value"])} for item in priced_assets)
-    top = priced_assets[:5]
+    components = list(priced_assets)
+    if margin_net_value > 0:
+        components.append({
+            "asset": "CROSS-MARGIN",
+            "usd_value": margin_net_value,
+            "locked": Decimal("0"),
+            "wrapped": False,
+            "synthetic": True,
+        })
+    components = sorted(components, key=lambda x: x["usd_value"], reverse=True)
+    top = components[:5]
     top_lines: list[str] = []
     top_weights: list[float] = []
     for item in top:
         value = float(item["usd_value"])
         weight = (value / float(total_value) * 100) if total_value > 0 else 0.0
         top_weights.append(weight)
+        if item.get("synthetic"):
+            top_lines.append(f"{item['asset']} ~${value:,.2f} ({weight:.1f}%) | net equity")
+            continue
         locked_note = " | some locked" if item["locked"] > 0 else ""
         wrapped_note = " | includes LD balances" if item["wrapped"] else ""
         top_lines.append(f"{item['asset']} ~${value:,.2f} ({weight:.1f}%){locked_note}{wrapped_note}")
 
     concentration = top_weights[0] if top_weights else 0.0
+    borrowed_pct = (float(borrowed_value) / float(total_value) * 100) if total_value > 0 and borrowed_value > 0 else 0.0
     if total_value <= 0:
         verdict = "Thin snapshot. No visible balance value."
         quality = "Thin"
+    elif borrowed_pct >= 20:
+        verdict = "Levered posture. Margin exposure is material."
+        quality = "Aggressive"
     elif concentration >= 70:
         verdict = "Highly concentrated. One position dominates."
         quality = "Concentrated"
@@ -109,7 +225,7 @@ def get_portfolio_snapshot() -> dict[str, Any]:
 
     available_assets = len(priced_assets)
     locked_assets = sum(1 for item in enriched if item["locked"] > 0)
-    posture_note = "defensive" if stable_pct >= 55 else "risk-on" if stable_pct <= 20 else "mixed"
+    posture_note = "levered risk-on" if borrowed_pct >= 20 else "defensive" if stable_pct >= 55 else "risk-on" if stable_pct <= 20 else "mixed"
 
     risk_lines: list[str] = []
     if total_value <= 0:
@@ -120,6 +236,15 @@ def get_portfolio_snapshot() -> dict[str, Any]:
         risk_lines.append("Stablecoin dry powder looks thin, so flexibility may be lower if market conditions change quickly.")
     if locked_assets > 0:
         risk_lines.append("Some balances are locked, so immediately available exposure is lower than gross holdings suggest.")
+    if borrowed_value > 0:
+        margin_line = f"Margin borrowed is about ${float(borrowed_value):,.2f}"
+        if interest_value > 0:
+            margin_line += f" with roughly ${float(interest_value):,.2f} in interest accruing."
+        else:
+            margin_line += "."
+        risk_lines.append(margin_line)
+    if margin_level > 0 and margin_level < Decimal("3"):
+        risk_lines.append(f"Margin level is {float(margin_level):.2f}, so leverage buffer is not especially wide.")
     if unmapped_assets:
         risk_lines.append(f"Some asset codes still need mapping for cleaner valuation: {', '.join(sorted(set(unmapped_assets))[:5])}.")
     if not risk_lines:
@@ -132,6 +257,10 @@ def get_portfolio_snapshot() -> dict[str, Any]:
         f"Top concentration is {concentration:.1f}%{' with some locked balances in play' if locked_assets else ''}, which makes the current posture look {posture_note}. "
         f"Lead exposure groups: {lead_groups}."
     )
+    if margin_net_value != 0:
+        why += f" Cross-margin net equity contributes about ${float(margin_net_value):,.2f}."
+    if borrowed_value > 0:
+        why += f" Borrowed margin exposure is about ${float(borrowed_value):,.2f}."
 
     tags = [
         RiskTag(name="Account Mode", level="Read-only", note="estimated Spot snapshot"),
@@ -143,6 +272,11 @@ def get_portfolio_snapshot() -> dict[str, Any]:
     tags.append(RiskTag(name="Stablecoin Share", level="High" if stable_pct >= 55 else "Medium" if stable_pct >= 20 else "Low", note=f"{stable_pct:.1f}%"))
     if group_mix:
         tags.append(RiskTag(name="Lead Group", level="Info", note=f"{group_mix[0][0]} {group_mix[0][1]:.1f}%"))
+    if borrowed_value > 0 or margin_net_value != 0:
+        margin_note = f"Net equity ${float(margin_net_value):,.2f}"
+        if borrowed_value > 0:
+            margin_note += f" | borrowed ${float(borrowed_value):,.2f}"
+        tags.append(RiskTag(name="Margin Exposure", level="High" if borrowed_pct >= 20 else "Medium" if borrowed_value > 0 else "Low", note=margin_note))
 
     return {
         "verdict": verdict,
@@ -157,6 +291,8 @@ def get_portfolio_snapshot() -> dict[str, Any]:
         "concentration": concentration,
         "posture": posture_note,
         "total_value": float(total_value),
+        "margin_borrowed_value": float(borrowed_value),
+        "margin_net_equity": float(margin_net_value),
         "priced_assets": [
             {"asset": item["asset"], "usd_value": float(item["usd_value"]), "wrapped": bool(item["wrapped"])}
             for item in priced_assets
@@ -206,6 +342,8 @@ def analyze_portfolio() -> AnalysisBrief:
         "whether the top holding keeps growing relative to the rest of the account",
         "whether stablecoin dry powder changes meaningfully after the next rotation",
     ]
+    if float(snapshot.get("margin_borrowed_value") or 0) > 0:
+        watch_items.insert(0, "whether borrowed margin exposure is being expanded, reduced, or rolled into new positions")
     if delta_watch:
         watch_items = delta_watch[:2] + watch_items
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.analyzers.thresholds import EXIT_RATE_HIGH, EXIT_RATE_MODERATE
+from src.analyzers.thresholds import EXIT_RATE_HIGH, EXIT_RATE_MODERATE, LIQUIDITY_DEEP, LIQUIDITY_MODERATE, LIQUIDITY_THIN
 from src.formatters.heuristics import signal_quality_from_signal
 from src.models.context import SignalContext
 from src.models.schemas import AnalysisBrief, RiskTag
@@ -50,10 +50,16 @@ def _signal_evidence_level(ctx: SignalContext) -> tuple[str, str]:
         score += 1
     if ctx.signal_freshness != "UNKNOWN":
         score += 1
+    if ctx.liquidity > 0:
+        score += 1
+    if ctx.volume_24h > 0:
+        score += 1
+    if ctx.funding_rate != 0 or ctx.long_short_ratio not in {0.0, 1.0}:
+        score += 1
 
-    if score >= 5:
+    if score >= 7:
         return "High", "The signal has enough live context to support a more serious setup read."
-    if score >= 3:
+    if score >= 4:
         return "Medium", "The signal read is usable, but some live timing or confirmation context is still incomplete."
     return "Low", "The signal read is provisional because confirmation context is still early or unmatched."
 
@@ -67,7 +73,7 @@ def _signal_why_it_matters(ctx: SignalContext) -> str:
         base = supporting
     elif ctx.current_price > 0 and ctx.trigger_price > 0:
         base = f"The signal is more useful when you can compare current price (${ctx.current_price:,.2f}) against the trigger zone (${ctx.trigger_price:,.2f}) instead of reacting to noise alone."
-    elif ctx.signal_status in {"watch", "triggered", "bullish"}:
+    elif ctx.signal_status in {"watch", "triggered", "bullish", "active"}:
         base = "This matters because a visible setup can become actionable only if attention turns into durable confirmation instead of fading after the first reaction."
     else:
         base = "A signal only becomes decision-useful when it explains quality, follow-through, and invalidation — not just movement."
@@ -77,6 +83,17 @@ def _signal_why_it_matters(ctx: SignalContext) -> str:
         extras.append(f"{ctx.smart_money_count} smart-money wallets are in the observed setup.")
     if ctx.signal_freshness != "UNKNOWN":
         extras.append(f"Timing reads as {ctx.signal_freshness.lower()} ({ctx.signal_age_hours:.1f}h old).")
+    if ctx.liquidity > 0:
+        extras.append(f"Visible liquidity is about ${ctx.liquidity:,.0f}.")
+    if ctx.smart_money_inflow_usd > 0:
+        extras.append(f"Smart-money inflow is visible at roughly ${ctx.smart_money_inflow_usd:,.0f}.")
+    if ctx.funding_sentiment:
+        futures_bits = [f"Futures positioning reads {ctx.funding_sentiment}"]
+        if ctx.funding_rate != 0:
+            futures_bits.append(f"funding {ctx.funding_rate * 100:+.4f}%")
+        if ctx.long_short_ratio > 0:
+            futures_bits.append(f"long/short {ctx.long_short_ratio:.2f}")
+        extras.append(f"{futures_bits[0]}{' | ' + ' | '.join(futures_bits[1:]) if len(futures_bits) > 1 else ''}.")
     if ctx.exit_rate >= EXIT_RATE_HIGH:
         extras.append(f"Exit rate is already high at {ctx.exit_rate:.0f}%, so the setup may be late.")
     elif ctx.exit_rate >= EXIT_RATE_MODERATE:
@@ -111,6 +128,12 @@ def _signal_watch_next(ctx: SignalContext) -> list[str]:
         watch.append("whether fresh confirmation appears, because the original signal timing is already stale")
     elif ctx.signal_freshness == "AGING":
         watch.append("whether timing refreshes before the setup degrades further")
+    if abs(ctx.funding_rate) > 0.001:
+        watch.append("whether extreme funding cools down before crowded positioning turns into a squeeze")
+    elif ctx.long_short_ratio > 2.5:
+        watch.append("whether crowded longs unwind instead of forcing a sharp flush")
+    elif 0 < ctx.long_short_ratio < 0.5:
+        watch.append("whether crowded shorts get squeezed or keep pressing the setup lower")
     return watch
 
 
@@ -129,6 +152,19 @@ def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
         risk_tags.append(RiskTag(name="Signal Timing", level="High" if ctx.signal_freshness == "STALE" else "Medium" if ctx.signal_freshness == "AGING" else "Low", note=f"{ctx.signal_freshness.title()} | {ctx.signal_age_hours:.1f}h old"))
     if ctx.exit_rate > 0:
         risk_tags.append(RiskTag(name="Exit Pressure", level="High" if ctx.exit_rate >= 70 else "Medium" if ctx.exit_rate >= 40 else "Low", note=f"Exit rate {ctx.exit_rate:.0f}%"))
+    if ctx.liquidity > 0:
+        liquidity_level = "High" if ctx.liquidity >= LIQUIDITY_DEEP else "Medium" if ctx.liquidity >= LIQUIDITY_MODERATE else "Low"
+        risk_tags.append(RiskTag(name="Liquidity", level=liquidity_level, note=f"Visible liquidity {ctx.liquidity:,.0f}"))
+    if ctx.funding_sentiment or ctx.funding_rate != 0 or ctx.long_short_ratio not in {0.0, 1.0}:
+        futures_level = "High" if abs(ctx.funding_rate) > 0.001 or ctx.long_short_ratio > 2.5 or (0 < ctx.long_short_ratio < 0.5) else "Medium"
+        futures_note = []
+        if ctx.funding_sentiment:
+            futures_note.append(ctx.funding_sentiment.title())
+        if ctx.funding_rate != 0:
+            futures_note.append(f"funding {ctx.funding_rate * 100:+.4f}%")
+        if ctx.long_short_ratio > 0:
+            futures_note.append(f"L/S {ctx.long_short_ratio:.2f}")
+        risk_tags.append(RiskTag(name="Futures Sentiment", level=futures_level, note=" | ".join(futures_note)))
 
     if state == "blocked":
         quick_verdict = "Blocked. Audit risk too high."
@@ -171,6 +207,14 @@ def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
             top_risks.append("Signal timing is stale and needs fresh confirmation.")
         elif ctx.signal_freshness == "AGING":
             top_risks.append("Signal timing is aging and can degrade quickly.")
+        if 0 < ctx.liquidity < LIQUIDITY_THIN:
+            top_risks.append("Visible liquidity is still thin, so execution quality may lag the signal headline.")
+        if abs(ctx.funding_rate) > 0.001:
+            top_risks.append("Futures funding is extreme, which raises squeeze and liquidation risk around the setup.")
+        elif ctx.long_short_ratio > 2.5:
+            top_risks.append("Long positioning looks crowded, so upside can still fail into a flush.")
+        elif 0 < ctx.long_short_ratio < 0.5:
+            top_risks.append("Short positioning looks crowded, so timing can get whippy even if the broader setup survives.")
         if ctx.trigger_price > 0 and ctx.current_price > 0 and ctx.current_price < ctx.trigger_price:
             top_risks.append("Price is still below the trigger zone, so confirmation remains incomplete.")
         if not top_risks:

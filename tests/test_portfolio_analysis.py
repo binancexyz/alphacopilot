@@ -10,7 +10,8 @@ class DummyLiveService:
     def get_portfolio_context(self):
         return {
             "_raw": {
-                "assets": {"data": self.responses["account"]["balances"]}
+                "assets": {"data": self.responses["account"]["balances"]},
+                "margin-trading": self.responses.get("margin", {}),
             },
             "prices": self.responses["prices_dict"]
         }
@@ -74,3 +75,36 @@ def test_analyze_portfolio_normalizes_ld_assets():
     assert "ETH" in note
     assert "LDUSDT" not in note
     assert "estimated Spot snapshot" in " ".join((tag.note or "") for tag in brief.risk_tags)
+
+
+def test_analyze_portfolio_includes_margin_exposure():
+    responses = {
+        "account": {
+            "balances": [
+                {"asset": "USDT", "free": "1000", "locked": "0"},
+                {"asset": "BTC", "free": "0.01", "locked": "0"},
+            ]
+        },
+        "margin": {
+            "marginLevel": "2.1",
+            "totalLiabilityOfBtc": "0.0100",
+            "totalNetAssetOfBtc": "0.0200",
+            "userAssets": [
+                {"asset": "BTC", "borrowed": "0.0100", "interest": "0.0001", "netAsset": "0.0200"},
+            ],
+        },
+        "prices_dict": {
+            "BTC": "80000",
+            "USDT": "1",
+        },
+    }
+    old_service = portfolio_analysis.LiveMarketDataService
+    try:
+        portfolio_analysis.LiveMarketDataService = lambda **kwargs: DummyLiveService(responses)
+        brief = portfolio_analysis.analyze_portfolio()
+    finally:
+        portfolio_analysis.LiveMarketDataService = old_service
+
+    assert brief.quick_verdict == "Levered posture. Margin exposure is material."
+    assert any(tag.name == "Margin Exposure" for tag in brief.risk_tags)
+    assert any("Margin borrowed is about" in risk for risk in brief.top_risks)

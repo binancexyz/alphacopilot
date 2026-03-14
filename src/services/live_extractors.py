@@ -1,8 +1,15 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import re
 from typing import Any
 
+from src.analyzers.thresholds import (
+    SIGNAL_AGE_AGING,
+    SIGNAL_AGE_STALE,
+    WALLET_CONCENTRATION_EXTREME,
+    WALLET_CONCENTRATION_HIGH,
+)
 from src.services.binance_skill_mapping import COMMAND_SKILL_MAP
 from src.utils.converters import safe_float as _to_float, safe_int as _to_int
 
@@ -12,29 +19,35 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     market_rank = raw.get("crypto-market-rank", {})
     signal = raw.get("trading-signal", {})
     audit = raw.get("query-token-audit", {})
+    meme_rush = raw.get("meme-rush", {})
 
-    metadata = token_info.get("metadata", {})
-    search_item = _best_token_match(token_info.get("search"), symbol, metadata) or metadata or token_info
-    dynamic = token_info.get("dynamic", {})
-    resolved_symbol = str(search_item.get("symbol") or metadata.get("symbol") or symbol)
-    audit_payload = audit.get("data", audit)
+    token_view = _token_info_view(token_info, symbol)
+    metadata = token_view["metadata"]
+    search_item = token_view["search_item"]
+    dynamic = token_view["dynamic"]
+    resolved_symbol = token_view["symbol"]
+    audit_payload = _normalize_audit_keys(audit.get("data", audit))
     audit_flags, audit_risks = _extract_audit_flags_and_risks(audit_payload)
     market_risks = _extract_market_rank_risks(market_rank, resolved_symbol)
     signal_risks = _extract_signal_risks(signal)
     first_signal = _first_item(signal.get("data")) or signal
     signal_age_hours = _signal_age_hours(first_signal)
-    signal_freshness = _signal_freshness(signal_age_hours)
+    signal_freshness = _signal_freshness(signal_age_hours, has_signal_data=_signal_has_live_data(first_signal))
     audit_gate, blocked_reason = _audit_gate_state(audit_payload, audit_flags)
+    matched_rank = _best_symbol_match((market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []), _normalize_match_key(resolved_symbol))
 
-    resolved_signal_status = signal.get("status") or signal.get("direction") or ("watch" if _first_item(signal.get("data")) else "unmatched")
-    top_holder_concentration_pct = _pick_number(_best_symbol_match((market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []), _normalize_match_key(resolved_symbol)) or {}, "holdersTop10Percent", "top10HoldersPercentage")
+    resolved_signal_status = _signal_status(signal, first_signal)
+    top_holder_concentration_pct = _pick_number(matched_rank or {}, "holdersTop10Percent", "top10HoldersPercentage")
 
     context = {
         "symbol": resolved_symbol,
-        "display_name": search_item.get("name") or metadata.get("name") or search_item.get("symbol") or symbol,
-        "price": _pick_number(dynamic, "price") or _pick_number(search_item, "price"),
-        "liquidity": _pick_number(dynamic, "liquidity") or _pick_number(search_item, "liquidity"),
-        "holders": _pick_int(dynamic, "holders", "kycHolderCount") or _pick_int(search_item, "holders"),
+        "display_name": token_view["display_name"],
+        "price": token_view["price"],
+        "liquidity": token_view["liquidity"],
+        "holders": token_view["holders"],
+        "volume_24h": token_view["volume_24h"],
+        "pct_change_24h": token_view["pct_change_24h"],
+        "market_cap": token_view["market_cap"],
         "top_holder_concentration_pct": top_holder_concentration_pct,
         "market_rank_context": _build_market_rank_context(market_rank, resolved_symbol),
         "signal_status": resolved_signal_status,
@@ -42,6 +55,8 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         "audit_flags": audit_flags,
         "major_risks": _merge_risks(signal_risks, audit_risks, market_risks),
         "smart_money_count": _pick_int(first_signal, "smartMoneyCount"),
+        "smart_money_holders": token_view["smart_money_holders"],
+        "smart_money_holding_pct": token_view["smart_money_holding_pct"],
         "exit_rate": _pick_number(first_signal, "exitRate", "exit_rate"),
         "signal_age_hours": signal_age_hours,
         "signal_freshness": signal_freshness,
@@ -80,15 +95,10 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         context["smart_money_holding_pct"] = _pick_number(dynamic, "smartMoneyHoldingPercent")
 
     # --- Smart money inflow match ---
-    smart_money_inflow = market_rank.get("smart_money_inflow", []) or []
-    if smart_money_inflow:
-        target = _normalize_match_key(resolved_symbol)
-        for item in smart_money_inflow:
-            item_symbol = _normalize_match_key(str(item.get("tokenName") or item.get("symbol") or ""))
-            if item_symbol and item_symbol == target:
-                context["smart_money_inflow_usd"] = _pick_number(item, "inflow")
-                context["smart_money_inflow_traders"] = _pick_int(item, "traders")
-                break
+    inflow_match = _matched_smart_money_inflow(market_rank, resolved_symbol)
+    if inflow_match:
+        context["smart_money_inflow_usd"] = _pick_number(inflow_match, "inflow")
+        context["smart_money_inflow_traders"] = _pick_int(inflow_match, "traders")
     context.update(_bridge_runtime_context(raw, "token"))
 
     spot = raw.get("spot", {})
@@ -122,12 +132,7 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     token_payload = raw.get("query-token-info", {})
     kline = token_payload.get("kline", [])
     if kline:
-        context["kline_candles"] = len(kline)
-        if len(kline) > 0:
-            latest = kline[-1]
-            if len(latest) >= 5:
-                context["kline_latest_close"] = _to_float(latest[3])
-                context["kline_latest_volume"] = _to_float(latest[4])
+        context.update(_token_kline_context(kline))
 
     alpha_data = raw.get("alpha", {})
     if alpha_data:
@@ -146,6 +151,13 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     futures = raw.get("derivatives-trading-usds-futures", {})
     if futures:
         _enrich_futures_sentiment(context, futures)
+
+    meme_snapshot = _token_meme_snapshot(meme_rush, token_view, resolved_symbol)
+    if meme_snapshot:
+        context.update(meme_snapshot)
+
+    if _token_has_top_trader_interest(market_rank, resolved_symbol):
+        context["top_trader_interest"] = True
 
     return context
 
@@ -176,6 +188,8 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
             "major_risks": major_risks,
             "style_profile": str(address_info.get("style_profile", "")),
             "exposure_breakdown": [str(x) for x in address_info.get("exposure_breakdown", [])],
+            "risky_holdings_count": _to_int(address_info.get("risky_holdings_count")),
+            "holdings_audit_notes": [str(x) for x in address_info.get("holdings_audit_notes", [])],
         }
         context.update(_bridge_runtime_context(raw, "wallet"))
         return context
@@ -223,7 +237,7 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
             exposure_breakdown.append(f"{name} {(value / portfolio_value) * 100:.1f}%")
 
     risks: list[str] = []
-    if top_concentration_pct >= 60:
+    if top_concentration_pct >= WALLET_CONCENTRATION_HIGH:
         risks.append("Wallet is highly concentrated in one token or theme.")
     if portfolio_value > 0 and len(exposure_weights) <= 1 and len(items) >= 3:
         risks.append("Wallet diversification is weaker than the holding count first suggests because exposures cluster into one theme.")
@@ -236,15 +250,19 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
         style_bits.append(f"Narrative bias: {', '.join(notable_exposures[:2])}")
     if style_profile:
         style_bits.append(f"Style profile: {style_profile}")
-    if top_concentration_pct >= 75:
+    if top_concentration_pct >= WALLET_CONCENTRATION_EXTREME:
         style_bits.append("Risk posture: concentrated")
-    elif len(items) >= 5 and len(exposure_weights) >= 2:
+    elif len(items) >= 5 and len(exposure_weights) >= 2 and top_concentration_pct < WALLET_CONCENTRATION_HIGH:
         style_bits.append("Risk posture: diversified")
     else:
         style_bits.append("Risk posture: mixed")
     style_read = " | ".join(style_bits)
 
-    if portfolio_value >= 100_000 and top_concentration_pct < 70 and len(items) >= 5 and len(exposure_weights) >= 2:
+    risky_holdings_count, holdings_audit_notes = _wallet_audit_overlay(raw, [item["symbol"] for item in holdings[:5]])
+    if risky_holdings_count > 0:
+        risks.extend(holdings_audit_notes[:2])
+
+    if portfolio_value >= 100_000 and top_concentration_pct < WALLET_CONCENTRATION_HIGH and len(items) >= 5 and len(exposure_weights) >= 2 and risky_holdings_count == 0:
         follow_verdict = "Track"
     elif portfolio_value > 0 or len(items) > 0:
         follow_verdict = "Unknown"
@@ -265,6 +283,8 @@ def extract_wallet_context(raw: dict[str, Any], address: str) -> dict[str, Any]:
         "style_read": style_read,
         "style_profile": style_profile,
         "exposure_breakdown": exposure_breakdown,
+        "risky_holdings_count": risky_holdings_count,
+        "holdings_audit_notes": holdings_audit_notes,
     }
     context.update(_bridge_runtime_context(raw, "wallet"))
     return context
@@ -360,36 +380,54 @@ def extract_watch_today_context(raw: dict[str, Any]) -> dict[str, Any]:
 
 
 def extract_signal_context(raw: dict[str, Any], token: str) -> dict[str, Any]:
+    token_info = raw.get("query-token-info", {})
+    market_rank = raw.get("crypto-market-rank", {})
     signal = raw.get("trading-signal", {})
+    futures = raw.get("derivatives-trading-usds-futures", {})
     first_signal = _first_item(signal.get("data")) or signal
     audit = raw.get("query-token-audit", {})
-    audit_payload = audit.get("data", audit)
+    audit_payload = _normalize_audit_keys(audit.get("data", audit))
     audit_flags, audit_risks = _extract_audit_flags_and_risks(audit_payload)
+    token_view = _token_info_view(token_info, token)
+    resolved_symbol = token_view["symbol"]
+    futures_snapshot = _futures_snapshot(futures)
+    inflow_match = _matched_smart_money_inflow(market_rank, resolved_symbol)
 
     direction = str(first_signal.get("direction", "")).lower()
-    status = first_signal.get("status") or ("bullish" if direction == "buy" else "bearish" if direction == "sell" else "unknown")
+    status = _signal_status(signal, first_signal)
     if first_signal == signal and not signal.get("data"):
         status = "unmatched"
     supporting_context = _build_signal_context(signal)
     signal_age_hours = _signal_age_hours(first_signal)
-    signal_freshness = _signal_freshness(signal_age_hours)
+    signal_freshness = _signal_freshness(signal_age_hours, has_signal_data=_signal_has_live_data(first_signal))
     audit_gate, blocked_reason = _audit_gate_state(audit_payload, audit_flags)
 
     context = {
-        "token": first_signal.get("ticker") or token,
+        "token": first_signal.get("ticker") or resolved_symbol or token,
         "signal_status": status,
         "trigger_price": _pick_number(first_signal, "alertPrice", "trigger_price"),
-        "current_price": _pick_number(first_signal, "currentPrice", "current_price"),
+        "current_price": _pick_number(first_signal, "currentPrice", "current_price") or token_view["price"],
         "max_gain": _pick_number(first_signal, "maxGain", "max_gain"),
         "exit_rate": _pick_number(first_signal, "exitRate", "exit_rate"),
+        "liquidity": token_view["liquidity"],
+        "holders": token_view["holders"],
+        "volume_24h": token_view["volume_24h"],
+        "pct_change_24h": token_view["pct_change_24h"],
+        "market_cap": token_view["market_cap"],
         "audit_flags": audit_flags,
         "supporting_context": supporting_context,
-        "major_risks": _merge_risks(_extract_signal_risks(signal), audit_risks),
+        "major_risks": _merge_risks(_extract_signal_risks(signal), _extract_market_rank_risks(market_rank, resolved_symbol), audit_risks, futures_snapshot.get("major_risks", [])),
         "smart_money_count": _pick_int(first_signal, "smartMoneyCount"),
+        "smart_money_holders": token_view["smart_money_holders"],
+        "smart_money_holding_pct": token_view["smart_money_holding_pct"],
+        "smart_money_inflow_usd": _pick_number(inflow_match or {}, "inflow"),
         "signal_age_hours": signal_age_hours,
         "signal_freshness": signal_freshness,
         "audit_gate": audit_gate,
         "blocked_reason": blocked_reason,
+        "funding_rate": _to_float(futures_snapshot.get("funding_rate")),
+        "long_short_ratio": _to_float(futures_snapshot.get("long_short_ratio")),
+        "funding_sentiment": str(futures_snapshot.get("funding_sentiment", "")),
     }
     context.update(_bridge_runtime_context(raw, "signal"))
     return context
@@ -397,18 +435,22 @@ def extract_signal_context(raw: dict[str, Any], token: str) -> dict[str, Any]:
 
 def extract_audit_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     token_info = raw.get("query-token-info", {})
+    signal = raw.get("trading-signal", {})
     audit = raw.get("query-token-audit", {})
-    audit_payload = audit.get("data", audit)
-    metadata = token_info.get("metadata", {})
-    search_item = _best_token_match(token_info.get("search"), symbol, metadata) or metadata or token_info
-    display_symbol = str(search_item.get("symbol") or metadata.get("symbol") or symbol)
-    display_name = str(search_item.get("name") or metadata.get("name") or display_symbol)
+    audit_payload = _normalize_audit_keys(audit.get("data", audit))
+    token_view = _token_info_view(token_info, symbol)
+    display_symbol = str(token_view["symbol"] or symbol)
+    display_name = str(token_view["display_name"] or display_symbol)
     audit_flags, audit_risks = _extract_audit_flags_and_risks(audit_payload)
     audit_gate, blocked_reason = _audit_gate_state(audit_payload, audit_flags)
     extra = audit_payload.get("extraInfo") or {}
     buy_tax = _to_float(extra.get("buyTax"))
     sell_tax = _to_float(extra.get("sellTax"))
     risk_level = str(audit_payload.get("riskLevelEnum") or ("HIGH" if audit_gate == "BLOCK" else "MEDIUM" if audit_gate == "WARN" else "LOW")).title()
+    first_signal = _first_item(signal.get("data")) or signal
+    signal_status = _signal_status(signal, first_signal)
+    signal_age_hours = _signal_age_hours(first_signal)
+    signal_freshness = _signal_freshness(signal_age_hours, has_signal_data=_signal_has_live_data(first_signal))
     summary_bits: list[str] = []
     if audit_payload.get("hasResult") and audit_payload.get("isSupported"):
         summary_bits.append(f"Risk level {audit_payload.get('riskLevel', 0)} ({risk_level.upper()})")
@@ -428,6 +470,11 @@ def extract_audit_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         "audit_summary": "; ".join(summary_bits),
         "has_result": bool(audit_payload.get("hasResult")),
         "is_supported": bool(audit_payload.get("isSupported")),
+        "liquidity": token_view["liquidity"],
+        "signal_status": signal_status,
+        "smart_money_count": _pick_int(first_signal, "smartMoneyCount"),
+        "signal_age_hours": signal_age_hours,
+        "signal_freshness": signal_freshness,
     }
     context.update(_bridge_runtime_context(raw, "audit"))
     return context
@@ -479,7 +526,7 @@ def extract_meme_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         lifecycle = "finalizing"
     elif status in {"timeout", "exitrate", "exited"} or exit_rate >= 70:
         lifecycle = "late"
-    elif status in {"valid", "watch", "bullish", "triggered"} or token.get("smart_money_count", 0) > 0:
+    elif status in {"valid", "watch", "bullish", "triggered", "active"} or token.get("smart_money_count", 0) > 0:
         lifecycle = "active"
     elif meme_like or meme_score > 0:
         lifecycle = "attention"
@@ -529,7 +576,7 @@ def extract_alpha_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     search_item = _best_token_match(token_info.get("search"), symbol, metadata) or metadata or token_info
     resolved_symbol = str(search_item.get("symbol") or metadata.get("symbol") or symbol)
     display_name = str(search_item.get("name") or metadata.get("name") or resolved_symbol)
-    audit_payload = audit.get("data", audit)
+    audit_payload = _normalize_audit_keys(audit.get("data", audit))
     audit_flags, audit_risks = _extract_audit_flags_and_risks(audit_payload)
     audit_gate, blocked_reason = _audit_gate_state(audit_payload, audit_flags)
 
@@ -562,16 +609,68 @@ def extract_alpha_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
 def extract_futures_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     futures = raw.get("derivatives-trading-usds-futures", {})
     token_info = raw.get("query-token-info", {})
-    metadata = token_info.get("metadata", {})
-    search_item = _best_token_match(token_info.get("search"), symbol, metadata) or metadata or token_info
-    resolved_symbol = str(search_item.get("symbol") or metadata.get("symbol") or symbol)
+    token_view = _token_info_view(token_info, symbol)
+    resolved_symbol = token_view["symbol"]
+    snapshot = _futures_snapshot(futures)
 
+    context: dict[str, Any] = {
+        "symbol": resolved_symbol,
+        "funding_rate": _to_float(snapshot.get("funding_rate")),
+        "funding_rate_sentiment": str(snapshot.get("funding_sentiment", "neutral")),
+        "open_interest": _to_float(snapshot.get("open_interest")),
+        "long_short_ratio": _to_float(snapshot.get("long_short_ratio")),
+        "taker_buy_sell_ratio": _to_float(snapshot.get("taker_buy_sell_ratio")),
+        "taker_buy_volume_1d": _to_float(snapshot.get("taker_buy_volume_1d")),
+        "taker_sell_volume_1d": _to_float(snapshot.get("taker_sell_volume_1d")),
+        "top_trader_long_short_ratio": _to_float(snapshot.get("top_trader_long_short_ratio")),
+        "mark_price": _to_float(snapshot.get("mark_price")),
+        "index_price": _to_float(snapshot.get("index_price")),
+        "major_risks": [str(x) for x in snapshot.get("major_risks", [])],
+    }
+    if snapshot.get("ticker_volume_24h"):
+        context["futures_ticker_volume_24h"] = _to_float(snapshot.get("ticker_volume_24h"))
+    if snapshot.get("price_change_pct_24h"):
+        context["futures_price_change_pct_24h"] = _to_float(snapshot.get("price_change_pct_24h"))
+    if snapshot.get("kline_candles"):
+        context["futures_kline_candles"] = _to_int(snapshot.get("kline_candles"))
+        context["futures_kline_latest_close"] = _to_float(snapshot.get("kline_latest_close"))
+    context.update(_bridge_runtime_context(raw, "futures"))
+    return context
+
+
+def _enrich_futures_sentiment(context: dict[str, Any], futures: dict[str, Any]) -> None:
+    snapshot = _futures_snapshot(futures)
+    context["futures_funding_rate"] = _to_float(snapshot.get("funding_rate"))
+    context["futures_open_interest"] = _to_float(snapshot.get("open_interest"))
+    context["futures_long_short_ratio"] = _to_float(snapshot.get("long_short_ratio"))
+    context["futures_taker_buy_sell_ratio"] = _to_float(snapshot.get("taker_buy_sell_ratio"))
+    context["futures_taker_buy_volume_1d"] = _to_float(snapshot.get("taker_buy_volume_1d"))
+    context["futures_taker_sell_volume_1d"] = _to_float(snapshot.get("taker_sell_volume_1d"))
+    context["futures_top_trader_long_short_ratio"] = _to_float(snapshot.get("top_trader_long_short_ratio"))
+    context["futures_mark_price"] = _to_float(snapshot.get("mark_price"))
+    if snapshot.get("ticker_volume_24h"):
+        context["futures_ticker_volume_24h"] = _to_float(snapshot.get("ticker_volume_24h"))
+    if snapshot.get("price_change_pct_24h"):
+        context["futures_price_change_pct_24h"] = _to_float(snapshot.get("price_change_pct_24h"))
+    if snapshot.get("kline_candles"):
+        context["futures_kline_candles"] = _to_int(snapshot.get("kline_candles"))
+        context["futures_kline_latest_close"] = _to_float(snapshot.get("kline_latest_close"))
+    context["futures_sentiment"] = str(snapshot.get("funding_sentiment", "neutral"))
+
+    risks = list(context.get("major_risks", []))
+    risks.extend([str(x) for x in snapshot.get("major_risks", [])])
+    context["major_risks"] = _unique(risks)
+
+
+def _futures_snapshot(futures: dict[str, Any]) -> dict[str, Any]:
     mark = futures.get("mark_price", {})
     funding = futures.get("funding_rate", {})
     oi = futures.get("open_interest", {})
     ls = futures.get("long_short_ratio", {})
     taker = futures.get("taker_volume", {})
     top_ls = futures.get("top_trader_ls", {})
+    ticker = futures.get("ticker", {})
+    kline = futures.get("kline", {}).get("data", []) if isinstance(futures.get("kline", {}), dict) else futures.get("kline", [])
 
     rate_items = funding.get("data", []) if isinstance(funding.get("data"), list) else []
     last_rate = float(rate_items[-1].get("fundingRate", 0)) if rate_items else 0.0
@@ -598,13 +697,12 @@ def extract_futures_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         risks.append(f"Funding rate is extreme at {last_rate * 100:+.4f}% — liquidation cascades possible.")
     if last_ls_ratio > 2.5:
         risks.append(f"Long/short ratio is {last_ls_ratio:.2f} — crowded longs risk.")
-    elif last_ls_ratio < 0.5:
+    elif 0 < last_ls_ratio < 0.5:
         risks.append(f"Long/short ratio is {last_ls_ratio:.2f} — crowded shorts risk.")
 
-    context: dict[str, Any] = {
-        "symbol": resolved_symbol,
+    snapshot = {
         "funding_rate": last_rate,
-        "funding_rate_sentiment": funding_sentiment,
+        "funding_sentiment": funding_sentiment,
         "open_interest": _to_float(oi.get("openInterest")),
         "long_short_ratio": last_ls_ratio,
         "taker_buy_sell_ratio": last_taker_ratio,
@@ -615,62 +713,268 @@ def extract_futures_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         "index_price": _to_float(mark.get("indexPrice")),
         "major_risks": risks,
     }
-    context.update(_bridge_runtime_context(raw, "futures"))
+
+    if ticker:
+        snapshot["ticker_volume_24h"] = _pick_number(ticker, "volume", "quoteVolume")
+        snapshot["price_change_pct_24h"] = _pick_number(ticker, "priceChangePercent")
+
+    if kline:
+        snapshot["kline_candles"] = len(kline)
+        if len(kline[-1]) >= 5:
+            snapshot["kline_latest_close"] = _to_float(kline[-1][4])
+
+    return snapshot
+
+
+def _token_info_view(token_info: dict[str, Any], symbol: str) -> dict[str, Any]:
+    metadata = token_info.get("metadata", {})
+    search_item = _best_token_match(token_info.get("search"), symbol, metadata) or metadata or token_info
+    dynamic = token_info.get("dynamic", {})
+    resolved_symbol = str(search_item.get("symbol") or metadata.get("symbol") or token_info.get("symbol") or symbol)
+    return {
+        "metadata": metadata,
+        "search_item": search_item,
+        "dynamic": dynamic,
+        "symbol": resolved_symbol,
+        "display_name": str(search_item.get("name") or metadata.get("name") or token_info.get("name") or resolved_symbol),
+        "price": _pick_number(dynamic, "price") or _pick_number(search_item, "price"),
+        "liquidity": _pick_number(dynamic, "liquidity") or _pick_number(search_item, "liquidity"),
+        "holders": _pick_int(dynamic, "holders", "kycHolderCount") or _pick_int(search_item, "holders"),
+        "volume_24h": _pick_number(dynamic, "volume24h") or _pick_number(search_item, "volume24h", "volume_24h"),
+        "pct_change_24h": _pick_number(dynamic, "percentChange24h", "pctChange24h") or _pick_number(search_item, "percentChange24h", "pct_change_24h"),
+        "market_cap": _pick_number(dynamic, "marketCap", "market_cap") or _pick_number(search_item, "marketCap", "market_cap"),
+        "smart_money_holders": _pick_int(dynamic, "smartMoneyHolders") or _pick_int(search_item, "smartMoneyHolders", "smart_money_holders"),
+        "smart_money_holding_pct": _pick_number(dynamic, "smartMoneyHoldingPercent") or _pick_number(search_item, "smartMoneyHoldingPercent", "smart_money_holding_pct"),
+    }
+
+
+def _matched_smart_money_inflow(market_rank: dict[str, Any], symbol: str) -> dict[str, Any] | None:
+    inflow_items = market_rank.get("smart_money_inflow", []) or []
+    target = _normalize_match_key(symbol)
+    for item in inflow_items:
+        item_symbol = _normalize_match_key(str(item.get("tokenName") or item.get("symbol") or ""))
+        if item_symbol and item_symbol == target:
+            return item
+    return None
+
+
+def _token_kline_context(kline: list[Any]) -> dict[str, Any]:
+    context: dict[str, Any] = {"kline_candles": len(kline)}
+    latest = kline[-1] if kline else []
+    if isinstance(latest, list) and len(latest) >= 5:
+        context["kline_latest_close"] = _to_float(latest[3])
+        context["kline_latest_volume"] = _to_float(latest[4])
+    trend, above_ma20 = _compute_kline_trend(kline)
+    if trend:
+        context["kline_trend"] = trend
+    if kline:
+        context["kline_above_ma20"] = above_ma20
     return context
 
 
-def _enrich_futures_sentiment(context: dict[str, Any], futures: dict[str, Any]) -> None:
-    mark = futures.get("mark_price", {})
-    funding = futures.get("funding_rate", {})
-    oi = futures.get("open_interest", {})
-    ls = futures.get("long_short_ratio", {})
-    taker = futures.get("taker_volume", {})
-    top_ls = futures.get("top_trader_ls", {})
-    ticker = futures.get("ticker", {})
-    kline = futures.get("kline", {}).get("data", []) if isinstance(futures.get("kline", {}), dict) else futures.get("kline", [])
-
-    rate_items = funding.get("data", []) if isinstance(funding.get("data"), list) else []
-    last_rate = float(rate_items[-1].get("fundingRate", 0)) if rate_items else 0.0
-    long_short_items = ls.get("data", []) if isinstance(ls.get("data"), list) else []
-    last_ls_ratio = float(long_short_items[-1].get("longShortRatio", 1.0)) if long_short_items else 1.0
-
-    taker_items = taker.get("data", []) if isinstance(taker.get("data"), list) else []
-    last_taker_ratio = float(taker_items[-1].get("buySellRatio", 1.0)) if taker_items else 1.0
-    last_taker_buy = float(taker_items[-1].get("buyVol", 0.0)) if taker_items else 0.0
-    last_taker_sell = float(taker_items[-1].get("sellVol", 0.0)) if taker_items else 0.0
-
-    top_ls_items = top_ls.get("data", []) if isinstance(top_ls.get("data"), list) else []
-    last_top_ls_ratio = float(top_ls_items[-1].get("longShortRatio", 1.0)) if top_ls_items else 1.0
-
-    context["futures_funding_rate"] = last_rate
-    context["futures_open_interest"] = _to_float(oi.get("openInterest"))
-    context["futures_long_short_ratio"] = last_ls_ratio
-    context["futures_taker_buy_sell_ratio"] = last_taker_ratio
-    context["futures_taker_buy_volume_1d"] = last_taker_buy
-    context["futures_taker_sell_volume_1d"] = last_taker_sell
-    context["futures_top_trader_long_short_ratio"] = last_top_ls_ratio
-    context["futures_mark_price"] = _to_float(mark.get("markPrice"))
-    
-    if ticker:
-        context["futures_ticker_volume_24h"] = _pick_number(ticker, "volume", "quoteVolume")
-        context["futures_price_change_pct_24h"] = _pick_number(ticker, "priceChangePercent")
-        
-    if kline:
-        context["futures_kline_candles"] = len(kline)
-        if len(kline) > 0 and len(kline[-1]) >= 5:
-            context["futures_kline_latest_close"] = _to_float(kline[-1][4])
-
-    if last_rate < -0.0001:
-        context["futures_sentiment"] = "bullish"
-    elif last_rate > 0.0003:
-        context["futures_sentiment"] = "bearish"
+def _compute_kline_trend(candles: list[Any]) -> tuple[str, bool]:
+    closes = [_to_float(item[3]) for item in candles if isinstance(item, list) and len(item) >= 4]
+    if not closes:
+        return "", False
+    ma_window = closes[-20:] if len(closes) >= 20 else closes
+    ma20 = sum(ma_window) / len(ma_window) if ma_window else 0.0
+    recent = closes[-5:] if len(closes) >= 5 else closes
+    first_close = recent[0] if recent else 0.0
+    last_close = recent[-1] if recent else 0.0
+    if first_close > 0 and last_close >= first_close * 1.01:
+        trend = "rising"
+    elif first_close > 0 and last_close <= first_close * 0.99:
+        trend = "falling"
     else:
-        context["futures_sentiment"] = "neutral"
+        trend = "flat"
+    return trend, bool(ma20 and closes[-1] >= ma20)
 
-    risks = list(context.get("major_risks", []))
-    if abs(last_rate) > 0.001:
-        risks.append(f"Futures funding rate extreme ({last_rate * 100:+.4f}%) — liquidation risk.")
-    context["major_risks"] = _unique(risks)
+
+def _token_meme_snapshot(meme_rush: dict[str, Any], token_view: dict[str, Any], symbol: str) -> dict[str, Any]:
+    items = meme_rush.get("tokens", []) or meme_rush.get("data", []) or []
+    matched = _best_symbol_match(items, _normalize_match_key(symbol)) if items else None
+    search_item = token_view["search_item"]
+    metadata = token_view["metadata"]
+
+    tag_values: list[str] = []
+    for source in (search_item.get("tokenTag") or {}, metadata.get("tokenTag") or {}):
+        if isinstance(source, dict):
+            tag_values.extend(str(key).lower() for key in source.keys())
+
+    symbol_upper = str(symbol).upper()
+    known_meme_symbols = {"DOGE", "SHIB", "PEPE", "BONK", "FLOKI", "WIF"}
+    is_meme_candidate = bool(matched) or any(tag in {"meme", "community", "dog", "frog"} for tag in tag_values) or symbol_upper in known_meme_symbols
+    if not is_meme_candidate:
+        return {}
+
+    progress = _pick_number(matched or {}, "progress")
+    migrate_status = _to_int((matched or {}).get("migrateStatus"))
+    if migrate_status == 1:
+        lifecycle = "migrated"
+    elif progress >= 90:
+        lifecycle = "finalizing"
+    elif progress > 0:
+        lifecycle = "active"
+    else:
+        lifecycle = "attention"
+
+    return {
+        "meme_lifecycle": lifecycle,
+        "meme_bonded_progress": progress,
+        "is_meme_candidate": True,
+    }
+
+
+def _token_has_top_trader_interest(market_rank: dict[str, Any], symbol: str) -> bool:
+    target = _normalize_match_key(symbol)
+    for trader in market_rank.get("top_traders", []) or []:
+        for token in trader.get("topEarningTokens", []) or []:
+            if _normalize_match_key(token.get("tokenSymbol")) == target:
+                return True
+    return False
+
+
+def _wallet_audit_overlay(raw: dict[str, Any], symbols: list[str]) -> tuple[int, list[str]]:
+    audit_payload = raw.get("query-token-audit")
+    if not audit_payload or not symbols:
+        return 0, []
+
+    requested_symbols = [_normalize_match_key(symbol) for symbol in symbols if _normalize_match_key(symbol)]
+    entries = list(_iter_audit_entries(audit_payload))
+    if not entries:
+        return 0, []
+
+    notes: list[str] = []
+    risky_count = 0
+    for symbol in requested_symbols:
+        matched_entry = next((entry for entry in entries if _normalize_match_key(_audit_entry_symbol(entry)) == symbol), None)
+        if matched_entry is None and len(entries) == 1 and len(requested_symbols) == 1:
+            matched_entry = entries[0]
+        if matched_entry is None:
+            continue
+        normalized = _normalize_audit_keys(matched_entry.get("data", matched_entry))
+        flags, risks = _extract_audit_flags_and_risks(normalized)
+        gate, blocked_reason = _audit_gate_state(normalized, flags)
+        if gate == "ALLOW" and not flags:
+            continue
+        risky_count += 1
+        display_symbol = _audit_entry_symbol(matched_entry) or symbol
+        note = blocked_reason or (flags[0] if flags else risks[0] if risks else "Audit caution visible.")
+        notes.append(f"{display_symbol} — {note}")
+    return risky_count, _unique(notes)
+
+
+def _iter_audit_entries(payload: Any):
+    if isinstance(payload, list):
+        for entry in payload:
+            if isinstance(entry, dict):
+                yield entry
+        return
+    if not isinstance(payload, dict):
+        return
+
+    if isinstance(payload.get("data"), list):
+        for entry in payload.get("data", []):
+            if isinstance(entry, dict):
+                yield entry
+        return
+
+    if isinstance(payload.get("tokens"), list):
+        for entry in payload.get("tokens", []):
+            if isinstance(entry, dict):
+                yield entry
+        return
+
+    audit_keys = {"hasResult", "has_result", "isSupported", "is_supported", "flags", "risks", "riskItems", "risk_items"}
+    if any(key in payload for key in audit_keys):
+        yield payload
+        return
+
+    for key, value in payload.items():
+        if isinstance(value, dict):
+            entry = dict(value)
+            entry.setdefault("symbol", key)
+            yield entry
+
+
+def _audit_entry_symbol(entry: dict[str, Any]) -> str:
+    nested = entry.get("data", {}) if isinstance(entry.get("data"), dict) else {}
+    return str(
+        entry.get("symbol")
+        or entry.get("ticker")
+        or entry.get("tokenSymbol")
+        or nested.get("symbol")
+        or nested.get("ticker")
+        or nested.get("tokenSymbol")
+        or ""
+    )
+
+
+def _normalize_audit_keys(audit: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(audit, dict):
+        return {}
+    normalized = dict(audit)
+    aliases = {
+        "has_result": "hasResult",
+        "is_supported": "isSupported",
+        "risk_level": "riskLevel",
+        "risk_level_enum": "riskLevelEnum",
+        "extra_info": "extraInfo",
+        "risk_items": "riskItems",
+        "is_hidden": "isHidden",
+    }
+    for source, target in aliases.items():
+        if source in normalized and target not in normalized:
+            normalized[target] = normalized[source]
+    return normalized
+
+
+def _signal_status(signal: dict[str, Any], first_signal: dict[str, Any]) -> str:
+    status = str(first_signal.get("status") or signal.get("status") or "").strip().lower()
+    if status:
+        return status
+    direction = str(first_signal.get("direction") or signal.get("direction") or "").strip().lower()
+    if direction == "buy":
+        return "bullish"
+    if direction == "sell":
+        return "bearish"
+    return "watch" if _signal_has_live_data(first_signal) else "unmatched"
+
+
+def _signal_has_live_data(signal_item: dict[str, Any]) -> bool:
+    if not isinstance(signal_item, dict):
+        return False
+    return any([
+        bool(str(signal_item.get("direction") or "").strip()),
+        bool(str(signal_item.get("status") or "").strip()),
+        _pick_int(signal_item, "smartMoneyCount") > 0,
+        _pick_number(signal_item, "alertPrice", "trigger_price") > 0,
+        _pick_number(signal_item, "currentPrice", "current_price") > 0,
+    ])
+
+
+def _coerce_timestamp_ms(value: Any) -> float:
+    if value in (None, ""):
+        return 0.0
+    if isinstance(value, (int, float)):
+        numeric = float(value)
+    else:
+        text = str(value).strip()
+        try:
+            numeric = float(text)
+        except ValueError:
+            try:
+                parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+            except ValueError:
+                return 0.0
+            return parsed.astimezone(timezone.utc).timestamp() * 1000
+    if numeric <= 0:
+        return 0.0
+    if numeric >= 1_000_000_000_000:
+        return numeric
+    if numeric >= 1_000_000_000:
+        return numeric * 1000
+    return 0.0
 
 
 def _bridge_meta(raw: dict[str, Any]) -> dict[str, Any]:
@@ -702,6 +1006,7 @@ def _bridge_runtime_context(raw: dict[str, Any], command: str) -> dict[str, str]
 
 
 def _extract_audit_flags_and_risks(audit: dict[str, Any]) -> tuple[list[str], list[str]]:
+    audit = _normalize_audit_keys(audit)
     if not audit:
         return [], []
 
@@ -778,7 +1083,7 @@ def _extract_signal_risks(signal: dict[str, Any]) -> list[str]:
     risks = list(signal.get("risks", []) or [])
     first = _first_item(signal.get("data")) or signal
     exit_rate = _pick_number(first, "exitRate", "exit_rate")
-    status = str(first.get("status", ""))
+    status = str(first.get("status", "")).lower()
     age_hours = _signal_age_hours(first)
     if status == "timeout":
         risks.append("Signal timed out and may no longer be actionable.")
@@ -786,9 +1091,9 @@ def _extract_signal_risks(signal: dict[str, Any]) -> list[str]:
         risks.append("Smart money exit rate is high, which may indicate the move is aging.")
     elif exit_rate >= 40:
         risks.append("Smart money exit rate is already mixed, so follow-through may be less clean.")
-    if age_hours >= 8:
+    if age_hours >= SIGNAL_AGE_STALE:
         risks.append("Signal is stale enough that timing quality may already be degraded.")
-    elif age_hours >= 2:
+    elif age_hours >= SIGNAL_AGE_AGING:
         risks.append("Signal is aging and needs fresher confirmation.")
     return _unique(risks)
 
@@ -836,7 +1141,7 @@ def _build_signal_context(signal: dict[str, Any]) -> str:
     platform = first.get("launchPlatform") or ""
     count = _to_int(first.get("smartMoneyCount"))
     status = first.get("status") or "unknown"
-    freshness = _signal_freshness(_signal_age_hours(first))
+    freshness = _signal_freshness(_signal_age_hours(first), has_signal_data=_signal_has_live_data(first))
     parts = [f"{ticker} has a {direction or 'smart-money'} signal"]
     if count:
         parts.append(f"from {count} smart-money addresses")
@@ -867,7 +1172,7 @@ def _wallet_exposure_bucket(symbol: str) -> str:
 
 
 def _wallet_style_profile(top_concentration_pct: float, holdings_count: int, exposure_weights: dict[str, float], change_24h: float) -> str:
-    if top_concentration_pct >= 75:
+    if top_concentration_pct >= WALLET_CONCENTRATION_EXTREME:
         base = "high-conviction concentrated"
     elif holdings_count >= 8 and len(exposure_weights) >= 3:
         base = "multi-theme diversified"
@@ -945,25 +1250,34 @@ def _signal_age_hours(signal_item: dict[str, Any]) -> float:
     try:
         ms = float(raw or 0)
     except (TypeError, ValueError):
-        return 0.0
+        ms = 0.0
     if ms <= 0:
+        for key in ("createdAt", "createTime", "createdTime", "signalTime", "timestamp"):
+            timestamp_ms = _coerce_timestamp_ms(signal_item.get(key))
+            if timestamp_ms > 0:
+                age_ms = (datetime.now(timezone.utc).timestamp() * 1000) - timestamp_ms
+                if age_ms > 0:
+                    return age_ms / 3_600_000
         return 0.0
     return ms / 3_600_000
 
 
 
-def _signal_freshness(age_hours: float) -> str:
+def _signal_freshness(age_hours: float, has_signal_data: bool = False) -> str:
     if age_hours <= 0:
+        if has_signal_data:
+            return "FRESH"
         return "UNKNOWN"
-    if age_hours < 2:
+    if age_hours < SIGNAL_AGE_AGING:
         return "FRESH"
-    if age_hours < 8:
+    if age_hours < SIGNAL_AGE_STALE:
         return "AGING"
     return "STALE"
 
 
 
 def _audit_gate_state(audit: dict[str, Any], audit_flags: list[str]) -> tuple[str, str]:
+    audit = _normalize_audit_keys(audit)
     if not audit or not audit.get("hasResult") or not audit.get("isSupported"):
         return "WARN", "Audit coverage is partial or unavailable."
 

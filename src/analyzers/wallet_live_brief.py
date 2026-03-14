@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from src.analyzers.thresholds import (
     CONCENTRATION_ELEVATED,
-    CONCENTRATION_EXTREME,
-    CONCENTRATION_HIGH,
-    CONCENTRATION_MEANINGFUL,
+    WALLET_CONCENTRATION_EXTREME,
+    WALLET_CONCENTRATION_HIGH,
+    WALLET_CONCENTRATION_MEANINGFUL,
 )
 from src.formatters.heuristics import wallet_signal_quality
 from src.models.context import WalletContext
@@ -42,11 +42,11 @@ def _format_holding_summary(ctx: WalletContext) -> str:
 
 
 def _concentration_read(ctx: WalletContext) -> str:
-    if ctx.top_concentration_pct >= CONCENTRATION_EXTREME:
+    if ctx.top_concentration_pct >= WALLET_CONCENTRATION_EXTREME:
         return "extreme concentration"
-    if ctx.top_concentration_pct >= CONCENTRATION_HIGH:
+    if ctx.top_concentration_pct >= WALLET_CONCENTRATION_HIGH:
         return "high concentration"
-    if ctx.top_concentration_pct >= CONCENTRATION_MEANINGFUL:
+    if ctx.top_concentration_pct >= WALLET_CONCENTRATION_MEANINGFUL:
         return "meaningful concentration"
     if ctx.top_concentration_pct > 0:
         return "controlled concentration"
@@ -74,9 +74,9 @@ def _activity_read(ctx: WalletContext) -> str:
 def _wallet_style_profile(ctx: WalletContext) -> str:
     if ctx.style_profile:
         return ctx.style_profile
-    if ctx.top_concentration_pct >= 75:
+    if ctx.top_concentration_pct >= WALLET_CONCENTRATION_EXTREME:
         return "Concentrated Conviction"
-    if ctx.top_concentration_pct >= 50:
+    if ctx.top_concentration_pct >= WALLET_CONCENTRATION_HIGH:
         return "Focused Rotation"
     if ctx.holdings_count >= 10 and ctx.top_concentration_pct <= 35:
         return "Broad Basket"
@@ -101,7 +101,10 @@ def _wallet_why_it_matters(ctx: WalletContext) -> str:
         pieces.append(_format_holding_summary(ctx))
     if ctx.exposure_breakdown:
         pieces.append(f"Exposure mix: {', '.join(ctx.exposure_breakdown[:3])}.")
-    return " ".join(pieces[:4]).strip()
+    if ctx.risky_holdings_count > 0:
+        pieces.append(f"Audit overlay flags {ctx.risky_holdings_count} visible holding(s) as structurally riskier than the wallet size alone would suggest.")
+    limit = 5 if ctx.risky_holdings_count > 0 else 4
+    return " ".join(pieces[:limit]).strip()
 
 
 def _wallet_watch_next(ctx: WalletContext) -> list[str]:
@@ -122,6 +125,8 @@ def _wallet_watch_next(ctx: WalletContext) -> list[str]:
         watch.append(f"whether exposure to {', '.join(ctx.notable_exposures[:2])} proves early, crowded, or late")
     else:
         watch.append("whether the wallet starts clustering around a clearer narrative")
+    if ctx.risky_holdings_count > 0:
+        watch.append("whether risky audited holdings are reduced, exited, or kept despite the structural warnings")
     return watch
 
 
@@ -131,7 +136,7 @@ def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
     evidence_level, evidence_note = _wallet_evidence_level(ctx)
 
     risk_tags: list[RiskTag] = [RiskTag(name="Evidence Quality", level=evidence_level, note=evidence_note)]
-    if ctx.top_concentration_pct >= 70:
+    if ctx.top_concentration_pct >= WALLET_CONCENTRATION_HIGH:
         risk_tags.append(RiskTag(name="Concentration Risk", level="High", note=f"Top concentration is {ctx.top_concentration_pct:.1f}%"))
     elif ctx.top_concentration_pct > 0:
         risk_tags.append(RiskTag(name="Concentration Risk", level="Medium", note=f"Top concentration is {ctx.top_concentration_pct:.1f}%"))
@@ -143,6 +148,8 @@ def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
     if ctx.notable_exposures:
         risk_tags.append(RiskTag(name="Narrative Risk", level="Medium", note=", ".join(ctx.notable_exposures[:3])))
     risk_tags.append(RiskTag(name="Style Profile", level="Low", note=_wallet_style_profile(ctx)))
+    if ctx.risky_holdings_count > 0:
+        risk_tags.append(RiskTag(name="Audit Overlay", level="High", note=f"{ctx.risky_holdings_count} flagged holding(s)"))
 
     thin_context = ctx.portfolio_value <= 0 and ctx.holdings_count <= 0 and not ctx.top_holdings
     partial_context = not thin_context and evidence_level == "Low"
@@ -155,6 +162,10 @@ def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
         quick_verdict = "Limited read. Some structure visible."
         ctx.follow_verdict = "Unknown"
         conviction = "Low"
+    elif ctx.risky_holdings_count > 0 and ctx.follow_verdict == "Track":
+        quick_verdict = "Readable wallet. Audit flags cap the follow signal."
+        ctx.follow_verdict = "Unknown"
+        conviction = "Low"
     elif ctx.follow_verdict == "Track" and ctx.top_concentration_pct < CONCENTRATION_ELEVATED:
         quick_verdict = "Trackable wallet. Useful behavior signal."
         conviction = "Medium"
@@ -162,9 +173,9 @@ def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
         quick_verdict = "Trackable wallet. Concentration still high."
     elif ctx.follow_verdict == "Don't follow":
         quick_verdict = "Not enough structure. Do not follow."
-    elif ctx.top_concentration_pct >= 75:
+    elif ctx.top_concentration_pct >= WALLET_CONCENTRATION_EXTREME:
         quick_verdict = "Readable wallet. Concentration too high to trust."
-    elif ctx.top_concentration_pct >= 50:
+    elif ctx.top_concentration_pct >= WALLET_CONCENTRATION_HIGH:
         quick_verdict = "Monitor only. Concentration still high."
     elif quality == "Medium":
         quick_verdict = "Readable wallet. Pattern signal exists."
@@ -177,10 +188,12 @@ def build_wallet_brief(ctx: WalletContext) -> AnalysisBrief:
     if not top_risks:
         if thin_context:
             top_risks.append("Current live wallet context is too thin to support a strong behavior judgment.")
-        if ctx.top_concentration_pct >= 75:
+        if ctx.top_concentration_pct >= WALLET_CONCENTRATION_EXTREME:
             top_risks.append("Extreme concentration means one position can dominate the whole read.")
         elif ctx.top_concentration_pct >= 60:
             top_risks.append("High concentration can turn one bad position into a large portfolio hit.")
+        if ctx.holdings_audit_notes:
+            top_risks.extend(ctx.holdings_audit_notes[:2])
         if abs(ctx.change_24h) >= 10:
             top_risks.append("Large 24h movement can make one snapshot look smarter or worse than the underlying behavior really is.")
         if not ctx.top_holdings:

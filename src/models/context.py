@@ -10,6 +10,9 @@ class TokenContext:
     price: float = 0.0
     liquidity: float = 0.0
     holders: int = 0
+    volume_24h: float = 0.0
+    pct_change_24h: float = 0.0
+    market_cap: float = 0.0
     top_holder_concentration_pct: float = 0.0
     market_rank_context: str = ""
     signal_status: str = "unknown"
@@ -17,11 +20,24 @@ class TokenContext:
     audit_flags: list[str] = field(default_factory=list)
     major_risks: list[str] = field(default_factory=list)
     smart_money_count: int = 0
+    smart_money_holders: int = 0
+    smart_money_holding_pct: float = 0.0
+    smart_money_inflow_usd: float = 0.0
+    smart_money_inflow_traders: int = 0
     exit_rate: float = 0.0
     signal_age_hours: float = 0.0
     signal_freshness: str = "UNKNOWN"
     audit_gate: str = "ALLOW"
     blocked_reason: str = ""
+    futures_funding_rate: float = 0.0
+    futures_long_short_ratio: float = 0.0
+    futures_sentiment: str = ""
+    meme_lifecycle: str = ""
+    meme_bonded_progress: float = 0.0
+    is_meme_candidate: bool = False
+    kline_trend: str = ""
+    kline_above_ma20: bool = False
+    top_trader_interest: bool = False
 
 
 @dataclass
@@ -45,6 +61,8 @@ class WalletContext:
     style_read: str = ""
     style_profile: str = ""
     exposure_breakdown: list[str] = field(default_factory=list)
+    risky_holdings_count: int = 0
+    holdings_audit_notes: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -95,11 +113,22 @@ class SignalContext:
     current_price: float = 0.0
     max_gain: float = 0.0
     exit_rate: float = 0.0
+    liquidity: float = 0.0
+    holders: int = 0
+    volume_24h: float = 0.0
+    pct_change_24h: float = 0.0
+    market_cap: float = 0.0
     audit_flags: list[str] = field(default_factory=list)
     supporting_context: str = ""
     major_risks: list[str] = field(default_factory=list)
     smart_money_count: int = 0
+    smart_money_holders: int = 0
+    smart_money_holding_pct: float = 0.0
+    smart_money_inflow_usd: float = 0.0
     signal_age_hours: float = 0.0
     signal_freshness: str = "UNKNOWN"
     audit_gate: str = "ALLOW"
     blocked_reason: str = ""
+    funding_rate: float = 0.0
+    long_short_ratio: float = 0.0
+    funding_sentiment: str = ""

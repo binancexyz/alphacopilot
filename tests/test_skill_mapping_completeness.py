@@ -30,3 +30,15 @@ def test_token_has_optional_enrichments():
     assert "alpha" in optional
     assert "spot" in optional
     assert "derivatives-trading-usds-futures" in optional
+    assert "meme-rush" in optional
+
+
+def test_signal_command_has_market_rank_and_futures_support():
+    assert "signal" in COMMAND_SKILL_MAP
+    assert "crypto-market-rank" in COMMAND_SKILL_MAP["signal"]
+    assert "derivatives-trading-usds-futures" in COMMAND_SKILL_MAP["signal"]
+
+
+def test_audit_command_has_signal_support():
+    assert "audit" in COMMAND_SKILL_MAP
+    assert "trading-signal" in COMMAND_SKILL_MAP["audit"]

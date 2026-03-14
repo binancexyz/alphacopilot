@@ -70,11 +70,16 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
     audit_summary = str(audit.get("audit_summary") or blocked_reason or "Audit output is limited right now.").replace("|", " / ")
     audit_flags = [str(x).replace("|", " / ") for x in audit.get("audit_flags", [])]
     risks = [str(x).replace("|", " / ") for x in audit.get("major_risks", [])]
+    signal_status = str(audit.get("signal_status") or "unknown").replace("|", "/")
+    smart_money_count = int(audit.get("smart_money_count") or 0)
+    signal_freshness = str(audit.get("signal_freshness") or "").replace("|", "/")
     combined = [x for x in [blocked_reason, *audit_flags, *risks] if x]
     audit_valid = bool(audit.get("has_result", audit.get("hasResult", False))) and bool(audit.get("is_supported", audit.get("isSupported", False)))
     audit_limited = not audit_valid or "limited" in audit_summary.lower() or "partial" in blocked_reason.lower() or "unavailable" in blocked_reason.lower()
 
     verdict = _verdict(audit_gate, risk_level, audit_limited, audit_flags)
+    if audit_gate == "BLOCK" and smart_money_count > 0 and signal_status in {"watch", "bullish", "triggered", "active"}:
+        verdict = f"{verdict} Smart money is still active, but the audit risk still overrides that interest."
     severity = _severity(audit_gate, risk_level, audit_limited, audit_flags)
 
     contract_matches = _collect_matches(combined, _CONTRACT_KEYS)
@@ -132,6 +137,15 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
     tags.append(RiskTag(name="Severity", level=severity, note=risk_level))
 
     sections: list[BriefSection] = []
+    if smart_money_count > 0 or signal_status not in {"", "unknown", "unmatched"}:
+        signal_lines = [f"Setup: {signal_status or 'unknown'}"]
+        if smart_money_count > 0:
+            signal_lines.append(f"Participation: {smart_money_count} smart-money wallet(s)")
+        if signal_freshness and signal_freshness != "UNKNOWN":
+            signal_lines.append(f"Timing: {signal_freshness.title()}")
+        if audit_gate == "BLOCK" and smart_money_count > 0:
+            signal_lines.append("Despite the audit risk, tracked smart money is still participating.")
+        sections.append(BriefSection(title="📡 Signal Lens", content="\n".join(f"- {line}" for line in signal_lines if line)))
     try:
         meme_brief = analyze_meme(symbol)
         meme_note = meme_brief.quick_verdict.strip()
