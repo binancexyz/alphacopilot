@@ -243,6 +243,9 @@ def get_portfolio_snapshot() -> dict[str, Any]:
     elif borrowed_pct >= 20:
         verdict = "Levered posture. Margin exposure is material."
         quality = "Aggressive"
+    elif stable_pct >= 70 and concentration >= 70:
+        verdict = "Very defensive. Capital is concentrated in stablecoins rather than spread across risk assets."
+        quality = "Defensive"
     elif concentration >= 70:
         verdict = "Highly concentrated. One position dominates."
         quality = "Concentrated"
@@ -265,8 +268,10 @@ def get_portfolio_snapshot() -> dict[str, Any]:
         risk_lines.append("Only dust-sized Spot balances were visible, so there is no meaningful active portfolio exposure to judge.")
     elif total_value <= 0:
         risk_lines.append("No priced Spot balances were visible, so the portfolio read stays incomplete.")
-    if concentration >= 70:
+    if concentration >= 70 and stable_pct < 70:
         risk_lines.append("Top holding concentration is high enough that one move can dominate portfolio performance.")
+    elif concentration >= 70 and stable_pct >= 70:
+        risk_lines.append("Most visible capital is parked in stablecoins, so the account is concentrated but still structurally defensive.")
     if stable_pct <= 10 and total_value > 0:
         risk_lines.append("Stablecoin dry powder looks thin, so flexibility may be lower if market conditions change quickly.")
     if locked_assets > 0:
