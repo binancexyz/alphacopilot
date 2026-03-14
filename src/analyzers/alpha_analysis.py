@@ -3,16 +3,38 @@ from __future__ import annotations
 from src.models.schemas import AnalysisBrief, BriefSection, RiskTag
 
 
-def _alpha_overview_items(ctx: dict) -> list[str]:
+def _to_float(value) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _alpha_ranked_items(ctx: dict) -> list[dict]:
     token_list = ctx.get("alpha_token_list") or []
+    return sorted(
+        [item for item in token_list if isinstance(item, dict)],
+        key=lambda item: (_to_float(item.get("score")), _to_float(item.get("volume24h")), _to_float(item.get("marketCap"))),
+        reverse=True,
+    )
+
+
+def _alpha_overview_items(ctx: dict) -> list[str]:
     items: list[str] = []
-    for item in token_list[:8]:
+    for item in _alpha_ranked_items(ctx)[:8]:
         symbol = str(item.get("symbol") or item.get("ticker") or "?")
         name = str(item.get("name") or item.get("tokenName") or "").strip()
-        if name and name.lower() != symbol.lower():
-            items.append(f"{symbol} — {name}")
-        else:
-            items.append(symbol)
+        change = _to_float(item.get("percentChange24h"))
+        volume = _to_float(item.get("volume24h"))
+        suffix = []
+        if change:
+            suffix.append(f"24h {change:+.1f}%")
+        if volume > 0:
+            suffix.append(f"vol ${volume/1_000_000:.1f}M")
+        label = f"{symbol} — {name}" if name and name.lower() != symbol.lower() else symbol
+        if suffix:
+            label += f" ({' · '.join(suffix)})"
+        items.append(label)
     return items
 
 
@@ -22,34 +44,51 @@ def analyze_alpha(symbol: str | None, ctx: dict) -> AnalysisBrief:
 
     if not symbol:
         listed_count = int(ctx.get("alpha_listed_count") or 0)
+        ranked_items = _alpha_ranked_items(ctx)
         items = _alpha_overview_items(ctx)
+        hot_count = sum(1 for item in ranked_items if item.get("hotTag"))
+        avg_change = 0.0
+        if ranked_items:
+            changes = [_to_float(item.get("percentChange24h")) for item in ranked_items[:20] if item.get("percentChange24h") not in {None, ""}]
+            if changes:
+                avg_change = sum(changes) / len(changes)
         quick_verdict = (
-            f"Binance Alpha overview ready with {listed_count} listed tokens."
+            f"Binance Alpha is active with {listed_count} listed tokens."
             if listed_count > 0
             else "Binance Alpha overview is thin right now."
         )
         why = (
             f"Use this as the discovery surface for Binance Alpha Token names. "
-            f"Currently showing {listed_count} listed tokens"
-            + (f", including {', '.join(items[:3])}." if items else ".")
+            f"Current list size: {listed_count}. Hot-tag names: {hot_count}. "
+            + (f"Top board examples: {', '.join(items[:3])}." if items else "The live list is not populating clearly yet.")
         )
         watch = [
-            "which newly visible Alpha names keep showing up instead of rotating out fast",
-            "whether any Alpha token graduates from curiosity into real follow-through",
-            "whether the Alpha list stays available and live instead of degrading into a thin bridge state",
+            "which Alpha names keep staying near the top instead of rotating out in one session",
+            "whether hot-tag names are supported by real volume instead of only headline moves",
+            "whether Binance Alpha breadth expands with fresh listings or narrows into a few crowded names",
         ]
         sections = []
         if items:
-            sections.append(BriefSection(title="🧭 Binance Alpha", content="\n".join(f"- {item}" for item in items)))
+            sections.append(BriefSection(title="🧭 Binance Alpha Board", content="\n".join(f"- {item}" for item in items[:8])))
+        stats_lines = []
+        if listed_count > 0:
+            stats_lines.append(f"- Listed tokens: {listed_count}")
+        if hot_count > 0:
+            stats_lines.append(f"- Hot-tag names: {hot_count}")
+        if avg_change:
+            stats_lines.append(f"- Avg 24h move (top 20): {avg_change:+.1f}%")
+        if stats_lines:
+            sections.append(BriefSection(title="📊 Alpha Snapshot", content="\n".join(stats_lines)))
         tags = [
             RiskTag(name="Feature", level="Medium", note="Binance Alpha Token discovery surface."),
+            RiskTag(name="Breadth", level="Medium" if listed_count >= 50 else "Low", note=f"{listed_count} names currently visible."),
         ]
         if runtime_warning:
             tags.append(RiskTag(name="Runtime", level="High", note=runtime_warning))
         return AnalysisBrief(
             entity="Binance Alpha",
             quick_verdict=quick_verdict,
-            signal_quality="Medium" if listed_count > 0 and not runtime_warning else "Low",
+            signal_quality="High" if listed_count > 0 and not runtime_warning else "Low",
             top_risks=risks,
             why_it_matters=why,
             what_to_watch_next=watch,
