@@ -659,7 +659,7 @@ def _fetch_signed_json(
     *,
     headers: dict[str, str],
     params: dict[str, Any] | None = None,
-) -> dict[str, Any]:
+) -> Any:
     api_key = settings.binance_api_key.strip()
     api_secret = settings.binance_api_secret.strip()
     if not api_key or not api_secret:
@@ -670,12 +670,14 @@ def _fetch_signed_json(
     payload.setdefault("recvWindow", 10000)
     query = urlencode(payload)
     signature = hmac.new(api_secret.encode("utf-8"), query.encode("utf-8"), hashlib.sha256).hexdigest()
-    
+
     auth_headers = dict(headers)
     auth_headers["X-MBX-APIKEY"] = api_key
 
     url = f"{base}{path}?{query}&signature={signature}"
-    return _fetch_json(client, method, url, skill_name, headers=auth_headers)
+    response = client.request(method, url, headers=auth_headers)
+    response.raise_for_status()
+    return response.json()
 
 def _fetch_assets_portfolio(client) -> dict[str, Any]:
     base = "https://api.binance.com"
