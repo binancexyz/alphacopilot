@@ -770,6 +770,7 @@ def _format_portfolio_card(brief: AnalysisBrief) -> str:
     style_tag = _first_tag(brief, "Style Profile")
     top3_tag = _first_tag(brief, "Top 3")
     effective_tag = _first_tag(brief, "Effective Positions")
+    alpha_tag = _first_tag(brief, "Alpha Exposure")
     top_lines = brief.beginner_note.splitlines()[:5] if brief.beginner_note else []
     top_asset = top_lines[0].split("~", 1)[0].replace("Dust balance —", "").strip() if top_lines else "—"
     posture = brief.signal_quality or "Defensive"
@@ -810,6 +811,8 @@ def _format_portfolio_card(brief: AnalysisBrief) -> str:
         analytics_lines.append(f"Top 3: {top3_tag.note}")
     if effective_tag and effective_tag.note:
         analytics_lines.append(f"Effective positions: {effective_tag.note}")
+    if alpha_tag and alpha_tag.note:
+        analytics_lines.append(f"Alpha exposure: {alpha_tag.note}")
     if coverage_tag and coverage_tag.note:
         analytics_lines.append(f"Coverage: {coverage_tag.note}")
     if analytics_lines:

@@ -144,6 +144,7 @@ def get_portfolio_snapshot() -> dict[str, Any]:
     account_snapshot = raw_context.get("account-snapshot", {})
     margin_account = raw_context.get("margin-trading", {})
     prices = context.get("prices", {})
+    alpha_symbols: set[str] = set()
 
     if not account and not funding_wallet:
         try:
@@ -155,6 +156,13 @@ def get_portfolio_snapshot() -> dict[str, Any]:
             margin_account = raw_context.get("margin-trading", margin_account)
         except Exception:
             pass
+
+    try:
+        alpha_bundle = fetch_live_bundle("alpha", "")
+        alpha_items = (alpha_bundle.raw.get("alpha", {}) or {}).get("token_list") or []
+        alpha_symbols = {str(item.get("symbol") or "").upper() for item in alpha_items if isinstance(item, dict) and item.get("symbol")}
+    except Exception:
+        alpha_symbols = set()
 
     balances: list[dict[str, Any]] = []
     source_counts = {"spot": 0, "funding": 0, "snapshot": 0}
@@ -202,6 +210,7 @@ def get_portfolio_snapshot() -> dict[str, Any]:
             "asset": normalized_asset,
             "raw_assets": set(),
             "sources": set(),
+            "is_alpha": normalized_asset in alpha_symbols,
             "qty": Decimal("0"),
             "usd_price": Decimal("0"),
             "usd_value": Decimal("0"),
@@ -210,6 +219,7 @@ def get_portfolio_snapshot() -> dict[str, Any]:
         })
         slot["raw_assets"].add(raw_asset)
         slot["sources"].add(str(item.get("_source") or "spot"))
+        slot["is_alpha"] = slot["is_alpha"] or (normalized_asset in alpha_symbols)
         slot["qty"] += qty
         slot["locked"] += locked
         slot["wrapped"] = slot["wrapped"] or wrapped
@@ -235,8 +245,10 @@ def get_portfolio_snapshot() -> dict[str, Any]:
 
     stable_value = sum(item["usd_value"] for item in priced_assets if item["asset"] in STABLES)
     risk_value = sum(item["usd_value"] for item in priced_assets if item["asset"] not in STABLES) + max(margin_net_value, Decimal("0"))
+    alpha_value = sum(item["usd_value"] for item in priced_assets if item.get("is_alpha"))
     stable_pct = (float(stable_value) / float(total_value) * 100) if total_value > 0 else 0.0
     risk_pct = (float(risk_value) / float(total_value) * 100) if total_value > 0 else 0.0
+    alpha_pct = (float(alpha_value) / float(total_value) * 100) if total_value > 0 else 0.0
     group_mix = top_groups({"asset": item["asset"], "usd_value": float(item["usd_value"])} for item in priced_assets)
     components = list(priced_assets)
     if margin_net_value > 0:
@@ -260,11 +272,12 @@ def get_portfolio_snapshot() -> dict[str, Any]:
             continue
         locked_note = " | some locked" if item["locked"] > 0 else ""
         wrapped_note = " | includes LD balances" if item["wrapped"] else ""
+        alpha_note = " | Alpha" if item.get("is_alpha") else ""
         source_note = ""
         if item.get("sources"):
             ordered = "/".join(sorted(str(src) for src in item["sources"]))
             source_note = f" | {ordered}"
-        top_lines.append(f"{item['asset']} ~${value:,.2f} ({weight:.1f}%){locked_note}{wrapped_note}{source_note}")
+        top_lines.append(f"{item['asset']} ~${value:,.2f} ({weight:.1f}%){locked_note}{wrapped_note}{alpha_note}{source_note}")
 
     concentration = top_weights[0] if top_weights else 0.0
     top3_concentration = sum(top_weights[:3]) if top_weights else 0.0
@@ -345,7 +358,7 @@ def get_portfolio_snapshot() -> dict[str, Any]:
     else:
         why = (
             f"Estimated visible Spot value is about ${float(total_value):,.2f} across {available_assets} priced asset(s). "
-            f"Stablecoins are {stable_pct:.1f}% of the priced snapshot and risk assets are {risk_pct:.1f}%. "
+            f"Stablecoins are {stable_pct:.1f}% of the priced snapshot, risk assets are {risk_pct:.1f}%, and Alpha-token exposure is {alpha_pct:.1f}%. "
             f"Top concentration is {concentration:.1f}% and top-3 concentration is {top3_concentration:.1f}%{' with some locked balances in play' if locked_assets else ''}, which makes the current posture look {posture_note}. "
             f"Style profile: {style_profile}. Effective positions: {effective_positions:.1f}. Lead exposure groups: {lead_groups}."
         )
@@ -378,6 +391,8 @@ def get_portfolio_snapshot() -> dict[str, Any]:
     if effective_positions > 0:
         tags.append(RiskTag(name="Effective Positions", level="Info", note=f"{effective_positions:.1f}"))
     tags.append(RiskTag(name="Stablecoin Share", level="High" if stable_pct >= 55 else "Medium" if stable_pct >= 20 else "Low", note=f"{stable_pct:.1f}%"))
+    if alpha_pct > 0:
+        tags.append(RiskTag(name="Alpha Exposure", level="Info", note=f"{alpha_pct:.1f}%"))
     if group_mix:
         tags.append(RiskTag(name="Lead Group", level="Info", note=f"{group_mix[0][0]} {group_mix[0][1]:.1f}%"))
     if borrowed_value > 0 or margin_net_value != 0:
