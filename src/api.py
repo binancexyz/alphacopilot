@@ -8,8 +8,10 @@ from pydantic import BaseModel
 from time import perf_counter
 import logging
 
+from src.analyzers.alpha_analysis import analyze_alpha
 from src.analyzers.audit_analysis import analyze_audit
 from src.analyzers.brief_analysis import analyze_brief
+from src.analyzers.futures_analysis import analyze_futures
 from src.analyzers.market_watch import watch_today
 from src.analyzers.portfolio_analysis import analyze_portfolio
 from src.analyzers.signal_check import analyze_signal
@@ -159,18 +161,22 @@ def watchtoday(request: Request, _: None = Depends(enforce_api_guard)) -> BriefR
 
 
 @app.get("/alpha", response_model=BriefResponse)
-def alpha(request: Request, _: None = Depends(enforce_api_guard), symbol: str = Query(..., min_length=1, max_length=20, description="Token symbol, e.g. BNB")) -> BriefResponse:
-    normalized = normalize_token_input(symbol)
+def alpha(request: Request, _: None = Depends(enforce_api_guard), symbol: str | None = Query(None, min_length=1, max_length=20, description="Optional token symbol, e.g. BNB")) -> BriefResponse:
+    normalized = normalize_token_input(symbol) if symbol else ""
     svc = live_service()
     context = svc.get_alpha_context(normalized)
+    brief = analyze_alpha(normalized or None, context)
+    entity = normalized or "binance-alpha"
+    runtime = build_runtime_meta("alpha", entity)
+    warning = brief.runtime_warning or runtime.get("warning") or _mode_warning()
     return BriefResponse(
         command="alpha",
-        entity=normalized,
+        entity=entity,
         mode=settings.app_mode,
-        rendered=format_brief(context),
-        warning=_mode_warning(),
-        runtime_state=context.get("runtime_state"),
-        runtime=None,
+        rendered=format_brief(brief),
+        warning=warning,
+        runtime_state=brief.runtime_state or runtime.get("state"),
+        runtime=runtime,
     )
 
 
@@ -179,14 +185,17 @@ def futures(request: Request, _: None = Depends(enforce_api_guard), symbol: str 
     normalized = normalize_token_input(symbol)
     svc = live_service()
     context = svc.get_futures_context(normalized)
+    brief = analyze_futures(normalized, context)
+    runtime = build_runtime_meta("futures", normalized)
+    warning = brief.runtime_warning or runtime.get("warning") or _mode_warning()
     return BriefResponse(
         command="futures",
         entity=normalized,
         mode=settings.app_mode,
-        rendered=format_brief(context),
-        warning=_mode_warning(),
-        runtime_state=context.get("runtime_state"),
-        runtime=None,
+        rendered=format_brief(brief),
+        warning=warning,
+        runtime_state=brief.runtime_state or runtime.get("state"),
+        runtime=runtime,
     )
 
 def _mode_warning() -> str | None:

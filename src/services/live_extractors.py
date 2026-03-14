@@ -571,11 +571,12 @@ def extract_alpha_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     token_info = raw.get("query-token-info", {})
     audit = raw.get("query-token-audit", {})
     spot = raw.get("spot", {})
+    token_list = alpha.get("token_list") or []
 
     metadata = token_info.get("metadata", {})
     search_item = _best_token_match(token_info.get("search"), symbol, metadata) or metadata or token_info
     resolved_symbol = str(search_item.get("symbol") or metadata.get("symbol") or symbol)
-    display_name = str(search_item.get("name") or metadata.get("name") or resolved_symbol)
+    display_name = str(search_item.get("name") or metadata.get("name") or resolved_symbol or "Binance Alpha")
     audit_payload = _normalize_audit_keys(audit.get("data", audit))
     audit_flags, audit_risks = _extract_audit_flags_and_risks(audit_payload)
     audit_gate, blocked_reason = _audit_gate_state(audit_payload, audit_flags)
@@ -587,6 +588,8 @@ def extract_alpha_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         "symbol": resolved_symbol,
         "display_name": display_name,
         "is_alpha_listed": is_alpha_listed,
+        "alpha_token_list": token_list,
+        "alpha_listed_count": len(token_list),
         "alpha_price": _pick_number(ticker, "lastPrice", "price"),
         "alpha_volume_24h": _pick_number(ticker, "volume", "quoteVolume"),
         "alpha_price_change_24h": _pick_number(ticker, "priceChangePercent"),
