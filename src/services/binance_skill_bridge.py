@@ -123,6 +123,20 @@ def fetch_live_bundle(command: str, entity: str = "") -> BridgeBundle:
             )
             _run_skill(
                 raw,
+                "funding-wallet",
+                lambda: _fetch_funding_wallet(client),
+                failed_skills,
+                errors,
+            )
+            _run_skill(
+                raw,
+                "account-snapshot",
+                lambda: _fetch_spot_account_snapshot(client),
+                failed_skills,
+                errors,
+            )
+            _run_skill(
+                raw,
                 "margin-trading",
                 lambda: _fetch_margin_account(client),
                 failed_skills,
@@ -705,6 +719,34 @@ def _fetch_margin_account(client) -> dict[str, Any]:
         "margin-trading",
         headers=_skill_headers("margin-trading"),
     )
+
+
+def _fetch_funding_wallet(client) -> dict[str, Any]:
+    base = "https://api.binance.com"
+    payload = _fetch_signed_json(
+        client,
+        "POST",
+        base,
+        "/sapi/v1/asset/get-funding-asset",
+        "assets",
+        headers=_skill_headers("assets"),
+        params={"needBtcValuation": "true"},
+    )
+    return {"data": payload} if isinstance(payload, list) else payload
+
+
+def _fetch_spot_account_snapshot(client) -> dict[str, Any]:
+    base = "https://api.binance.com"
+    payload = _fetch_signed_json(
+        client,
+        "GET",
+        base,
+        "/sapi/v1/accountSnapshot",
+        "assets",
+        headers=_skill_headers("assets"),
+        params={"type": "SPOT", "limit": 1},
+    )
+    return payload if isinstance(payload, dict) else {"data": payload}
 
 
 # ---------- Spot skill fetchers (public, no auth) ----------

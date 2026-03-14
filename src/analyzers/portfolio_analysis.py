@@ -113,25 +113,39 @@ def get_portfolio_snapshot() -> dict[str, Any]:
         api_key=settings.binance_api_key,
         api_secret=settings.binance_api_secret,
     )
-    
-    # We load "portfolio" which relies on the skills "assets" and "margin-trading"
+
     context = live_service.get_portfolio_context()
-    
+
     raw_context = context.get("_raw", context)
     account = raw_context.get("assets", {}).get("data", [])
+    funding_wallet = raw_context.get("funding-wallet", {}).get("data", [])
+    account_snapshot = raw_context.get("account-snapshot", {})
     margin_account = raw_context.get("margin-trading", {})
     prices = context.get("prices", {})
 
-    if not account:
+    if not account and not funding_wallet:
         try:
             bundle = fetch_live_bundle("portfolio", "")
             raw_context = bundle.raw or raw_context
             account = raw_context.get("assets", {}).get("data", [])
+            funding_wallet = raw_context.get("funding-wallet", {}).get("data", [])
+            account_snapshot = raw_context.get("account-snapshot", account_snapshot)
             margin_account = raw_context.get("margin-trading", margin_account)
         except Exception:
             pass
 
-    balances = account if isinstance(account, list) else []
+    balances: list[dict[str, Any]] = []
+    if isinstance(account, list):
+        balances.extend(item for item in account if isinstance(item, dict))
+    if isinstance(funding_wallet, list):
+        balances.extend(item for item in funding_wallet if isinstance(item, dict))
+    if isinstance(account_snapshot, dict):
+        snapshot_vos = account_snapshot.get("snapshotVos") or []
+        if snapshot_vos and isinstance(snapshot_vos, list):
+            latest = snapshot_vos[-1] if isinstance(snapshot_vos[-1], dict) else {}
+            snap_balances = ((latest.get("data") or {}).get("balances") or []) if isinstance(latest, dict) else []
+            if isinstance(snap_balances, list):
+                balances.extend(item for item in snap_balances if isinstance(item, dict))
     btc_price = _infer_btc_price(balances, prices)
     merged: dict[str, dict[str, Any]] = {}
     unmapped_assets: list[str] = []
@@ -219,7 +233,7 @@ def get_portfolio_snapshot() -> dict[str, Any]:
 
     concentration = top_weights[0] if top_weights else 0.0
     borrowed_pct = (float(borrowed_value) / float(total_value) * 100) if total_value > 0 and borrowed_value > 0 else 0.0
-    dust_asset_count = sum(1 for item in enriched if _is_dust_position(item["qty"], item["usd_value"])) + len(dust_assets)
+    dust_asset_count = len(dust_assets)
     if total_value <= 0 and (enriched or dust_assets):
         verdict = "Only dust-sized Spot balances are visible. No meaningful active exposure."
         quality = "Dust"
@@ -273,11 +287,6 @@ def get_portfolio_snapshot() -> dict[str, Any]:
 
     dust_lines: list[str] = []
     if total_value <= 0:
-        for item in enriched[:5]:
-            qty = item["qty"]
-            if qty <= 0:
-                continue
-            dust_lines.append(f"{item['asset']} {qty.normalize()}")
         for item in dust_assets[:5]:
             qty = item["qty"]
             if qty <= 0:
