@@ -766,6 +766,10 @@ def _format_portfolio_card(brief: AnalysisBrief) -> str:
     lead_group_tag = _first_tag(brief, "Lead Group")
     margin_tag = _first_tag(brief, "Margin Exposure")
     short_trend_tag = _first_tag(brief, "Short Trend")
+    coverage_tag = _first_tag(brief, "Coverage")
+    style_tag = _first_tag(brief, "Style Profile")
+    top3_tag = _first_tag(brief, "Top 3")
+    effective_tag = _first_tag(brief, "Effective Positions")
     top_lines = brief.beginner_note.splitlines()[:5] if brief.beginner_note else []
     top_asset = top_lines[0].split("~", 1)[0].replace("Dust balance —", "").strip() if top_lines else "—"
     posture = brief.signal_quality or "Defensive"
@@ -798,6 +802,19 @@ def _format_portfolio_card(brief: AnalysisBrief) -> str:
         parts.extend(_tree_lines(top_lines[:5]))
     else:
         parts.extend(_tree_lines(["No priced holdings visible", "Read-only snapshot unavailable"] if unavailable else ["No priced holdings visible", "Waiting for fuller snapshot"]))
+
+    analytics_lines = []
+    if style_tag and style_tag.note:
+        analytics_lines.append(f"Style: {style_tag.note}")
+    if top3_tag and top3_tag.note:
+        analytics_lines.append(f"Top 3: {top3_tag.note}")
+    if effective_tag and effective_tag.note:
+        analytics_lines.append(f"Effective positions: {effective_tag.note}")
+    if coverage_tag and coverage_tag.note:
+        analytics_lines.append(f"Coverage: {coverage_tag.note}")
+    if analytics_lines:
+        parts.extend(["", "**🧪 Analytics**"])
+        parts.extend(_tree_lines(analytics_lines[:4]))
 
     if margin_tag and margin_tag.note:
         parts.extend(["", "**🏦 Margin**"])

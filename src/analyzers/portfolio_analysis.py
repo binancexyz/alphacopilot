@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from math import fsum
 from typing import Any
 
 from src.models.schemas import AnalysisBrief, RiskTag
@@ -12,6 +13,27 @@ from src.config import settings
 
 STABLES = {"USDT", "USDC", "BUSD", "FDUSD", "TUSD", "USDP", "DAI"}
 LD_PREFIXES = ("LD",)
+
+
+def _effective_positions(weights: list[float]) -> float:
+    if not weights:
+        return 0.0
+    squared = fsum((w / 100.0) ** 2 for w in weights if w > 0)
+    return (1.0 / squared) if squared > 0 else 0.0
+
+
+def _style_profile(stable_pct: float, concentration: float, borrowed_pct: float, positions: int) -> str:
+    if borrowed_pct >= 20:
+        return "Levered"
+    if stable_pct >= 70:
+        return "Defensive cash-heavy"
+    if concentration >= 70:
+        return "Concentrated conviction"
+    if positions >= 6 and stable_pct < 30:
+        return "Diversified risk-on"
+    if positions <= 2 and stable_pct < 30:
+        return "Narrow risk-on"
+    return "Mixed posture"
 
 def _normalize_asset(asset: str) -> tuple[str, bool]:
     normalized = asset.upper().strip()
@@ -135,17 +157,24 @@ def get_portfolio_snapshot() -> dict[str, Any]:
             pass
 
     balances: list[dict[str, Any]] = []
+    source_counts = {"spot": 0, "funding": 0, "snapshot": 0}
     if isinstance(account, list):
-        balances.extend(item for item in account if isinstance(item, dict))
+        items = [item for item in account if isinstance(item, dict)]
+        balances.extend({**item, "_source": "spot"} for item in items)
+        source_counts["spot"] = len(items)
     if isinstance(funding_wallet, list):
-        balances.extend(item for item in funding_wallet if isinstance(item, dict))
+        items = [item for item in funding_wallet if isinstance(item, dict)]
+        balances.extend({**item, "_source": "funding"} for item in items)
+        source_counts["funding"] = len(items)
     if isinstance(account_snapshot, dict):
         snapshot_vos = account_snapshot.get("snapshotVos") or []
         if snapshot_vos and isinstance(snapshot_vos, list):
             latest = snapshot_vos[-1] if isinstance(snapshot_vos[-1], dict) else {}
             snap_balances = ((latest.get("data") or {}).get("balances") or []) if isinstance(latest, dict) else []
             if isinstance(snap_balances, list):
-                balances.extend(item for item in snap_balances if isinstance(item, dict))
+                items = [item for item in snap_balances if isinstance(item, dict)]
+                balances.extend({**item, "_source": "snapshot"} for item in items)
+                source_counts["snapshot"] = len(items)
     btc_price = _infer_btc_price(balances, prices)
     merged: dict[str, dict[str, Any]] = {}
     unmapped_assets: list[str] = []
@@ -172,6 +201,7 @@ def get_portfolio_snapshot() -> dict[str, Any]:
         slot = merged.setdefault(normalized_asset, {
             "asset": normalized_asset,
             "raw_assets": set(),
+            "sources": set(),
             "qty": Decimal("0"),
             "usd_price": Decimal("0"),
             "usd_value": Decimal("0"),
@@ -179,6 +209,7 @@ def get_portfolio_snapshot() -> dict[str, Any]:
             "wrapped": False,
         })
         slot["raw_assets"].add(raw_asset)
+        slot["sources"].add(str(item.get("_source") or "spot"))
         slot["qty"] += qty
         slot["locked"] += locked
         slot["wrapped"] = slot["wrapped"] or wrapped
@@ -229,10 +260,17 @@ def get_portfolio_snapshot() -> dict[str, Any]:
             continue
         locked_note = " | some locked" if item["locked"] > 0 else ""
         wrapped_note = " | includes LD balances" if item["wrapped"] else ""
-        top_lines.append(f"{item['asset']} ~${value:,.2f} ({weight:.1f}%){locked_note}{wrapped_note}")
+        source_note = ""
+        if item.get("sources"):
+            ordered = "/".join(sorted(str(src) for src in item["sources"]))
+            source_note = f" | {ordered}"
+        top_lines.append(f"{item['asset']} ~${value:,.2f} ({weight:.1f}%){locked_note}{wrapped_note}{source_note}")
 
     concentration = top_weights[0] if top_weights else 0.0
+    top3_concentration = sum(top_weights[:3]) if top_weights else 0.0
+    effective_positions = _effective_positions(top_weights)
     borrowed_pct = (float(borrowed_value) / float(total_value) * 100) if total_value > 0 and borrowed_value > 0 else 0.0
+    style_profile = _style_profile(stable_pct, concentration, borrowed_pct, len(priced_assets))
     dust_asset_count = len(dust_assets)
     if total_value <= 0 and (enriched or dust_assets):
         verdict = "Only dust-sized Spot balances are visible. No meaningful active exposure."
@@ -308,23 +346,37 @@ def get_portfolio_snapshot() -> dict[str, Any]:
         why = (
             f"Estimated visible Spot value is about ${float(total_value):,.2f} across {available_assets} priced asset(s). "
             f"Stablecoins are {stable_pct:.1f}% of the priced snapshot and risk assets are {risk_pct:.1f}%. "
-            f"Top concentration is {concentration:.1f}%{' with some locked balances in play' if locked_assets else ''}, which makes the current posture look {posture_note}. "
-            f"Lead exposure groups: {lead_groups}."
+            f"Top concentration is {concentration:.1f}% and top-3 concentration is {top3_concentration:.1f}%{' with some locked balances in play' if locked_assets else ''}, which makes the current posture look {posture_note}. "
+            f"Style profile: {style_profile}. Effective positions: {effective_positions:.1f}. Lead exposure groups: {lead_groups}."
         )
     if margin_net_value != 0:
         why += f" Cross-margin net equity contributes about ${float(margin_net_value):,.2f}."
     if borrowed_value > 0:
         why += f" Borrowed margin exposure is about ${float(borrowed_value):,.2f}."
 
+    source_bits = []
+    if source_counts["spot"]:
+        source_bits.append(f"spot {source_counts['spot']}")
+    if source_counts["funding"]:
+        source_bits.append(f"funding {source_counts['funding']}")
+    if source_counts["snapshot"]:
+        source_bits.append(f"snapshot {source_counts['snapshot']}")
+
     tags = [
         RiskTag(name="Account Mode", level="Read-only", note="estimated Spot snapshot"),
         RiskTag(name="Source", level="Binance API", note="signed account read + live price map"),
+        RiskTag(name="Coverage", level="Good" if len(source_bits) >= 2 else "Limited", note=" | ".join(source_bits) if source_bits else "spot only"),
         RiskTag(name="Assets", level=str(available_assets), note="priced balances"),
+        RiskTag(name="Style Profile", level="Info", note=style_profile),
     ]
     if total_value <= 0 and dust_lines:
         tags.append(RiskTag(name="Dust State", level="Info", note=f"{len(dust_lines)} residual balance(s) visible"))
     if concentration > 0:
         tags.append(RiskTag(name="Top Concentration", level="High" if concentration >= 70 else "Medium" if concentration >= 40 else "Low", note=f"{concentration:.1f}%"))
+    if top3_concentration > 0:
+        tags.append(RiskTag(name="Top 3", level="Info", note=f"{top3_concentration:.1f}%"))
+    if effective_positions > 0:
+        tags.append(RiskTag(name="Effective Positions", level="Info", note=f"{effective_positions:.1f}"))
     tags.append(RiskTag(name="Stablecoin Share", level="High" if stable_pct >= 55 else "Medium" if stable_pct >= 20 else "Low", note=f"{stable_pct:.1f}%"))
     if group_mix:
         tags.append(RiskTag(name="Lead Group", level="Info", note=f"{group_mix[0][0]} {group_mix[0][1]:.1f}%"))
