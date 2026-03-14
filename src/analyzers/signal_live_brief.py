@@ -11,6 +11,33 @@ _GENERIC_SIGNAL_CONTEXTS = {
 }
 
 
+def _human_money(value: float) -> str:
+    abs_value = abs(value)
+    if abs_value >= 1_000_000_000_000:
+        return f"${value / 1_000_000_000_000:.1f}T"
+    if abs_value >= 1_000_000_000:
+        return f"${value / 1_000_000_000:.1f}B"
+    if abs_value >= 1_000_000:
+        return f"${value / 1_000_000:.1f}M"
+    if abs_value >= 1_000:
+        return f"${value / 1_000:.1f}K"
+    return f"${value:,.2f}"
+
+
+def _signal_invalidation(ctx: SignalContext) -> str:
+    if ctx.audit_gate == "BLOCK":
+        return "Breaks immediately if the audit state stays blocked."
+    if ctx.trigger_price > 0 and ctx.current_price > 0:
+        if ctx.current_price >= ctx.trigger_price:
+            return "Breaks if price loses the trigger zone and follow-through fades."
+        return "Still unproven until price reclaims the trigger zone with real follow-through."
+    if ctx.exit_rate >= 70:
+        return "Breaks if exit pressure stays elevated and fresh participation does not replace it."
+    if ctx.signal_status == "unmatched":
+        return "No smart-money follow-through."
+    return "Breaks if confirmation does not improve in the next cycle."
+
+
 def _signal_state_label(ctx: SignalContext, quality: str, evidence_level: str) -> str:
     if ctx.audit_gate == "BLOCK":
         return "blocked"
@@ -165,6 +192,20 @@ def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
         if ctx.long_short_ratio > 0:
             futures_note.append(f"L/S {ctx.long_short_ratio:.2f}")
         risk_tags.append(RiskTag(name="Futures Sentiment", level=futures_level, note=" | ".join(futures_note)))
+    if ctx.trigger_price > 0:
+        zone_low = ctx.trigger_price * 0.99
+        zone_high = ctx.trigger_price * 1.01
+        risk_tags.append(RiskTag(name="Entry Zone", level="Info", note=f"${zone_low:,.2f} – ${zone_high:,.2f}"))
+    risk_tags.append(RiskTag(name="Invalidation", level="Info", note=_signal_invalidation(ctx)))
+    if ctx.max_gain > 0:
+        risk_tags.append(RiskTag(name="Max Gain", level="Info", note=f"+{ctx.max_gain:.1f}%"))
+    if ctx.smart_money_inflow_usd > 0:
+        inflow_level = "High" if ctx.smart_money_inflow_usd >= 100_000 else "Medium"
+        risk_tags.append(RiskTag(name="Smart Money Inflow", level=inflow_level, note=f"~{_human_money(ctx.smart_money_inflow_usd)}"))
+    if ctx.volume_24h > 0:
+        risk_tags.append(RiskTag(name="Volume 24h", level="Info", note=_human_money(ctx.volume_24h)))
+    if ctx.market_cap > 0:
+        risk_tags.append(RiskTag(name="Market Cap", level="Info", note=_human_money(ctx.market_cap)))
 
     if state == "blocked":
         quick_verdict = "Blocked. Audit risk too high."

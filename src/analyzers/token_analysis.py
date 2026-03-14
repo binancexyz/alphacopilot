@@ -23,6 +23,16 @@ def analyze_token(symbol: str) -> AnalysisBrief:
             token_context.price = float(quote.get("price") or 0)
         if float(quote.get("volume_24h") or 0) > 0 and token_context.liquidity <= 0:
             token_context.liquidity = float(quote.get("volume_24h") or 0)
+        if float(quote.get("volume_24h") or 0) > 0 and token_context.volume_24h <= 0:
+            token_context.volume_24h = float(quote.get("volume_24h") or 0)
+        if float(quote.get("market_cap") or 0) > 0 and token_context.market_cap <= 0:
+            token_context.market_cap = float(quote.get("market_cap") or 0)
+        if quote.get("percent_change_24h") is not None:
+            token_context.pct_change_24h = float(quote.get("percent_change_24h") or 0)
+        if float(quote.get("high_24h") or 0) > 0 and token_context.price_high_24h <= 0:
+            token_context.price_high_24h = float(quote.get("high_24h") or 0)
+        if float(quote.get("low_24h") or 0) > 0 and token_context.price_low_24h <= 0:
+            token_context.price_low_24h = float(quote.get("low_24h") or 0)
 
     brief = build_token_brief(token_context)
 
@@ -54,8 +64,12 @@ def analyze_token(symbol: str) -> AnalysisBrief:
     ownership_lines.append(f"Smart money: {token_context.smart_money_count} wallet{'s' if token_context.smart_money_count != 1 else ''}" if token_context.smart_money_count > 0 else "Smart money: none visible")
     if token_context.top_holder_concentration_pct > 0:
         ownership_lines.append(f"Top-10 concentration: {token_context.top_holder_concentration_pct:.1f}%")
+    if token_context.kol_holders > 0:
+        ownership_lines.append(f"KOL holders: {token_context.kol_holders} ({token_context.kol_holding_pct:.1f}%)")
+    if token_context.pro_holders > 0:
+        ownership_lines.append(f"Pro holders: {token_context.pro_holders} ({token_context.pro_holding_pct:.1f}%)")
     if ownership_lines:
-        brief.beginner_note = "\n".join(ownership_lines[:3])
+        brief.beginner_note = "\n".join(ownership_lines[:5])
 
     if token_context.liquidity >= 10_000_000:
         brief.top_risks = [

@@ -45,7 +45,9 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
 
     display_name, display_symbol = _preferred_identity(symbol, token.display_name, token.symbol, quote)
 
-    signal_quality = "High" if signal.signal_status in {"triggered", "bullish"} else "Medium" if signal.signal_status in {"watch"} else "Low"
+    signal_quality = "High" if signal.signal_status in {"triggered", "bullish"} else "Medium" if signal.signal_status in {"watch", "active"} else "Low"
+    if signal.signal_status == "active" and signal.smart_money_count >= 3:
+        signal_quality = "High"
     top_risk = token.major_risks[0] if token.major_risks else signal.major_risks[0] if signal.major_risks else "Context is still incomplete, so treat this as a monitor-first setup."
 
     if not price and not quote:
@@ -73,7 +75,12 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
     if portfolio_note:
         top_risk = f"{top_risk} {portfolio_note}".strip()
 
-    why = f"{display_name}|{display_symbol}|{price}|{change}|{rank}|{signal.signal_status}|{token.liquidity}|{top_risk}|{verdict}"
+    volume_24h = float(quote.get("volume_24h") or token.volume_24h or 0) if quote else token.volume_24h
+    market_cap = float(quote.get("market_cap") or token.market_cap or 0) if quote else token.market_cap
+    why = (
+        f"{display_name}|{display_symbol}|{price}|{change}|{rank}|{signal.signal_status}|{token.liquidity}|{top_risk}|{verdict}|"
+        f"{volume_24h}|{market_cap}|{signal.smart_money_count}|{token.kline_trend}"
+    )
 
     tags: list[RiskTag] = []
     if quote_source:

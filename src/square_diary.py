@@ -14,6 +14,7 @@ from zoneinfo import ZoneInfo
 if __package__ is None or __package__ == "":
     sys.path.append(str(Path(__file__).resolve().parents[1]))
 
+from src.models.context import WatchTodayContext
 from src.analyzers.posture_context import load_portfolio_posture
 from src.services.careers_tracker import refresh_or_load as refresh_careers_snapshot, short_market_note as careers_market_note
 from src.services.factory import get_market_data_service
@@ -49,6 +50,7 @@ DEFAULT_CONFIG = {
         "OpenClaw product design",
     ],
     "schedule": {
+        "morning-diary": "08:00",
         "night-diary": "21:30",
     },
     "quality_mode": "premium-daily",
@@ -205,12 +207,16 @@ HOOKS = {
 BODY_BANK = {
     "morning-diary": [
         [
-            "I want the day to start with clean priorities, useful output, and less wasted motion.",
-            "The goal is not to do everything. It is to sharpen the right things.",
+            "The overnight board looks active, but quality still matters more than motion.",
+            "What matters this morning is not what moved, but what still has confirmation behind it.",
         ],
         [
-            "I care a lot more about clarity than activity right now.",
-            "Better systems make better judgment easier, which is still one of the main goals behind this project.",
+            "Starting the day with a clean read on what Binance Skills are actually showing.",
+            "The edge is still in ranking quality ahead of noise.",
+        ],
+        [
+            "Morning discipline: check the board, rank the setups, ignore the hype.",
+            "What looks interesting is only worth attention if the structure underneath it still holds.",
         ],
     ],
     "education": [
@@ -360,8 +366,26 @@ NIGHT_MODE_OPENERS = {
 NIGHT_MODE_CADENCE = {
     "diary": ["hook", "body", "reflection", "builder_signal", "builder_line", "work_signal", "closer"],
     "builder": ["hook", "builder_signal", "builder_line", "body", "work_signal", "reflection", "closer"],
-    "market": ["hook", "body", "market_line", "builder_signal", "builder_line", "reflection", "closer"],
+    "market": ["hook", "body", "market_snapshot", "market_line", "builder_signal", "builder_line", "reflection", "closer"],
 }
+
+MORNING_MODE_CADENCE = {
+    "opportunity": ["hook", "market_snapshot", "top_setup", "body", "posture_note", "closer"],
+    "signal": ["hook", "signal_board", "smart_money", "body", "posture_note", "closer"],
+    "narrative": ["hook", "narrative_heat", "body", "market_snapshot", "posture_note", "closer"],
+}
+
+MORNING_MODE_OPENERS = {
+    "opportunity": ["Morning scan", "Overnight opportunity check", "Opening setup read"],
+    "signal": ["Signal board check", "Morning signal scan", "Smart money overnight"],
+    "narrative": ["Narrative check", "Morning heat map", "What is moving this morning"],
+}
+
+MORNING_CLOSERS = [
+    "The board sets the tone. Discipline keeps it useful.",
+    "Starting clean. The market will show more if it deserves attention.",
+    "Morning read complete. Now the work is ranking quality ahead of noise.",
+]
 
 BANNED_FRAGMENTS = {
     "very strong direction",
@@ -379,7 +403,11 @@ def ensure_tmp_dir() -> None:
 
 def load_config() -> dict:
     if CONFIG_PATH.exists():
-        return {**DEFAULT_CONFIG, **json.loads(CONFIG_PATH.read_text(encoding="utf-8"))}
+        loaded = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+        merged = {**DEFAULT_CONFIG, **loaded}
+        if isinstance(loaded.get("schedule"), dict):
+            merged["schedule"] = {**DEFAULT_CONFIG.get("schedule", {}), **loaded["schedule"]}
+        return merged
     return dict(DEFAULT_CONFIG)
 
 
@@ -608,11 +636,253 @@ def choose_night_mode(topic: str, commit_line: str) -> str:
     return random.choice(["diary", "builder", "market"])
 
 
-def fetch_market_tone(config: dict) -> str:
+def _load_watch_today_context() -> WatchTodayContext | None:
     try:
         service = get_market_data_service()
-        ctx = normalize_watch_today_context(service.get_watch_today_context())
+        return normalize_watch_today_context(service.get_watch_today_context())
     except Exception:
+        return None
+
+
+def _normalize_piece(text: str) -> str:
+    return re.sub(r"\s+", " ", str(text or "")).strip()
+
+
+def _truncate_piece(text: str, limit: int = 120) -> str:
+    normalized = _normalize_piece(text)
+    if len(normalized) <= limit:
+        return normalized
+    clipped = normalized[: max(limit - 1, 1)].rstrip()
+    if " " in clipped:
+        clipped = clipped.rsplit(" ", 1)[0]
+    return f"{clipped}…"
+
+
+def _compose_piece(*parts: str, limit: int = 120) -> str:
+    text = " ".join(part.strip() for part in parts if part and part.strip())
+    return _truncate_piece(text, limit=limit) if text else ""
+
+
+def _first_board_item(*lanes: list[str]) -> str:
+    for lane in lanes:
+        for item in lane:
+            normalized = _normalize_piece(item)
+            if normalized:
+                return normalized
+    return ""
+
+
+def _extract_symbolish(text: str) -> str:
+    cleaned = _normalize_piece(text)
+    for chunk in re.split(r"\s*[|—:]\s*", cleaned):
+        match = re.search(r"\b[A-Z]{2,10}\b", chunk)
+        if match and match.group(0) not in {"BUY", "SELL", "PNL", "WR", "USD", "USDT", "USDC"}:
+            return match.group(0)
+    match = re.search(r"\b[A-Z]{2,10}\b", cleaned)
+    if match and match.group(0) not in {"BUY", "SELL", "PNL", "WR", "USD", "USDT", "USDC"}:
+        return match.group(0)
+    words = re.findall(r"[A-Za-z0-9][A-Za-z0-9/\-]*", cleaned)
+    return words[0].upper() if words else "BOARD"
+
+
+def _extract_symbols(items: list[str], limit: int = 3) -> list[str]:
+    seen: list[str] = []
+    for item in items:
+        symbol = _extract_symbolish(item)
+        if symbol and symbol not in seen:
+            seen.append(symbol)
+        if len(seen) >= limit:
+            break
+    return seen
+
+
+def _extract_money_hint(items: list[str]) -> str:
+    for item in items:
+        match = re.search(r"\$[0-9][0-9,]*(?:\.[0-9]+)?[KMBT]?", item)
+        if match:
+            return match.group(0)
+    return ""
+
+
+def _smart_money_activity(ctx: WatchTodayContext) -> str:
+    count = len(ctx.smart_money_flow)
+    if count >= 3:
+        return "accumulating"
+    if count >= 1 or len(ctx.strongest_signals) >= 2:
+        return "active"
+    return "quiet"
+
+
+def _freshness_hint(ctx: WatchTodayContext) -> str:
+    signal_text = " ".join(ctx.strongest_signals[:2]).lower()
+    if "stale" in signal_text:
+        return "stale timing"
+    if "aging" in signal_text or "late" in signal_text:
+        return "aging timing"
+    if any(word in signal_text for word in ["fresh", "early", "trigger", "active", "buy"]):
+        return "fresh timing"
+    if ctx.strongest_signals or ctx.top_picks:
+        return "live timing"
+    return "quiet timing"
+
+
+def _direction_hint(text: str) -> str:
+    lower = _normalize_piece(text).lower()
+    if any(word in lower for word in ["sell", "short", "bear", "fade", "down"]):
+        return "bearish"
+    if any(word in lower for word in ["buy", "long", "bull", "strength", "up"]):
+        return "bullish"
+    return "mixed"
+
+
+def _exit_pressure_hint(ctx: WatchTodayContext) -> str:
+    lower_risks = " ".join(ctx.risk_zones[:3]).lower()
+    if any(word in lower_risks for word in ["exit", "late", "overheat", "crowd", "squeeze"]):
+        return "elevated"
+    if len(ctx.risk_zones) >= 2:
+        return "mixed"
+    return "contained"
+
+
+def _follow_through_hint(ctx: WatchTodayContext) -> str:
+    risk_text = " ".join(ctx.risk_zones[:2]).lower()
+    if any(word in risk_text for word in ["overheat", "late", "fade", "exit"]):
+        return "fading"
+    if len(ctx.smart_money_flow) >= 2 or len(ctx.strongest_signals) >= 2:
+        return "real"
+    return "mixed"
+
+
+def _format_market_snapshot(ctx: WatchTodayContext) -> str:
+    signal_count = len(ctx.strongest_signals)
+    trending_count = len(ctx.trending_now) or len(ctx.exchange_board) or len(ctx.top_picks)
+    return _truncate_piece(
+        f"Board has {signal_count} active signals and {trending_count} trending names. Smart money is {_smart_money_activity(ctx)}."
+    )
+
+
+def _format_top_setup(ctx: WatchTodayContext) -> str:
+    lead = _extract_symbolish(_first_board_item(ctx.top_picks, ctx.strongest_signals, ctx.exchange_board))
+    if not lead:
+        return ""
+    smart_money_count = len(ctx.smart_money_flow)
+    smart_money_note = f" with {smart_money_count} smart-money lane{'s' if smart_money_count != 1 else ''}" if smart_money_count else ""
+    return _truncate_piece(f"Cleanest visible setup: {lead}{smart_money_note} and {_freshness_hint(ctx)}.")
+
+
+def _format_signal_board(ctx: WatchTodayContext) -> str:
+    lead_item = _first_board_item(ctx.strongest_signals, ctx.top_picks, ctx.exchange_board)
+    lead = _extract_symbolish(lead_item)
+    direction = _direction_hint(lead_item)
+    pressure = _exit_pressure_hint(ctx)
+    return _truncate_piece(
+        f"Signal board shows {len(ctx.strongest_signals)} active setups. Lead: {lead} ({direction}). Exit pressure: {pressure}."
+    )
+
+
+def _format_smart_money(ctx: WatchTodayContext) -> str:
+    symbols = _extract_symbols(ctx.smart_money_flow or ctx.strongest_signals or ctx.top_picks, limit=2)
+    if not symbols:
+        return ""
+    amount = _extract_money_hint(ctx.top_traders + ctx.smart_money_flow)
+    base = f"Smart money is visible in {', '.join(symbols)}."
+    if amount:
+        return _truncate_piece(f"{base} Largest visible PnL is around {amount}.")
+    return _truncate_piece(f"{base} Flow still looks {_smart_money_activity(ctx)}.")
+
+
+def _format_narrative_heat(ctx: WatchTodayContext) -> str:
+    narratives = [item for item in ctx.top_narratives[:2] if item]
+    if not narratives:
+        return ""
+    social_focus = _extract_symbolish(ctx.social_hype[0]) if ctx.social_hype else _extract_symbolish(ctx.top_narratives[2]) if len(ctx.top_narratives) >= 3 else ""
+    if social_focus:
+        return _truncate_piece(
+            f"Hottest narratives this morning: {', '.join(narratives)}. Social heat is clustering around {social_focus}."
+        )
+    return _truncate_piece(f"Hottest narratives this morning: {', '.join(narratives)}.")
+
+
+def _format_futures_note(ctx: WatchTodayContext) -> str:
+    if not ctx.futures_sentiment:
+        return ""
+    lead = ctx.futures_sentiment[0]
+    follow = ctx.futures_sentiment[1] if len(ctx.futures_sentiment) > 1 else ""
+    return _compose_piece(f"Futures tone: {lead}.", follow, limit=120)
+
+
+def _format_night_market_snapshot(ctx: WatchTodayContext) -> str:
+    signal_count = len(ctx.strongest_signals)
+    trending_count = len(ctx.trending_now) or len(ctx.exchange_board) or len(ctx.top_picks)
+    return _truncate_piece(
+        f"Today's board showed {signal_count} signals and {trending_count} trending names. Smart money was {_smart_money_activity(ctx)}."
+    )
+
+
+def _format_night_top_setup(ctx: WatchTodayContext) -> str:
+    lead = _extract_symbolish(_first_board_item(ctx.top_picks, ctx.strongest_signals, ctx.exchange_board))
+    if not lead:
+        return ""
+    return _truncate_piece(f"Strongest setup of the day was {lead}. Follow-through still looks {_follow_through_hint(ctx)}.")
+
+
+def _watch_today_snapshot_payload(ctx: WatchTodayContext, config: dict) -> dict[str, str]:
+    snapshot = {
+        "market_snapshot": _format_market_snapshot(ctx),
+        "top_setup": _format_top_setup(ctx),
+        "signal_board": _format_signal_board(ctx),
+        "smart_money": _format_smart_money(ctx),
+        "narrative_heat": _format_narrative_heat(ctx),
+        "futures_note": _format_futures_note(ctx),
+    }
+    if any(snapshot.values()):
+        return snapshot
+
+    focus = [str(x).upper() for x in config.get("market_focus", []) if str(x).strip()]
+    fallback_focus = ", ".join(focus[:2]) if focus else "BTC, BNB"
+    return {
+        "market_snapshot": f"Board is still thin this morning, so {fallback_focus} matter more than noise.",
+        "top_setup": "",
+        "signal_board": "",
+        "smart_money": "",
+        "narrative_heat": "",
+        "futures_note": "",
+    }
+
+
+def choose_morning_mode(ctx: WatchTodayContext) -> str:
+    signal_count = len(ctx.strongest_signals)
+    smart_money_count = len(ctx.smart_money_flow)
+    narrative_count = len(ctx.top_narratives)
+
+    if signal_count >= 3 or smart_money_count >= 2:
+        return "signal"
+    if narrative_count >= 3:
+        return "narrative"
+    return "opportunity"
+
+
+def fetch_morning_market_snapshot(config: dict) -> dict[str, str]:
+    ctx = _load_watch_today_context()
+    if ctx is None:
+        return _watch_today_snapshot_payload(WatchTodayContext(), config)
+    return _watch_today_snapshot_payload(ctx, config)
+
+
+def fetch_night_market_wrap(config: dict) -> dict[str, str]:
+    ctx = _load_watch_today_context()
+    if ctx is None:
+        return {"market_snapshot": fetch_market_tone(config), "top_setup": "", "futures_note": ""}
+    return {
+        "market_snapshot": _format_night_market_snapshot(ctx),
+        "top_setup": _format_night_top_setup(ctx),
+        "futures_note": _format_futures_note(ctx),
+    }
+
+
+def fetch_market_tone(config: dict) -> str:
+    ctx = _load_watch_today_context()
+    if ctx is None:
         return ""
     if ctx.market_takeaway:
         return str(ctx.market_takeaway).strip()
@@ -692,6 +962,62 @@ def contextual_builder_line(topic: str, commit_line: str, mode: str = "builder")
     return line
 
 
+def build_morning_diary_post(config: dict, state: dict[str, Any], topic: str, series: str, hook: str, hook_type: str) -> tuple[str, dict[str, str]]:
+    body = " ".join(pick_body("morning-diary", topic))
+    closer = random.choice(MORNING_CLOSERS)
+    opener = random.choice(MORNING_MODE_OPENERS["opportunity"])
+    posture_note = fetch_posture_note()
+    mode = "opportunity"
+    ctx = _load_watch_today_context()
+    snapshot = _watch_today_snapshot_payload(ctx or WatchTodayContext(), config)
+    if ctx is not None:
+        mode = choose_morning_mode(ctx)
+        opener = random.choice(MORNING_MODE_OPENERS[mode])
+
+    hook_text = hook.strip()
+    if hook_text.lower().startswith(("morning diary:", "morning note:")):
+        hook_text = hook_text.split(":", 1)[1].strip()
+
+    components = {
+        "hook": f"{series} — {opener}: {hook_text}",
+        "market_snapshot": snapshot.get("market_snapshot", ""),
+        "top_setup": snapshot.get("top_setup", ""),
+        "signal_board": snapshot.get("signal_board", ""),
+        "smart_money": snapshot.get("smart_money", ""),
+        "narrative_heat": snapshot.get("narrative_heat", ""),
+        "body": body,
+        "posture_note": posture_note,
+        "closer": closer,
+    }
+
+    bits: list[str] = []
+    for key in MORNING_MODE_CADENCE[mode]:
+        value = components.get(key, "")
+        if value:
+            bits.append(value)
+
+    futures_note = snapshot.get("futures_note", "")
+    if futures_note:
+        insert_at = max(len(bits) - 2, 1)
+        bits.insert(insert_at, futures_note)
+
+    custom = custom_line(config, state)
+    if custom and random.random() < 0.25:
+        bits.append(custom)
+    bits.append(random.choice(SEO_ENDINGS))
+
+    text = " ".join(bit.strip() for bit in bits if bit and bit.strip())
+    text = text[:999].rstrip()
+    meta = {
+        "slot": "morning-diary",
+        "topic": topic,
+        "series": series,
+        "hook_type": hook_type,
+        "voice": f"{VOICE_GUIDE.get('morning-diary', 'clear')} | mode={mode}",
+    }
+    return text, meta
+
+
 def build_night_diary_post(config: dict, state: dict[str, Any], topic: str, series: str, hook: str, hook_type: str) -> tuple[str, dict[str, str]]:
     body = pick_body("night-diary", topic)
     reflection = random.choice(NIGHT_REFLECTIONS)
@@ -701,11 +1027,16 @@ def build_night_diary_post(config: dict, state: dict[str, Any], topic: str, seri
     work_signal = working_tree_signal()
     builder_line = contextual_builder_line(topic, commit_line, mode)
     market_line = contextual_market_line(config, topic, mode)
+    night_wrap = fetch_night_market_wrap(config)
+    market_snapshot = night_wrap.get("market_snapshot", "")
+    market_details = _compose_piece(night_wrap.get("top_setup", ""), night_wrap.get("futures_note", ""), limit=180)
+    if market_details:
+        market_line = _compose_piece(market_details, market_line, limit=220)
     custom = custom_line(config, state)
     opener = random.choice(NIGHT_MODE_OPENERS[mode])
 
     hook_text = hook.strip()
-    if mode == "diary" and hook_text.lower().startswith(("night diary:", "evening note:")):
+    if hook_text.lower().startswith(("night diary:", "evening note:")):
         hook_text = hook_text.split(":", 1)[1].strip()
 
     components = {
@@ -715,6 +1046,7 @@ def build_night_diary_post(config: dict, state: dict[str, Any], topic: str, seri
         "builder_line": builder_line,
         "work_signal": work_signal,
         "reflection": reflection,
+        "market_snapshot": market_snapshot,
         "market_line": market_line,
         "closer": closer,
     }
@@ -793,15 +1125,7 @@ def build_post(slot: str, config: dict, state: dict[str, Any]) -> tuple[str, dic
     bits = [f"{series}: {hook}"]
 
     if slot == "morning-diary":
-        bits.extend(
-            [
-                *pick_body(slot, topic),
-                recent_commit_summary(),
-                working_tree_summary(),
-                focus_line(config, "Today I'm watching"),
-                custom_line(config, state),
-            ]
-        )
+        return build_morning_diary_post(config, state, topic, series, hook, hook_type)
     elif slot == "night-diary":
         return build_night_diary_post(config, state, topic, series, hook, hook_type)
     elif slot == "market":

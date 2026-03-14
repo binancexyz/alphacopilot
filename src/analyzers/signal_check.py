@@ -8,6 +8,10 @@ from src.services.factory import get_market_data_service
 from src.services.normalizers import normalize_signal_context
 
 
+def _has_risk_tag(brief: AnalysisBrief, name: str) -> bool:
+    return any(tag.name == name for tag in brief.risk_tags)
+
+
 def analyze_signal(token: str) -> AnalysisBrief:
     service = get_market_data_service()
     raw_context = service.get_signal_context(token)
@@ -25,7 +29,7 @@ def analyze_signal(token: str) -> AnalysisBrief:
         rank = int(quote.get("rank") or 0)
         brief.risk_tags.insert(0, RiskTag(name="Header Market", level="Info", note=f"{price}|{change}|{rank}"))
 
-    if signal_context.trigger_price > 0:
+    if signal_context.trigger_price > 0 and not _has_risk_tag(brief, "Entry Zone"):
         zone_low = signal_context.trigger_price * 0.99
         zone_high = signal_context.trigger_price * 1.01
         brief.risk_tags.append(RiskTag(name="Entry Zone", level="Info", note=f"${zone_low:,.2f} – ${zone_high:,.2f}"))
@@ -61,20 +65,21 @@ def analyze_signal(token: str) -> AnalysisBrief:
 
     append_posture_note_to_brief(brief, signal_context.token)
 
-    invalidation = ""
-    if signal_context.audit_gate == "BLOCK":
-        invalidation = "Breaks immediately if the audit state stays blocked."
-    elif signal_context.trigger_price > 0 and signal_context.current_price > 0:
-        if signal_context.current_price >= signal_context.trigger_price:
-            invalidation = "Breaks if price loses the trigger zone and follow-through fades."
+    if not _has_risk_tag(brief, "Invalidation"):
+        invalidation = ""
+        if signal_context.audit_gate == "BLOCK":
+            invalidation = "Breaks immediately if the audit state stays blocked."
+        elif signal_context.trigger_price > 0 and signal_context.current_price > 0:
+            if signal_context.current_price >= signal_context.trigger_price:
+                invalidation = "Breaks if price loses the trigger zone and follow-through fades."
+            else:
+                invalidation = "Still unproven until price reclaims the trigger zone with real follow-through."
+        elif signal_context.exit_rate >= 70:
+            invalidation = "Breaks if exit pressure stays elevated and fresh participation does not replace it."
+        elif signal_context.signal_status == "unmatched":
+            invalidation = "No smart-money follow-through"
         else:
-            invalidation = "Still unproven until price reclaims the trigger zone with real follow-through."
-    elif signal_context.exit_rate >= 70:
-        invalidation = "Breaks if exit pressure stays elevated and fresh participation does not replace it."
-    elif signal_context.signal_status == "unmatched":
-        invalidation = "No smart-money follow-through"
-    else:
-        invalidation = "Breaks if confirmation does not improve in the next cycle."
-    brief.risk_tags.append(RiskTag(name="Invalidation", level="Info", note=invalidation))
+            invalidation = "Breaks if confirmation does not improve in the next cycle."
+        brief.risk_tags.append(RiskTag(name="Invalidation", level="Info", note=invalidation))
 
     return brief

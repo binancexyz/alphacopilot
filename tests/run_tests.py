@@ -43,6 +43,7 @@ from tests.test_runtime_bridge_templates import (
 )
 from tests.test_analyzer_return_types import test_analyzers_return_analysis_brief_instances
 from tests.test_audit_analysis import (
+    test_analyze_audit_adds_market_context_when_market_data_is_available,
     test_analyze_audit_adds_signal_lens_when_smart_money_is_active,
     test_analyze_audit_marks_limited_validity_when_payload_is_partial,
     test_analyze_audit_marks_valid_supported_payload,
@@ -60,6 +61,7 @@ from tests.test_audit_judgment_states import (
     test_audit_marks_tax_heavy_as_tradable_but_flagged,
 )
 from tests.test_brief_analysis import (
+    test_analyze_brief_packs_market_fields_and_boosts_active_smart_money_quality,
     test_analyze_brief_handles_unmatched_signal_with_binance_spot,
     test_analyze_brief_uses_binance_spot_context,
 )
@@ -105,6 +107,15 @@ from tests.test_portfolio_history import (
     test_append_and_load_history,
     test_describe_delta_detects_material_changes,
     test_describe_trend_detects_short_local_direction,
+)
+from tests.test_premium_output_formatters import (
+    test_format_audit_card_renders_market_context_section,
+    test_format_compact_brief_card_renders_market_section_and_wallet_count,
+    test_format_portfolio_card_renders_margin_trend_and_five_holdings,
+    test_format_signal_card_renders_context_section,
+    test_format_token_card_renders_market_and_momentum_sections,
+    test_format_wallet_card_renders_value_holdings_and_narrative,
+    test_format_watchtoday_card_caps_extra_sections_at_six_total,
 )
 from tests.test_portfolio_trend_tag import test_short_trend_tag_shape
 from tests.test_posture_aware_analysis import (
@@ -154,8 +165,12 @@ from tests.test_signal_judgment_states import (
 from tests.test_signal_live_brief import test_build_signal_brief
 from tests.test_signal_posture_aware import test_signal_adds_portfolio_posture_note
 from tests.test_square_diary_context import (
+    test_build_morning_diary_post_uses_market_snapshot_mode,
+    test_build_night_diary_post_includes_market_wrap_and_futures,
+    test_choose_morning_mode_prefers_signal_then_narrative,
     test_contextual_builder_line_can_use_posture_note,
     test_contextual_market_line_can_use_market_tone,
+    test_fetch_morning_market_snapshot_returns_structured_lines,
 )
 from tests.test_thin_copy_polish import (
     test_compact_brief_thin_copy_uses_limited_read_language,
@@ -251,6 +266,7 @@ def main() -> None:
     test_analyze_audit_respects_validity_flags_from_extracted_live_payload()
     test_analyze_audit_pulls_bonding_curve_data_from_meme_lens()
     test_analyze_audit_adds_signal_lens_when_smart_money_is_active()
+    test_analyze_audit_adds_market_context_when_market_data_is_available()
 
     # --- skill registry + bridge ---
     test_skill_registry_resolves_query_token_info_reference()
@@ -265,6 +281,7 @@ def main() -> None:
     # --- brief analysis ---
     test_analyze_brief_uses_binance_spot_context()
     test_analyze_brief_handles_unmatched_signal_with_binance_spot()
+    test_analyze_brief_packs_market_fields_and_boosts_active_smart_money_quality()
 
     # --- brief posture aware ---
     test_analyze_brief_adds_portfolio_posture_note()
@@ -292,6 +309,13 @@ def main() -> None:
     test_format_token_card_keeps_ownership_structure_when_thin()
     test_format_watchtoday_card_keeps_sections_when_thin()
     test_format_audit_card_surfaces_limited_validity()
+    test_format_compact_brief_card_renders_market_section_and_wallet_count()
+    test_format_token_card_renders_market_and_momentum_sections()
+    test_format_signal_card_renders_context_section()
+    test_format_watchtoday_card_caps_extra_sections_at_six_total()
+    test_format_audit_card_renders_market_context_section()
+    test_format_portfolio_card_renders_margin_trend_and_five_holdings()
+    test_format_wallet_card_renders_value_holdings_and_narrative()
 
     # --- holdings thin states ---
     test_wallet_thin_state_keeps_premium_structure()
@@ -382,6 +406,10 @@ def main() -> None:
     # --- square diary context ---
     test_contextual_market_line_can_use_market_tone()
     test_contextual_builder_line_can_use_posture_note()
+    test_choose_morning_mode_prefers_signal_then_narrative()
+    test_fetch_morning_market_snapshot_returns_structured_lines()
+    test_build_morning_diary_post_uses_market_snapshot_mode()
+    test_build_night_diary_post_includes_market_wrap_and_futures()
 
     # --- thin copy polish ---
     test_compact_brief_thin_copy_uses_limited_read_language()

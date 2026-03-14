@@ -14,6 +14,36 @@ from src.models.context import TokenContext
 from src.models.schemas import AnalysisBrief, RiskTag
 
 
+def _human_money(value: float) -> str:
+    abs_value = abs(value)
+    if abs_value >= 1_000_000_000_000:
+        return f"${value / 1_000_000_000_000:.1f}T"
+    if abs_value >= 1_000_000_000:
+        return f"${value / 1_000_000_000:.1f}B"
+    if abs_value >= 1_000_000:
+        return f"${value / 1_000_000:.1f}M"
+    if abs_value >= 1_000:
+        return f"${value / 1_000:.1f}K"
+    return f"${value:,.2f}"
+
+
+def _momentum_note(ctx: TokenContext) -> str:
+    parts: list[str] = []
+    for label, value in (("5m", ctx.pct_change_5m), ("1h", ctx.pct_change_1h), ("4h", ctx.pct_change_4h)):
+        if value != 0:
+            parts.append(f"{label} {value:+.1f}%")
+    return " | ".join(parts)
+
+
+def _buy_sell_note(ctx: TokenContext) -> str:
+    if ctx.buy_sell_ratio <= 0:
+        return ""
+    buy_pct = ctx.buy_sell_ratio * 100
+    sell_pct = max(0.0, 100 - buy_pct)
+    pressure = "buy-heavy" if ctx.buy_sell_ratio >= 0.55 else "sell-heavy" if ctx.buy_sell_ratio <= 0.45 else "balanced"
+    return f"{pressure} ({buy_pct:.0f}% buy / {sell_pct:.0f}% sell)"
+
+
 def _token_evidence_level(ctx: TokenContext) -> tuple[str, str]:
     score = 0
     if ctx.price > 0:
@@ -60,13 +90,29 @@ def _token_why_it_matters(ctx: TokenContext) -> str:
         pieces.append(f"Signal timing reads as {ctx.signal_freshness.lower()} ({ctx.signal_age_hours:.1f}h old).")
     if ctx.kline_trend:
         pieces.append(f"4h K-line trend reads {ctx.kline_trend} and price is {'above' if ctx.kline_above_ma20 else 'below'} the recent MA20.")
+    buy_sell_note = _buy_sell_note(ctx)
+    if buy_sell_note:
+        pieces.append(f"24h order flow looks {buy_sell_note}.")
+    if ctx.kol_holders > 0:
+        holder_note = f"KOL holders are visible at {ctx.kol_holders}"
+        if ctx.kol_holding_pct > 0:
+            holder_note += f" ({ctx.kol_holding_pct:.1f}%)"
+        if ctx.pro_holders > 0:
+            holder_note += f", with pro holders at {ctx.pro_holders}"
+            if ctx.pro_holding_pct > 0:
+                holder_note += f" ({ctx.pro_holding_pct:.1f}%)"
+        holder_note += "."
+        pieces.append(holder_note)
+    momentum_note = _momentum_note(ctx)
+    if momentum_note:
+        pieces.append(f"Multi-timeframe momentum reads {momentum_note}.")
     if ctx.is_meme_candidate and ctx.meme_lifecycle:
         pieces.append(f"Meme lifecycle reads {ctx.meme_lifecycle} with bonding progress near {ctx.meme_bonded_progress:.0f}%.")
     if ctx.top_trader_interest:
         pieces.append("Top-trader PnL tables also show this symbol among recent top earners.")
     if not pieces:
         pieces.append(_token_price_line(ctx))
-    return " ".join(pieces[:3]).strip()
+    return " ".join(pieces[:5]).strip()
 
 
 def _token_watch_next(ctx: TokenContext) -> list[str]:
@@ -139,6 +185,40 @@ def build_token_brief(ctx: TokenContext) -> AnalysisBrief:
     if ctx.liquidity > 0:
         liquidity_level = "High" if ctx.liquidity >= LIQUIDITY_DEEP else "Medium" if ctx.liquidity >= LIQUIDITY_MODERATE else "Low"
         risk_tags.append(RiskTag(name="Liquidity", level=liquidity_level, note=f"Visible liquidity {ctx.liquidity:,.0f}"))
+    market_lines: list[str] = []
+    if ctx.volume_24h > 0:
+        market_lines.append(f"Volume 24h: {_human_money(ctx.volume_24h)}")
+    if ctx.market_cap > 0:
+        market_lines.append(f"Market Cap: {_human_money(ctx.market_cap)}")
+    if ctx.price_high_24h > 0 or ctx.price_low_24h > 0:
+        high = f"${ctx.price_high_24h:,.2f}" if ctx.price_high_24h > 0 else "—"
+        low = f"${ctx.price_low_24h:,.2f}" if ctx.price_low_24h > 0 else "—"
+        market_lines.append(f"24h Range: {low} – {high}")
+    if market_lines:
+        risk_tags.append(RiskTag(name="Market Data", level="Info", note=" | ".join(market_lines)))
+    buy_sell_note = _buy_sell_note(ctx)
+    if buy_sell_note:
+        pressure_level = "High" if ctx.buy_sell_ratio >= 0.65 or ctx.buy_sell_ratio <= 0.35 else "Medium"
+        risk_tags.append(RiskTag(name="Buy/Sell Pressure", level=pressure_level, note=buy_sell_note))
+    holder_quality_bits: list[str] = []
+    if ctx.kol_holders > 0:
+        bit = f"KOL {ctx.kol_holders}"
+        if ctx.kol_holding_pct > 0:
+            bit += f" ({ctx.kol_holding_pct:.1f}%)"
+        holder_quality_bits.append(bit)
+    if ctx.pro_holders > 0:
+        bit = f"Pro {ctx.pro_holders}"
+        if ctx.pro_holding_pct > 0:
+            bit += f" ({ctx.pro_holding_pct:.1f}%)"
+        holder_quality_bits.append(bit)
+    if holder_quality_bits:
+        risk_tags.append(RiskTag(name="Holder Quality", level="Info", note=" | ".join(holder_quality_bits)))
+    momentum_note = _momentum_note(ctx)
+    if momentum_note:
+        positive_moves = sum(1 for value in (ctx.pct_change_5m, ctx.pct_change_1h, ctx.pct_change_4h) if value > 0)
+        negative_moves = sum(1 for value in (ctx.pct_change_5m, ctx.pct_change_1h, ctx.pct_change_4h) if value < 0)
+        momentum_level = "High" if positive_moves >= 2 else "Low" if negative_moves >= 2 else "Medium"
+        risk_tags.append(RiskTag(name="Momentum", level=momentum_level, note=momentum_note))
     if ctx.futures_sentiment or ctx.futures_funding_rate != 0 or ctx.futures_long_short_ratio not in {0.0, 1.0}:
         futures_level = "High" if abs(ctx.futures_funding_rate) > 0.001 or ctx.futures_long_short_ratio > 2.5 or (0 < ctx.futures_long_short_ratio < 0.5) else "Medium"
         futures_note = []

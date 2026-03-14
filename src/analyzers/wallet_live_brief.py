@@ -37,7 +37,7 @@ def _format_holding_summary(ctx: WalletContext) -> str:
     if not ctx.top_holdings:
         return "Top holding detail is limited, so this wallet still needs more behavior context before strong conclusions."
 
-    top_bits = [f"{holding.symbol} ({holding.weight_pct:.1f}%)" for holding in ctx.top_holdings[:3]]
+    top_bits = [f"{holding.symbol} ({holding.weight_pct:.1f}%)" for holding in ctx.top_holdings[:5]]
     return f"Top visible holdings are {', '.join(top_bits)}, which gives a better clue about style and concentration than wallet size alone."
 
 

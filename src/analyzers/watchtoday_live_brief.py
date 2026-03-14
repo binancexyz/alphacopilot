@@ -14,6 +14,8 @@ LANE_LABELS = {
     "top_picks": "Top Picks",
     "strongest_signals": "Signal Core",
     "exchange_board": "Exchange Board",
+    "futures_sentiment": "Futures Sentiment",
+    "top_traders": "Top Traders",
 }
 
 
@@ -27,6 +29,8 @@ def _watch_lane_summary(ctx: WatchTodayContext) -> tuple[list[str], list[str]]:
         "top_picks": bool(ctx.top_picks),
         "strongest_signals": bool(ctx.strongest_signals),
         "exchange_board": bool(ctx.exchange_board),
+        "futures_sentiment": bool(ctx.futures_sentiment),
+        "top_traders": bool(ctx.top_traders),
     }
     populated = [LANE_LABELS[key] for key, present in lanes.items() if present]
     sparse = [LANE_LABELS[key] for key, present in lanes.items() if not present]
@@ -98,6 +102,10 @@ def _watch_sections(ctx: WatchTodayContext) -> list[BriefSection]:
         sections.append(BriefSection(title="🌊 Narrative", content="\n".join(f"- {item}" for item in ctx.top_narratives[:3])))
     if len(ctx.top_picks) >= 2 or (ctx.top_picks and (ctx.strongest_signals or ctx.exchange_board)):
         sections.append(BriefSection(title="👀 Today's Top 3", content="\n".join(f"- {item}" for item in ctx.top_picks[:3])))
+    if ctx.futures_sentiment:
+        sections.append(BriefSection(title="📈 Futures Sentiment", content="\n".join(f"- {item}" for item in ctx.futures_sentiment[:4])))
+    if ctx.top_traders:
+        sections.append(BriefSection(title="🏆 Top Traders", content="\n".join(f"- {item}" for item in ctx.top_traders[:3])))
 
     populated, sparse = _watch_lane_summary(ctx)
     if len(sparse) >= 2:
@@ -118,6 +126,10 @@ def build_watchtoday_brief(ctx: WatchTodayContext) -> AnalysisBrief:
         risk_tags.append(RiskTag(name="Signal Density", level="Medium", note=f"{len(ctx.strongest_signals)} active signal areas identified."))
     if ctx.top_narratives:
         risk_tags.append(RiskTag(name="Hot Narratives", level="Medium", note=", ".join(ctx.top_narratives[:3])))
+    if ctx.futures_sentiment:
+        risk_tags.append(RiskTag(name="Futures Sentiment", level="Info", note=", ".join(ctx.futures_sentiment[:2])))
+    if ctx.top_traders:
+        risk_tags.append(RiskTag(name="Top Traders", level="Info", note=", ".join(ctx.top_traders[:2])))
 
     populated, sparse = _watch_lane_summary(ctx)
 

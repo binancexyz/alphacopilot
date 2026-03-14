@@ -10,6 +10,19 @@ _LIQUIDITY_KEYS = ("liquidity", "tax", "sell", "buy", "slippage", "pool", "trade
 _STRUCTURE_KEYS = ("holder", "concentration", "risk level", "wash", "honeypot", "hidden", "risk")
 
 
+def _human_money(value: float) -> str:
+    abs_value = abs(value)
+    if abs_value >= 1_000_000_000_000:
+        return f"${value / 1_000_000_000_000:.1f}T"
+    if abs_value >= 1_000_000_000:
+        return f"${value / 1_000_000_000:.1f}B"
+    if abs_value >= 1_000_000:
+        return f"${value / 1_000_000:.1f}M"
+    if abs_value >= 1_000:
+        return f"${value / 1_000:.1f}K"
+    return f"${value:,.2f}"
+
+
 def _pick_finding(items: list[str], *keywords: str) -> str:
     lower_keywords = [k.lower() for k in keywords]
     for item in items:
@@ -73,6 +86,12 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
     signal_status = str(audit.get("signal_status") or "unknown").replace("|", "/")
     smart_money_count = int(audit.get("smart_money_count") or 0)
     signal_freshness = str(audit.get("signal_freshness") or "").replace("|", "/")
+    price = float(audit.get("price") or 0)
+    liquidity = float(audit.get("liquidity") or 0)
+    volume_24h = float(audit.get("volume_24h") or 0)
+    market_cap = float(audit.get("market_cap") or 0)
+    buy_tax = float(audit.get("buy_tax") or 0)
+    sell_tax = float(audit.get("sell_tax") or 0)
     combined = [x for x in [blocked_reason, *audit_flags, *risks] if x]
     audit_valid = bool(audit.get("has_result", audit.get("hasResult", False))) and bool(audit.get("is_supported", audit.get("isSupported", False)))
     audit_limited = not audit_valid or "limited" in audit_summary.lower() or "partial" in blocked_reason.lower() or "unavailable" in blocked_reason.lower()
@@ -97,34 +116,47 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
     else:
         primary = "Contract: No red flags"
 
+    liquidity_line = ""
     if liquidity_hit:
-        secondary = f"Liquidity: {liquidity_hit}"
+        liquidity_line = f"Liquidity: {liquidity_hit}"
+    elif liquidity > 0:
+        liquidity_line = f"Liquidity: {_human_money(liquidity)} visible"
     elif audit_limited:
-        secondary = "Liquidity: Partial visibility ⚠️"
+        liquidity_line = "Liquidity: Partial visibility ⚠️"
     elif any("tax" in flag.lower() for flag in audit_flags):
-        secondary = f"Liquidity: {next(flag for flag in audit_flags if 'tax' in flag.lower())}"
+        liquidity_line = f"Liquidity: {next(flag for flag in audit_flags if 'tax' in flag.lower())}"
     else:
-        secondary = "Liquidity: Adequate"
+        liquidity_line = "Liquidity: Adequate"
 
     if structure_hit:
-        tertiary = f"Structure: {structure_hit}"
+        structure_line = f"Structure: {structure_hit}"
     elif audit_gate == "BLOCK":
-        tertiary = "Structure: Weak"
+        structure_line = "Structure: Weak"
     elif audit_limited:
-        tertiary = "Structure: Partial"
+        structure_line = "Structure: Partial"
     elif risk_level.lower() == "low":
-        tertiary = "Structure: Stable"
+        structure_line = "Structure: Stable"
     else:
-        tertiary = f"Structure: {risk_level} risk"
+        structure_line = f"Structure: {risk_level} risk"
+
+    findings = [primary]
+    if buy_tax > 0 or sell_tax > 0:
+        findings.append(f"Tax: Buy {buy_tax:.2f}% / Sell {sell_tax:.2f}%")
+    if liquidity_line and liquidity_line not in findings and len(findings) < 3:
+        findings.append(liquidity_line)
+    if structure_line and structure_line not in findings and len(findings) < 3:
+        findings.append(structure_line)
+    while len(findings) < 3:
+        findings.append("")
 
     packed = "|".join([
         display_name,
         display_symbol,
         severity,
         audit_summary,
-        primary,
-        secondary,
-        tertiary,
+        findings[0],
+        findings[1],
+        findings[2],
         audit_gate.lower(),
         verdict,
     ])
@@ -146,6 +178,15 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
         if audit_gate == "BLOCK" and smart_money_count > 0:
             signal_lines.append("Despite the audit risk, tracked smart money is still participating.")
         sections.append(BriefSection(title="📡 Signal Lens", content="\n".join(f"- {line}" for line in signal_lines if line)))
+    market_lines: list[str] = []
+    if price > 0:
+        market_lines.append(f"Price: ${price:,.2f}")
+    if volume_24h > 0:
+        market_lines.append(f"Volume 24h: {_human_money(volume_24h)}")
+    if market_cap > 0:
+        market_lines.append(f"Market Cap: {_human_money(market_cap)}")
+    if market_lines:
+        sections.append(BriefSection(title="📊 Market Context", content="\n".join(f"- {line}" for line in market_lines)))
     try:
         meme_brief = analyze_meme(symbol)
         meme_note = meme_brief.quick_verdict.strip()

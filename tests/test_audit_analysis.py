@@ -142,3 +142,30 @@ def test_analyze_audit_adds_signal_lens_when_smart_money_is_active():
 
     assert any(section.title == '📡 Signal Lens' for section in brief.sections)
     assert 'Smart money is still active' in brief.quick_verdict
+
+
+def test_analyze_audit_adds_market_context_when_market_data_is_available():
+    old_service = audit_analysis.get_market_data_service
+    audit_analysis.get_market_data_service = lambda: DummyService({
+        'symbol': 'BNB',
+        'display_name': 'BNB',
+        'audit_gate': 'ALLOW',
+        'audit_summary': 'Risk level 0 (LOW)',
+        'risk_level': 'Low',
+        'audit_flags': [],
+        'major_risks': [],
+        'has_result': True,
+        'is_supported': True,
+        'price': 612.5,
+        'volume_24h': 1_200_000_000,
+        'market_cap': 85_000_000_000,
+        'buy_tax': 1.5,
+        'sell_tax': 2.0,
+    })
+    try:
+        brief = audit_analysis.analyze_audit('BNB')
+    finally:
+        audit_analysis.get_market_data_service = old_service
+
+    assert any(section.title == '📊 Market Context' for section in brief.sections)
+    assert 'Tax: Buy 1.50% / Sell 2.00%' in brief.quick_verdict

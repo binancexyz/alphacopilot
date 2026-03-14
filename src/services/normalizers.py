@@ -12,8 +12,19 @@ def normalize_token_context(payload: dict) -> TokenContext:
         liquidity=_to_float(payload.get("liquidity")),
         holders=_to_int(payload.get("holders")),
         volume_24h=_to_float(payload.get("volume_24h")),
+        volume_5m=_to_float(payload.get("volume_5m")),
+        volume_1h=_to_float(payload.get("volume_1h")),
+        volume_4h=_to_float(payload.get("volume_4h")),
         pct_change_24h=_to_float(payload.get("pct_change_24h")),
+        pct_change_5m=_to_float(payload.get("pct_change_5m")),
+        pct_change_1h=_to_float(payload.get("pct_change_1h")),
+        pct_change_4h=_to_float(payload.get("pct_change_4h")),
         market_cap=_to_float(payload.get("market_cap")),
+        buy_sell_ratio=_to_float(payload.get("buy_sell_ratio")),
+        fdv=_to_float(payload.get("fdv")),
+        price_high_24h=_to_float(payload.get("price_high_24h")),
+        price_low_24h=_to_float(payload.get("price_low_24h")),
+        tx_count_24h=_to_int(payload.get("tx_count_24h")),
         top_holder_concentration_pct=_to_float(payload.get("top_holder_concentration_pct")),
         market_rank_context=str(payload.get("market_rank_context", "")),
         signal_status=str(payload.get("signal_status", "unknown")),
@@ -25,6 +36,10 @@ def normalize_token_context(payload: dict) -> TokenContext:
         smart_money_holding_pct=_to_float(payload.get("smart_money_holding_pct")),
         smart_money_inflow_usd=_to_float(payload.get("smart_money_inflow_usd")),
         smart_money_inflow_traders=_to_int(payload.get("smart_money_inflow_traders")),
+        kol_holders=_to_int(payload.get("kol_holders")),
+        kol_holding_pct=_to_float(payload.get("kol_holding_pct")),
+        pro_holders=_to_int(payload.get("pro_holders")),
+        pro_holding_pct=_to_float(payload.get("pro_holding_pct")),
         exit_rate=_to_float(payload.get("exit_rate")),
         signal_age_hours=_to_float(payload.get("signal_age_hours")),
         signal_freshness=str(payload.get("signal_freshness", "UNKNOWN")),
@@ -79,6 +94,8 @@ def normalize_watch_today_context(payload: dict) -> WatchTodayContext:
         meme_watch=[str(x) for x in payload.get("meme_watch", [])],
         top_picks=[str(x) for x in payload.get("top_picks", [])],
         exchange_board=[str(x) for x in payload.get("exchange_board", [])],
+        futures_sentiment=[str(x) for x in payload.get("futures_sentiment", [])],
+        top_traders=[str(x) for x in payload.get("top_traders", [])],
     )
 
 
@@ -136,4 +153,3 @@ def normalize_meme_context(payload: dict) -> MemeContext:
         social_brief=str(payload.get("social_brief", "")),
         top_holder_concentration_pct=_to_float(payload.get("top_holder_concentration_pct")),
     )
-

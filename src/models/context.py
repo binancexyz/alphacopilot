@@ -11,8 +11,19 @@ class TokenContext:
     liquidity: float = 0.0
     holders: int = 0
     volume_24h: float = 0.0
+    volume_5m: float = 0.0
+    volume_1h: float = 0.0
+    volume_4h: float = 0.0
     pct_change_24h: float = 0.0
+    pct_change_5m: float = 0.0
+    pct_change_1h: float = 0.0
+    pct_change_4h: float = 0.0
     market_cap: float = 0.0
+    buy_sell_ratio: float = 0.0
+    fdv: float = 0.0
+    price_high_24h: float = 0.0
+    price_low_24h: float = 0.0
+    tx_count_24h: int = 0
     top_holder_concentration_pct: float = 0.0
     market_rank_context: str = ""
     signal_status: str = "unknown"
@@ -24,6 +35,10 @@ class TokenContext:
     smart_money_holding_pct: float = 0.0
     smart_money_inflow_usd: float = 0.0
     smart_money_inflow_traders: int = 0
+    kol_holders: int = 0
+    kol_holding_pct: float = 0.0
+    pro_holders: int = 0
+    pro_holding_pct: float = 0.0
     exit_rate: float = 0.0
     signal_age_hours: float = 0.0
     signal_freshness: str = "UNKNOWN"
@@ -78,6 +93,8 @@ class WatchTodayContext:
     meme_watch: list[str] = field(default_factory=list)
     top_picks: list[str] = field(default_factory=list)
     exchange_board: list[str] = field(default_factory=list)
+    futures_sentiment: list[str] = field(default_factory=list)
+    top_traders: list[str] = field(default_factory=list)
 
 
 @dataclass

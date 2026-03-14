@@ -32,6 +32,7 @@
     "Good systems should make better judgment easier, not harder."
   ],
   "schedule": {
+    "morning-diary": "08:00",
     "night-diary": "21:30"
   }
 }

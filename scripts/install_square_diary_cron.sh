@@ -6,6 +6,7 @@ LOG_DIR="$ROOT/tmp"
 mkdir -p "$LOG_DIR"
 
 slots=(
+  "08:00|morning-diary"
   "21:30|night-diary"
 )
 
