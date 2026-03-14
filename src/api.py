@@ -20,7 +20,7 @@ from src.analyzers.wallet_analysis import analyze_wallet
 from src.config import config_warnings, settings
 from src.formatters.brief_formatter import format_brief
 from src.services.api_guard import enforce_api_guard, guard_status
-from src.services.runtime_report import build_runtime_meta, live_service
+from src.services.runtime_report import apply_runtime_meta, build_runtime_meta, live_service
 from src.utils.parsing import normalize_token_input, normalize_wallet_input
 from src.utils.validation import looks_like_wallet_address
 
@@ -114,6 +114,7 @@ def runtime_report(request: Request, _: None = Depends(enforce_api_guard)) -> di
 def _brief_response(command: str, entity: str, brief) -> BriefResponse:
     health = live_service().healthcheck() if settings.app_mode == "live" else None
     runtime = build_runtime_meta(command, entity, health=health)
+    brief = apply_runtime_meta(brief, runtime)
     return BriefResponse(
         command=command,
         entity=entity,
@@ -168,6 +169,7 @@ def alpha(request: Request, _: None = Depends(enforce_api_guard), symbol: str | 
     brief = analyze_alpha(normalized or None, context)
     entity = normalized or "binance-alpha"
     runtime = build_runtime_meta("alpha", entity)
+    brief = apply_runtime_meta(brief, runtime)
     warning = brief.runtime_warning or runtime.get("warning") or _mode_warning()
     return BriefResponse(
         command="alpha",
@@ -187,6 +189,7 @@ def futures(request: Request, _: None = Depends(enforce_api_guard), symbol: str 
     context = svc.get_futures_context(normalized)
     brief = analyze_futures(normalized, context)
     runtime = build_runtime_meta("futures", normalized)
+    brief = apply_runtime_meta(brief, runtime)
     warning = brief.runtime_warning or runtime.get("warning") or _mode_warning()
     return BriefResponse(
         command="futures",

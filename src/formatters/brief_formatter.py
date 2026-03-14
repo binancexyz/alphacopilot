@@ -583,10 +583,18 @@ def _format_wallet_card(brief: AnalysisBrief) -> str:
 
 
 def _runtime_banner(brief: AnalysisBrief) -> list[str]:
+    trust_tag = next((tag for tag in brief.risk_tags if tag.name == "Live Trust"), None)
+    if trust_tag:
+        trust_line = trust_tag.level
+        if brief.runtime_warning:
+            trust_line += f" · {brief.runtime_warning}"
+        elif trust_tag.note:
+            trust_line += f" · generated {trust_tag.note}"
+        return ["", f"**🛰️ Live Trust**\n{trust_line}"]
     if brief.runtime_state == "live_degraded" and brief.runtime_warning:
-        return ["", f"**🛠️ Runtime**\n{brief.runtime_warning}"]
+        return ["", f"**🛰️ Live Trust**\n🟡 Partial live / degraded · {brief.runtime_warning}"]
     if brief.runtime_state == "mock":
-        return ["", "**🛠️ Runtime**\nRunning in mock mode."]
+        return ["", "**🛰️ Live Trust**\n🔴 Mock / not live"]
     return []
 
 
@@ -702,25 +710,35 @@ def _format_portfolio_card(brief: AnalysisBrief) -> str:
 
 def format_brief(brief: AnalysisBrief) -> str:
     if brief.entity.startswith("Price:"):
-        return _format_price_card(brief)
-    if brief.entity.startswith("Brief:"):
-        return _format_compact_brief_card(brief)
-    if brief.entity.startswith("Risk:"):
-        return _format_risk_card(brief)
-    if brief.entity.startswith("Audit:"):
-        return _format_audit_card(brief)
-    if brief.entity.startswith("Meme:"):
-        return _format_token_card(brief)
-    if brief.entity.startswith("Token:"):
-        return _format_token_card(brief)
-    if brief.entity.startswith("Signal:"):
-        return _format_signal_card(brief)
-    if brief.entity.startswith("Wallet:"):
-        return _format_wallet_card(brief)
-    if brief.entity.startswith("Portfolio:"):
-        return _format_portfolio_card(brief)
-    if brief.entity == "Market Watch":
-        return _format_watchtoday_card(brief)
+        rendered = _format_price_card(brief)
+    elif brief.entity.startswith("Brief:"):
+        rendered = _format_compact_brief_card(brief)
+    elif brief.entity.startswith("Risk:"):
+        rendered = _format_risk_card(brief)
+    elif brief.entity.startswith("Audit:"):
+        rendered = _format_audit_card(brief)
+    elif brief.entity.startswith("Meme:"):
+        rendered = _format_token_card(brief)
+    elif brief.entity.startswith("Token:"):
+        rendered = _format_token_card(brief)
+    elif brief.entity.startswith("Signal:"):
+        rendered = _format_signal_card(brief)
+    elif brief.entity.startswith("Wallet:"):
+        rendered = _format_wallet_card(brief)
+    elif brief.entity.startswith("Portfolio:"):
+        rendered = _format_portfolio_card(brief)
+    elif brief.entity == "Market Watch":
+        rendered = _format_watchtoday_card(brief)
+    else:
+        parts = [_entity_line(brief.entity), "", brief.quick_verdict]
+        rendered = "\n".join(parts).strip() + "\n"
 
-    parts = [_entity_line(brief.entity), "", brief.quick_verdict]
-    return "\n".join(parts).strip() + "\n"
+    banner = _runtime_banner(brief)
+    if not banner or "**🛰️ Live Trust**" in rendered:
+        return rendered
+
+    lines = rendered.strip().splitlines()
+    if not lines:
+        return rendered
+    rebuilt = [lines[0], *banner, *lines[1:]]
+    return "\n".join(rebuilt).strip() + "\n"
