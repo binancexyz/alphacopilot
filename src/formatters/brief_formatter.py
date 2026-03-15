@@ -367,6 +367,11 @@ def _format_compact_brief_card(brief: AnalysisBrief) -> str:
         else:
             signal_line = f"{signal_line} · {smart_money_count_i} wallet{'s' if smart_money_count_i != 1 else ''}"
 
+    source_tag = next((tag for tag in brief.risk_tags if tag.name == 'Source' and tag.note), None)
+    maturity_tag = _first_tag(brief, 'Maturity')
+    order_book_tag = _first_tag(brief, 'Order Book')
+    spot_tag = _first_tag(brief, 'Binance Spot')
+
     parts = [_brief_header(symbol or name, price_f, change_f, rank_i)]
     parts.extend(["", "**⚡ Snapshot**"])
     parts.extend(_tree_lines([
@@ -374,17 +379,33 @@ def _format_compact_brief_card(brief: AnalysisBrief) -> str:
         f"Trend: {trend}",
         f"Liquidity: {liquidity_text}",
     ]))
+
     market_lines = []
     if volume_f > 0:
         market_lines.append(f"Volume 24h: {_human_money(volume_f)}")
     if market_cap_f > 0:
         market_lines.append(f"Market Cap: {_human_money(market_cap_f)}")
+    if smart_money_count_i > 0:
+        market_lines.append(f"Smart money: {smart_money_count_i} wallets")
     if market_lines:
         parts.extend(["", "**📊 Market**"])
         parts.extend(_tree_lines(market_lines))
+
+    read_lines = []
+    if spot_tag and spot_tag.note:
+        read_lines.append(f"Spot: {spot_tag.note}")
+    if order_book_tag and order_book_tag.note:
+        read_lines.append(f"Order book: {order_book_tag.note}")
+    if maturity_tag and maturity_tag.note:
+        read_lines.append(f"Maturity: {maturity_tag.note}")
+    if source_tag and source_tag.note and source_tag.note != 'Secondary market data':
+        read_lines.append(f"Source: {source_tag.note}")
+    if read_lines:
+        parts.extend(["", "**🔎 Read**"])
+        parts.extend(_tree_lines(read_lines[:4]))
+
     parts.extend(["", f"**🧠 Verdict {_dots(confidence)}**\n{verdict or 'Monitor only. No conviction setup visible.'}"])
     footer_bits = [_short_risk(top_risk or 'Secondary data')]
-    source_tag = next((tag for tag in brief.risk_tags if tag.name == 'Source' and tag.note), None)
     if source_tag and source_tag.note == 'Secondary market data':
         footer_bits.append('Thin context' if price_f <= 0 or liquidity_f <= 0 else 'Market-only read')
     elif liquidity_f <= 0 and _short_risk(top_risk or '').lower() != 'thin payload':
@@ -571,6 +592,7 @@ def _format_signal_card(brief: AnalysisBrief) -> str:
     parts = [_signal_header(symbol, price_f, change_f, rank_i)]
     parts.extend(["", "**⚡ Setup**"])
     parts.extend(_tree_lines(setup_lines))
+
     context_lines = []
     for tag_name in ("Volume 24h", "Market Cap", "Max Gain", "Smart Money Inflow"):
         note = _tag_note(brief, tag_name)
@@ -579,8 +601,28 @@ def _format_signal_card(brief: AnalysisBrief) -> str:
     if context_lines:
         parts.extend(["", "**📊 Context**"])
         parts.extend(_tree_lines(context_lines))
+
+    evidence_lines = []
+    spot_tag = _first_tag(brief, "Binance Spot")
+    taker_tag = _first_tag(brief, "Taker Ratio")
+    top_traders_tag = _first_tag(brief, "Top Traders")
+    if spot_tag and spot_tag.note:
+        evidence_lines.append(f"Spot: {spot_tag.note}")
+    if taker_tag and taker_tag.note:
+        evidence_lines.append(f"Taker flow: {taker_tag.note}")
+    if top_traders_tag and top_traders_tag.note:
+        evidence_lines.append(f"Top traders: {top_traders_tag.note}")
+    if evidence_lines:
+        parts.extend(["", "**🧭 Evidence**"])
+        parts.extend(_tree_lines(evidence_lines[:4]))
+
     verdict_text = brief.quick_verdict or "Watchlist only. Needs confirmation."
     parts.extend(["", f"**🧠 Verdict {_dots(brief.signal_quality)}**\n{verdict_text}"])
+
+    if brief.why_it_matters:
+        parts.extend(["", "**🔎 Read**"])
+        parts.extend(_tree_lines([brief.why_it_matters]))
+
     risk_bits = [bit for bit in (_short_risk(risk) for risk in brief.top_risks[:2]) if bit] or ["Thin payload"]
     if any("late setup" in (risk or "").lower() for risk in brief.top_risks[:2]) and "Most wallets already exited" not in risk_bits:
         risk_bits.insert(0, "Most wallets already exited")
