@@ -1044,7 +1044,7 @@ def _skill_headers(skill_name: str, extra: dict[str, str] | None = None) -> dict
     ref = get_skill_reference(skill_name)
     headers = {
         "Accept-Encoding": "identity",
-        "User-Agent": ref.user_agent or "binance-web3/1.0 (Skill)",
+        "User-Agent": (ref.user_agent if ref else None) or "binance-web3/1.0 (Skill)",
     }
     if extra:
         headers.update(extra)

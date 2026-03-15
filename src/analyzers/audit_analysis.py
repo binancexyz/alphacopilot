@@ -214,7 +214,7 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
             if meme_lines:
                 sections.append(BriefSection(title="🧪 Meme Lens", content="\n".join(f"- {line}" for line in meme_lines if line)))
     except Exception:
-        pass
+        tags.append(RiskTag(name="Meme Lens", level="Info", note="Meme lens unavailable"))
 
     return AnalysisBrief(
         entity=f"Audit: {display_symbol}",

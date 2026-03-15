@@ -192,27 +192,38 @@ def test_analyze_brief_packs_market_fields_and_boosts_active_smart_money_quality
     old_service = brief_analysis.get_market_data_service
     old_fetch = brief_analysis._fetch_market_quote
     brief_analysis.get_market_data_service = lambda: ActiveService()
-    brief_analysis._fetch_market_quote = lambda symbol: ({
-        'name': 'BNB',
-        'symbol': 'BNB',
-        'price': 612.5,
-        'percent_change_24h': 3.25,
-        'rank': 0,
-        'spread_pct': 0.04,
-        'exchange_symbol': 'BNBUSDT',
-        'source': 'Binance Spot',
-        'volume_24h': 1_200_000_000,
-        'market_cap': 85_000_000_000,
-    }, 'Binance Spot')
     try:
+        brief_analysis._fetch_market_quote = lambda symbol: ({
+            'name': 'BNB',
+            'symbol': 'BNB',
+            'price': 612.5,
+            'percent_change_24h': 3.25,
+            'rank': 0,
+            'spread_pct': 0.04,
+            'exchange_symbol': 'BNBUSDT',
+            'source': 'Binance Spot',
+            'volume_24h': 1_200_000_000,
+            'market_cap': 85_000_000_000,
+        }, 'Binance Spot')
         brief = brief_analysis.analyze_brief('BNB')
+        fields = brief.quick_verdict.split("|")
+        assert brief.signal_quality == "High"
+        assert fields[9] == "1200000000.0"
+        assert fields[10] == "85000000000.0"
+        assert fields[11] == "4"
+        assert fields[12] == "rising"
+
+        brief_analysis._fetch_market_quote = lambda symbol: ({
+            'name': 'BNB',
+            'symbol': 'BNB',
+            'price': 612.5,
+            'percent_change_24h': 3.25,
+            'rank': 0,
+            'source': 'CoinGecko',
+        }, 'CoinGecko')
+        secondary_brief = brief_analysis.analyze_brief('BNB')
     finally:
         brief_analysis.get_market_data_service = old_service
         brief_analysis._fetch_market_quote = old_fetch
 
-    fields = brief.quick_verdict.split("|")
-    assert brief.signal_quality == "High"
-    assert fields[9] == "1200000000.0"
-    assert fields[10] == "85000000000.0"
-    assert fields[11] == "4"
-    assert fields[12] == "rising"
+    assert secondary_brief.signal_quality == "Medium"

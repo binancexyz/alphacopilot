@@ -44,9 +44,7 @@ def test_signal_brief_marks_stale_setup_even_if_signal_exists():
     ctx = SignalContext(
         token="DOGE",
         signal_status="watch",
-        trigger_price=0.10,
-        current_price=0.095,
-        smart_money_count=2,
+        smart_money_count=0,
         signal_freshness="STALE",
         signal_age_hours=30.0,
         exit_rate=20,

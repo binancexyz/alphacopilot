@@ -244,7 +244,7 @@ def get_portfolio_snapshot() -> dict[str, Any]:
         total_value = spot_total_value
 
     stable_value = sum(item["usd_value"] for item in priced_assets if item["asset"] in STABLES)
-    risk_value = sum(item["usd_value"] for item in priced_assets if item["asset"] not in STABLES) + max(margin_net_value, Decimal("0"))
+    risk_value = sum(item["usd_value"] for item in priced_assets if item["asset"] not in STABLES) + margin_net_value
     alpha_value = sum(item["usd_value"] for item in priced_assets if item.get("is_alpha"))
     stable_pct = (float(stable_value) / float(total_value) * 100) if total_value > 0 else 0.0
     risk_pct = (float(risk_value) / float(total_value) * 100) if total_value > 0 else 0.0
@@ -315,6 +315,8 @@ def get_portfolio_snapshot() -> dict[str, Any]:
     posture_note = "levered risk-on" if borrowed_pct >= 20 else "defensive" if stable_pct >= 55 else "risk-on" if stable_pct <= 20 else "mixed"
 
     risk_lines: list[str] = []
+    if total_value > 0:
+        risk_lines.append("This snapshot covers Spot, Funding, and Cross-Margin only — open USDS-M Futures positions are not included.")
     if total_value <= 0 and (enriched or dust_assets):
         risk_lines.append("Only dust-sized Spot balances were visible, so there is no meaningful active portfolio exposure to judge.")
     elif total_value <= 0:
@@ -334,6 +336,8 @@ def get_portfolio_snapshot() -> dict[str, Any]:
         else:
             margin_line += "."
         risk_lines.append(margin_line)
+    if margin_net_value < 0:
+        risk_lines.append(f"Cross-margin net equity is underwater by about ${abs(float(margin_net_value)):,.2f}, so liabilities exceed visible margin assets.")
     if margin_level > 0 and margin_level < Decimal("3"):
         risk_lines.append(f"Margin level is {float(margin_level):.2f}, so leverage buffer is not especially wide.")
     if unmapped_assets:
@@ -365,7 +369,11 @@ def get_portfolio_snapshot() -> dict[str, Any]:
     if margin_net_value != 0:
         why += f" Cross-margin net equity contributes about ${float(margin_net_value):,.2f}."
     if borrowed_value > 0:
-        why += f" Borrowed margin exposure is about ${float(borrowed_value):,.2f}."
+        why += f" Borrowed margin exposure is about ${float(borrowed_value):,.2f}"
+        if interest_value > 0:
+            why += f" with roughly ${float(interest_value):,.2f} in interest."
+        else:
+            why += "."
 
     source_bits = []
     if source_counts["spot"]:

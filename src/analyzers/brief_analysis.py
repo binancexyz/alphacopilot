@@ -7,6 +7,8 @@ from src.services.normalizers import normalize_signal_context, normalize_token_c
 from src.models.schemas import AnalysisBrief, RiskTag
 from src.formatters.brief_formatter import _human_money
 
+_NATIVE_CONTRACTS = {"0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "0x0000000000000000000000000000000000000000"}
+
 
 _MAJOR_SYMBOLS = {"BTC", "ETH", "BNB", "SOL", "XRP", "DOGE", "ADA", "TRX", "TON", "AVAX", "LINK"}
 
@@ -25,6 +27,9 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
 
     token = normalize_token_context(token_raw)
     signal = normalize_signal_context(signal_raw)
+
+    audit_gate = str(token_raw.get("audit_gate") or "")
+    audit_blocked = audit_gate == "BLOCK"
     quote, quote_source = _fetch_market_quote(symbol)
 
     price = 0.0
@@ -63,8 +68,14 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
     elif quote and quote_source and quote_source != "Binance Spot":
         top_risk = "Using secondary market data for this brief."
 
-    if signal_quality == "High" and not token.audit_flags:
+    if audit_blocked:
+        verdict = "Blocked. Audit risk too high."
+        signal_quality = "Low"
+    elif signal_quality == "High" and not token.audit_flags:
         verdict = "Conviction setup. Follow-through still needed."
+    elif signal_quality == "High" and token.audit_flags:
+        verdict = "Signal is strong, but audit flags cap conviction."
+        signal_quality = "Medium"
     elif signal_quality == "Medium" and quote_source == "Binance Spot" and spread_pct <= 0.2:
         verdict = "Clean price context. Setup needs confirmation."
     elif signal_quality == "Medium":
@@ -84,6 +95,10 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
     )
 
     tags: list[RiskTag] = []
+    if audit_blocked:
+        tags.append(RiskTag(name="Audit Gate", level="High", note=str(token_raw.get("blocked_reason") or "Blocked by live audit")))
+    elif token.audit_flags:
+        tags.append(RiskTag(name="Audit Gate", level="Medium", note=", ".join(token.audit_flags[:2])))
     if quote_source:
         level = "Low" if quote_source == "Binance Spot" else "Info"
         tags.append(RiskTag(name="Source", level=level, note=quote_source if quote_source == "Binance Spot" else "Secondary market data"))
@@ -129,7 +144,7 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
     return AnalysisBrief(
         entity=f"Brief: {display_symbol}",
         quick_verdict=why,
-        signal_quality="High" if quote_source == "Binance Spot" and signal_quality == "High" else signal_quality,
+        signal_quality=signal_quality if quote_source == "Binance Spot" or signal_quality != "High" else "Medium",
         top_risks=[],
         why_it_matters="",
         what_to_watch_next=[],

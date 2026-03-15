@@ -67,6 +67,15 @@ def test_fetch_live_bundle_builds_wallet_payload_with_skill_refs():
     assert bundle.meta["failedSkills"] == []
     assert "query-address-info" in bundle.meta["skillRefs"]
 
+    old_ref = skill_bridge.get_skill_reference
+    skill_bridge.get_skill_reference = lambda _: None
+    try:
+        headers = skill_bridge._skill_headers("missing-skill")
+    finally:
+        skill_bridge.get_skill_reference = old_ref
+
+    assert headers["User-Agent"] == "binance-web3/1.0 (Skill)"
+
 
 def test_fetch_live_bundle_marks_partial_failure_without_dropping_other_skill_data():
     responses = {

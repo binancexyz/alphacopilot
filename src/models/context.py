@@ -108,6 +108,12 @@ class MemeContext:
     audit_flags: list[str] = field(default_factory=list)
     major_risks: list[str] = field(default_factory=list)
     smart_money_count: int = 0
+    smart_money_holders: int = 0
+    smart_money_inflow_usd: float = 0.0
+    kol_holders: int = 0
+    kol_holding_pct: float = 0.0
+    pro_holders: int = 0
+    pro_holding_pct: float = 0.0
     exit_rate: float = 0.0
     signal_age_hours: float = 0.0
     signal_freshness: str = "UNKNOWN"

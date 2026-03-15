@@ -94,6 +94,14 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         context["smart_money_holders"] = _pick_int(dynamic, "smartMoneyHolders")
         context["smart_money_holding_pct"] = _pick_number(dynamic, "smartMoneyHoldingPercent")
 
+    # --- Native token note ---
+    if token_view.get("is_native_token"):
+        context["is_native_token"] = True
+        if not context.get("holders") and not context.get("smart_money_holders"):
+            context.setdefault("major_risks", [])
+            if isinstance(context["major_risks"], list):
+                context["major_risks"].append("Native chain token — on-chain holder composition data is unavailable.")
+
     # --- Smart money inflow match ---
     inflow_match = _matched_smart_money_inflow(market_rank, resolved_symbol)
     if inflow_match:
@@ -122,6 +130,7 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         if s_kline:
             context["spot_kline_candles"] = len(s_kline)
             if len(s_kline) > 0 and len(s_kline[-1]) >= 5:
+                # Spot REST klines follow [ts, open, high, low, close, volume, ...].
                 context["spot_kline_latest_close"] = _to_float(s_kline[-1][4])
 
         s_trades = spot.get("recent_trades", {}).get("data", []) if isinstance(spot.get("recent_trades", {}), dict) else spot.get("recent_trades", [])
@@ -141,11 +150,18 @@ def extract_token_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         if ticker:
             context["alpha_price"] = _pick_number(ticker, "lastPrice", "price")
             context["alpha_volume_24h"] = _pick_number(ticker, "volume", "quoteVolume")
-            
+
+        if not context.get("alpha_price"):
+            matched_alpha = _matched_alpha_token(alpha_data, resolved_symbol)
+            if matched_alpha:
+                context["alpha_price"] = _pick_number(matched_alpha, "price")
+                context["alpha_volume_24h"] = _pick_number(matched_alpha, "volume24h")
+
         a_kline = alpha_data.get("kline", [])
         if a_kline:
             context["alpha_kline_candles"] = len(a_kline)
             if len(a_kline) > 0 and len(a_kline[-1]) >= 5:
+                # Alpha REST klines follow [ts, open, high, low, close, volume, ...].
                 context["alpha_kline_latest_close"] = _to_float(a_kline[-1][4])
 
     futures = raw.get("derivatives-trading-usds-futures", {})
@@ -333,6 +349,8 @@ def extract_watch_today_context(raw: dict[str, Any]) -> dict[str, Any]:
         "meme_watch": meme_watch,
         "top_picks": top_picks,
         "exchange_board": exchange_board,
+        "futures_sentiment": [],
+        "top_traders": [],
     }
     context.update(_bridge_runtime_context(raw, "watchtoday"))
 
@@ -481,6 +499,13 @@ def extract_audit_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         "signal_age_hours": signal_age_hours,
         "signal_freshness": signal_freshness,
     }
+
+    if token_view.get("is_native_token"):
+        context["is_native_token"] = True
+        if audit_payload.get("isHidden") and _to_int(audit_payload.get("riskLevel")) == 0 and not audit_flags:
+            context["audit_summary"] = "Native chain token — standard security model, holder-level audit not applicable."
+            context["risk_level"] = "Low"
+
     context.update(_bridge_runtime_context(raw, "audit"))
     return context
 
@@ -554,6 +579,12 @@ def extract_meme_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         "audit_flags": token.get("audit_flags", []),
         "major_risks": _unique(risks),
         "smart_money_count": token.get("smart_money_count", 0),
+        "smart_money_holders": token.get("smart_money_holders", 0),
+        "smart_money_inflow_usd": token.get("smart_money_inflow_usd", 0.0),
+        "kol_holders": token.get("kol_holders", 0),
+        "kol_holding_pct": token.get("kol_holding_pct", 0.0),
+        "pro_holders": token.get("pro_holders", 0),
+        "pro_holding_pct": token.get("pro_holding_pct", 0.0),
         "exit_rate": token.get("exit_rate", 0.0),
         "signal_age_hours": token.get("signal_age_hours", 0.0),
         "signal_freshness": token.get("signal_freshness", "UNKNOWN"),
@@ -745,9 +776,20 @@ def _futures_snapshot(futures: dict[str, Any]) -> dict[str, Any]:
     if kline:
         snapshot["kline_candles"] = len(kline)
         if len(kline[-1]) >= 5:
+            # Futures REST klines follow [ts, open, high, low, close, volume, ...].
             snapshot["kline_latest_close"] = _to_float(kline[-1][4])
 
     return snapshot
+
+
+_NATIVE_CONTRACTS = {"0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "0x0000000000000000000000000000000000000000"}
+
+
+def _is_native_token(metadata: dict[str, Any], search_item: dict[str, Any]) -> bool:
+    if metadata.get("nativeAddressFlag"):
+        return True
+    contract = str(metadata.get("contractAddress") or search_item.get("contractAddress") or "").lower().strip()
+    return contract in _NATIVE_CONTRACTS
 
 
 def _token_info_view(token_info: dict[str, Any], symbol: str) -> dict[str, Any]:
@@ -755,6 +797,7 @@ def _token_info_view(token_info: dict[str, Any], symbol: str) -> dict[str, Any]:
     search_item = _best_token_match(token_info.get("search"), symbol, metadata) or metadata or token_info
     dynamic = token_info.get("dynamic", {})
     resolved_symbol = str(search_item.get("symbol") or metadata.get("symbol") or token_info.get("symbol") or symbol)
+    native = _is_native_token(metadata, search_item)
     return {
         "metadata": metadata,
         "search_item": search_item,
@@ -769,7 +812,18 @@ def _token_info_view(token_info: dict[str, Any], symbol: str) -> dict[str, Any]:
         "market_cap": _pick_number(dynamic, "marketCap", "market_cap") or _pick_number(search_item, "marketCap", "market_cap"),
         "smart_money_holders": _pick_int(dynamic, "smartMoneyHolders") or _pick_int(search_item, "smartMoneyHolders", "smart_money_holders"),
         "smart_money_holding_pct": _pick_number(dynamic, "smartMoneyHoldingPercent") or _pick_number(search_item, "smartMoneyHoldingPercent", "smart_money_holding_pct"),
+        "is_native_token": native,
     }
+
+
+def _matched_alpha_token(alpha_data: dict[str, Any], symbol: str) -> dict[str, Any] | None:
+    token_list = alpha_data.get("token_list", []) or []
+    target = _normalize_match_key(symbol)
+    for item in token_list:
+        item_symbol = _normalize_match_key(str(item.get("symbol") or item.get("name") or ""))
+        if item_symbol and item_symbol == target:
+            return item
+    return None
 
 
 def _matched_smart_money_inflow(market_rank: dict[str, Any], symbol: str) -> dict[str, Any] | None:
@@ -786,6 +840,7 @@ def _token_kline_context(kline: list[Any]) -> dict[str, Any]:
     context: dict[str, Any] = {"kline_candles": len(kline)}
     latest = kline[-1] if kline else []
     if isinstance(latest, list) and len(latest) >= 5:
+        # Web3 skill token klines follow [open, high, low, close, volume].
         context["kline_latest_close"] = _to_float(latest[3])
         context["kline_latest_volume"] = _to_float(latest[4])
     trend, above_ma20 = _compute_kline_trend(kline)
@@ -797,6 +852,7 @@ def _token_kline_context(kline: list[Any]) -> dict[str, Any]:
 
 
 def _compute_kline_trend(candles: list[Any]) -> tuple[str, bool]:
+    # Web3 skill token klines follow [open, high, low, close, volume].
     closes = [_to_float(item[3]) for item in candles if isinstance(item, list) and len(item) >= 4]
     if not closes:
         return "", False
@@ -1244,15 +1300,15 @@ def _extract_top_narratives(market_rank: dict[str, Any], meme_rush: dict[str, An
         if brief:
             out.append(brief)
     topics = meme_rush.get("topics", []) or meme_rush.get("data", []) or []
-    for topic in topics[:3]:
-        name = topic.get("name", {}).get("topicNameEn") or topic.get("name", {}).get("topicNameCn") or topic.get("type")
+    for topic in topics[:5]:
+        name = topic.get("topicNameEn") or topic.get("name") or topic.get("topicNameCn") or topic.get("type")
         if name:
             out.append(str(name))
     out.extend([str(x) for x in meme_rush.get("top_narratives", []) or []])
     cleaned = []
     for item in out:
         short = str(item).strip()
-        if short and len(short) <= 40:
+        if short and len(short) <= 60:
             cleaned.append(short)
     return _unique(cleaned)[:5]
 
@@ -1261,7 +1317,7 @@ def _extract_topic_summary(meme_rush: dict[str, Any]) -> str:
     topics = meme_rush.get("topics", []) or meme_rush.get("data", []) or []
     if topics:
         top = topics[0]
-        name = top.get("name", {}).get("topicNameEn") or top.get("type") or "topic"
+        name = top.get("topicNameEn") or top.get("name") or top.get("topicNameCn") or top.get("type") or "topic"
         inflow = top.get("topicNetInflow") or top.get("topicNetInflowAth")
         if inflow:
             return f"{name} is a leading topic with visible net inflow of {inflow}."
@@ -1379,7 +1435,8 @@ def _extract_trending_now(market_rank: dict[str, Any]) -> list[str]:
             out.append(f"{symbol} · {liq_part}")
     leaderboard = market_rank.get("data", {}).get("leaderBoardList", []) or market_rank.get("leaderBoardList", []) or []
     for item in leaderboard[:3]:
-        symbol = item.get("symbol") or item.get("baseAsset") or item.get("name") or "Token"
+        meta = item.get("metaInfo") or {}
+        symbol = meta.get("symbol") or item.get("symbol") or item.get("baseAsset") or item.get("name") or "Token"
         brief = item.get("socialHypeInfo", {}).get("socialSummaryBriefTranslated") or item.get("socialHypeInfo", {}).get("socialSummaryBrief")
         out.append(f"{symbol} — {brief}" if brief else str(symbol))
     return _unique(out)[:3]
@@ -1394,7 +1451,7 @@ def _extract_smart_money_flow(market_rank: dict[str, Any], signal: dict[str, Any
     out: list[str] = []
     inflow_items = market_rank.get("smart_money_inflow", []) or []
     for item in inflow_items[:3]:
-        symbol = item.get("symbol") or item.get("tokenName") or "Token"
+        symbol = item.get("tokenName") or item.get("symbol") or "Token"
         traders = _to_int(item.get("traders"))
         inflow = _pick_number(item, "inflow")
         bits = [str(symbol)]
@@ -1427,7 +1484,8 @@ def _extract_social_hype(market_rank: dict[str, Any]) -> list[str]:
     out: list[str] = []
     leaderboard = market_rank.get("data", {}).get("leaderBoardList", []) or market_rank.get("leaderBoardList", []) or []
     for item in leaderboard[:3]:
-        symbol = item.get("symbol") or item.get("baseAsset") or item.get("name") or "Token"
+        meta = item.get("metaInfo") or {}
+        symbol = meta.get("symbol") or item.get("symbol") or item.get("baseAsset") or item.get("name") or "Token"
         brief = item.get("socialHypeInfo", {}).get("socialSummaryBriefTranslated") or item.get("socialHypeInfo", {}).get("socialSummaryBrief")
         if brief:
             out.append(f"{symbol} — {brief}")
@@ -1454,7 +1512,7 @@ def _extract_meme_watch(meme_rush: dict[str, Any]) -> list[str]:
     out: list[str] = []
     items = meme_rush.get("tokens", []) or meme_rush.get("data", []) or []
     for item in items[:3]:
-        symbol = item.get("symbol") or item.get("name", {}).get("topicNameEn") or item.get("type") or "Token"
+        symbol = item.get("symbol") or item.get("topicNameEn") or item.get("name") or item.get("type") or "Token"
         progress = _pick_number(item, "progress")
         migrate = _to_int(item.get("migrateStatus"))
         if migrate == 1:

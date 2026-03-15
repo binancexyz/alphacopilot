@@ -43,10 +43,10 @@ def _signal_state_label(ctx: SignalContext, quality: str, evidence_level: str) -
         return "blocked"
     if ctx.signal_status == "unmatched":
         return "unmatched"
-    if evidence_level == "Low":
-        return "thin"
     if ctx.signal_freshness == "STALE":
         return "stale"
+    if evidence_level == "Low":
+        return "thin"
     if ctx.exit_rate >= EXIT_RATE_HIGH:
         return "late"
     if ctx.trigger_price > 0 and ctx.current_price > 0:
@@ -212,7 +212,17 @@ def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
         quality = "Blocked"
         conviction = "Low"
     elif state == "unmatched":
-        quick_verdict = "Watchlist only. No signal match."
+        available: list[str] = []
+        if ctx.current_price > 0:
+            available.append("price")
+        if ctx.funding_rate != 0 or ctx.long_short_ratio not in {0.0, 1.0}:
+            available.append("futures")
+        if ctx.audit_gate and ctx.audit_gate != "ALLOW":
+            available.append("audit")
+        if available:
+            quick_verdict = f"No signal match. {', '.join(available).title()} context still visible."
+        else:
+            quick_verdict = "Watchlist only. No signal match."
         conviction = "Low"
     elif state == "thin":
         quick_verdict = "Thin setup. Needs live confirmation."

@@ -107,3 +107,49 @@ class MockMarketDataService:
             "lifecycle_stage": "new",
             "bonded_progress": 42.0,
         }
+
+    def get_alpha_context(self, symbol: str) -> NormalizedDict:
+        if symbol:
+            return {
+                "symbol": symbol,
+                "display_name": symbol,
+                "is_alpha_listed": False,
+                "alpha_price": 0.0,
+                "alpha_volume_24h": 0.0,
+                "major_risks": ["No live Binance Alpha payload available in mock mode."],
+                "audit_gate": "WARN",
+                "blocked_reason": "Alpha coverage is unavailable in mock mode.",
+            }
+        return {
+            "alpha_listed_count": 0,
+            "alpha_token_list": [],
+            "major_risks": ["No live Binance Alpha payload available in mock mode."],
+        }
+
+    def get_futures_context(self, symbol: str) -> NormalizedDict:
+        return {
+            "symbol": symbol,
+            "funding_rate": 0.0,
+            "funding_rate_sentiment": "neutral",
+            "open_interest": 0.0,
+            "long_short_ratio": 1.0,
+            "top_trader_long_short_ratio": 1.0,
+            "taker_buy_sell_ratio": 1.0,
+            "mark_price": 0.0,
+            "index_price": 0.0,
+            "ticker_volume_24h": 0.0,
+            "price_change_pct_24h": 0.0,
+            "major_risks": ["No live Binance Futures payload available in mock mode."],
+        }
+
+    def get_portfolio_context(self) -> NormalizedDict:
+        return {
+            "_raw": {
+                "assets": {"data": []},
+                "funding-wallet": {"data": []},
+                "account-snapshot": {},
+                "margin-trading": {},
+            },
+            "prices": {},
+            "major_risks": ["No live portfolio payload available in mock mode."],
+        }

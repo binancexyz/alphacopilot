@@ -20,3 +20,5 @@ def test_extract_watchtoday_context_backfills_sparse_lanes_from_exchange_board_a
     assert out['strongest_signals']
     assert out['social_hype']
     assert out['top_picks']
+    assert out['futures_sentiment'] == []
+    assert out['top_traders'] == []

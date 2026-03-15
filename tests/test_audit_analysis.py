@@ -12,6 +12,7 @@ class DummyService:
 
 def test_analyze_audit_marks_limited_validity_when_payload_is_partial():
     old_service = audit_analysis.get_market_data_service
+    old_meme_analyzer = audit_analysis.analyze_meme
     audit_analysis.get_market_data_service = lambda: DummyService({
         'symbol': 'BNB',
         'display_name': 'BNB',
@@ -24,13 +25,16 @@ def test_analyze_audit_marks_limited_validity_when_payload_is_partial():
         'has_result': False,
         'is_supported': False,
     })
+    audit_analysis.analyze_meme = lambda symbol: (_ for _ in ()).throw(RuntimeError('boom'))
     try:
         brief = audit_analysis.analyze_audit('BNB')
     finally:
         audit_analysis.get_market_data_service = old_service
+        audit_analysis.analyze_meme = old_meme_analyzer
 
     assert brief.entity == 'Audit: BNB'
     assert any(tag.name == 'Audit Validity' and tag.level == 'Limited' for tag in brief.risk_tags)
+    assert any(tag.name == 'Meme Lens' and tag.note == 'Meme lens unavailable' for tag in brief.risk_tags)
     assert 'limited audit visibility' in brief.quick_verdict.lower()
 
 

@@ -82,15 +82,14 @@ def test_analyze_portfolio_includes_margin_exposure():
         "account": {
             "balances": [
                 {"asset": "USDT", "free": "1000", "locked": "0"},
-                {"asset": "BTC", "free": "0.01", "locked": "0"},
             ]
         },
         "margin": {
             "marginLevel": "2.1",
-            "totalLiabilityOfBtc": "0.0100",
-            "totalNetAssetOfBtc": "0.0200",
+            "totalLiabilityOfBtc": "0.0300",
+            "totalNetAssetOfBtc": "-0.0100",
             "userAssets": [
-                {"asset": "BTC", "borrowed": "0.0100", "interest": "0.0001", "netAsset": "0.0200"},
+                {"asset": "BTC", "borrowed": "0.0300", "interest": "0.0002", "netAsset": "-0.0100"},
             ],
         },
         "prices_dict": {
@@ -108,3 +107,5 @@ def test_analyze_portfolio_includes_margin_exposure():
     assert brief.quick_verdict == "Levered posture. Margin exposure is material."
     assert any(tag.name == "Margin Exposure" for tag in brief.risk_tags)
     assert any("Margin borrowed is about" in risk for risk in brief.top_risks)
+    assert any("underwater" in risk.lower() for risk in brief.top_risks)
+    assert "with roughly $16.00 in interest." in brief.why_it_matters
