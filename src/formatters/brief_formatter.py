@@ -801,6 +801,52 @@ def _format_alpha_card(brief: AnalysisBrief) -> str:
     return "\n".join(parts).strip() + "\n"
 
 
+def _format_futures_card(brief: AnalysisBrief) -> str:
+    parts = [_entity_line(brief.entity)]
+    parts.extend(_runtime_banner(brief))
+
+    positioning_content = _section_content(brief, "futures positioning")
+    evidence_content = _section_content(brief, "positioning evidence")
+
+    if positioning_content.strip():
+        parts.extend(["", "**📊 Futures Positioning**"])
+        parts.append(_treeify_block(positioning_content))
+
+    if evidence_content.strip():
+        parts.extend(["", "**🧭 Evidence**"])
+        parts.append(_treeify_block(evidence_content))
+
+    crowding_tag = _first_tag(brief, "Crowding")
+    squeeze_tag = _first_tag(brief, "Squeeze Risk")
+    analytics_lines = []
+    if crowding_tag and crowding_tag.note:
+        analytics_lines.append(f"Crowding: {crowding_tag.note}")
+    if squeeze_tag and squeeze_tag.note:
+        analytics_lines.append(f"Squeeze risk: {squeeze_tag.note}")
+    if analytics_lines:
+        parts.extend(["", "**🧪 Positioning Read**"])
+        parts.extend(_tree_lines(analytics_lines))
+
+    verdict = brief.quick_verdict or "Futures context is available but still thin."
+    parts.extend(["", f"**🧠 Verdict {_dots(brief.signal_quality)}**\n{verdict}"])
+
+    why = (brief.why_it_matters or "").strip()
+    if why:
+        parts.extend(["", "**🔎 Read**"])
+        parts.extend(_tree_lines([why]))
+
+    watch = [item for item in brief.what_to_watch_next[:3] if item and item.strip()]
+    if watch:
+        parts.extend(["", "**👀 Watch**"])
+        parts.extend(_tree_lines(watch))
+
+    risk_bits = [bit for bit in (_short_risk(risk) for risk in brief.top_risks[:2]) if bit]
+    if risk_bits:
+        parts.extend(["", f"**⚠️ {' · '.join(dict.fromkeys(risk_bits[:2]))}**"])
+
+    return "\n".join(parts).strip() + "\n"
+
+
 def _format_portfolio_card(brief: AnalysisBrief) -> str:
     total_value = ""
     why = brief.why_it_matters or ""
@@ -910,6 +956,8 @@ def format_brief(brief: AnalysisBrief) -> str:
         rendered = _format_watchtoday_card(brief)
     elif brief.entity == "Binance Alpha" or brief.entity.startswith("Alpha ·"):
         rendered = _format_alpha_card(brief)
+    elif brief.entity.startswith("Futures ·"):
+        rendered = _format_futures_card(brief)
     else:
         parts = [_entity_line(brief.entity), "", brief.quick_verdict]
         rendered = "\n".join(parts).strip() + "\n"
