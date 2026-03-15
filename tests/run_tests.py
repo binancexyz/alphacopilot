@@ -67,11 +67,6 @@ from tests.test_brief_analysis import (
     test_analyze_brief_uses_binance_spot_context,
 )
 from tests.test_brief_posture_aware import test_analyze_brief_adds_portfolio_posture_note
-from tests.test_careers_tracker import (
-    test_build_summary_and_short_note,
-    test_extract_jobs_from_jsonld_html,
-    test_summarize_snapshot_contains_takeaway,
-)
 from tests.test_config_validation import test_config_warnings_reports_live_without_base_url
 from tests.test_env_autoload import test_config_autoload_reads_local_env
 from tests.test_exposure_groups import (
@@ -326,10 +321,19 @@ def main() -> None:
     # --- brief posture aware ---
     test_analyze_brief_adds_portfolio_posture_note()
 
-    # --- careers tracker ---
-    test_extract_jobs_from_jsonld_html()
-    test_summarize_snapshot_contains_takeaway()
-    test_build_summary_and_short_note()
+    # --- careers tracker (conditional — requires httpx) ---
+    try:
+        from tests.test_careers_tracker import (
+            test_build_summary_and_short_note,
+            test_extract_jobs_from_jsonld_html,
+            test_summarize_snapshot_contains_takeaway,
+        )
+    except ModuleNotFoundError:
+        print("Skipping careers tracker tests: httpx is not installed on this host.")
+    else:
+        test_extract_jobs_from_jsonld_html()
+        test_summarize_snapshot_contains_takeaway()
+        test_build_summary_and_short_note()
 
     # --- config validation ---
     test_config_warnings_reports_live_without_base_url()
