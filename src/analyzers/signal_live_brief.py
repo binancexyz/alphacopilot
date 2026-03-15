@@ -182,7 +182,7 @@ def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
 
     risk_tags: list[RiskTag] = [RiskTag(name="Evidence Quality", level=evidence_level, note=evidence_note)]
     gate_level = "High" if ctx.audit_gate == "BLOCK" else "Medium" if ctx.audit_gate == "WARN" else "Low"
-    if ctx.audit_flags or ctx.audit_gate != "ALLOW":
+    if ctx.audit_gate in {"WARN", "BLOCK"} or ctx.audit_flags:
         note = ctx.blocked_reason or ", ".join(ctx.audit_flags) or "Audit returned caution flags."
         risk_tags.append(RiskTag(name="Audit Gate", level=gate_level, note=note))
     if ctx.signal_freshness != "UNKNOWN":
@@ -268,7 +268,7 @@ def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
             available.append("price")
         if ctx.funding_rate != 0 or ctx.long_short_ratio not in {0.0, 1.0}:
             available.append("futures")
-        if ctx.audit_gate and ctx.audit_gate != "ALLOW":
+        if ctx.audit_flags or ctx.blocked_reason:
             available.append("audit")
         if available:
             quick_verdict = f"No signal match. {', '.join(available).title()} context still visible."

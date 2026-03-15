@@ -11,6 +11,9 @@ from src.services.skill_registry import get_skill_reference, skill_registry_snap
 from src.utils.parsing import normalize_token_input
 
 
+MAJOR_MARKET_SYMBOLS = {"BTC", "ETH", "BNB", "SOL", "XRP", "ADA", "DOGE", "AVAX", "LINK", "TON"}
+
+
 @dataclass(frozen=True)
 class BridgeBundle:
     raw: dict[str, Any]
@@ -146,13 +149,17 @@ def fetch_live_bundle(command: str, entity: str = "") -> BridgeBundle:
             symbol = normalize_token_input(entity)
             token_payload: dict[str, Any] | None = None
             contract_address = ""
+            strict_token_match = command_key == "signal"
+            skip_onchain_token_context = command_key == "signal" and symbol in MAJOR_MARKET_SYMBOLS
 
-            token_result = _capture_skill(
-                lambda: _fetch_token_info_bundle(client, base, chain_id, symbol),
-                failed_skills,
-                errors,
-                "query-token-info",
-            )
+            token_result = None
+            if not skip_onchain_token_context:
+                token_result = _capture_skill(
+                    lambda: _fetch_token_info_bundle(client, base, chain_id, symbol, exact_only=strict_token_match),
+                    failed_skills,
+                    errors,
+                    "query-token-info",
+                )
             if token_result is not None:
                 token_payload, contract_address = token_result
                 raw["query-token-info"] = token_payload
@@ -325,7 +332,7 @@ def _fetch_token_kline(client, chain_id: str, contract_address: str, interval: s
     )
 
 
-def _fetch_token_info_bundle(client, base: str, chain_id: str, symbol: str) -> tuple[dict[str, Any], str]:
+def _fetch_token_info_bundle(client, base: str, chain_id: str, symbol: str, *, exact_only: bool = False) -> tuple[dict[str, Any], str]:
     search_json = _fetch_json(
         client,
         "GET",
@@ -335,7 +342,7 @@ def _fetch_token_info_bundle(client, base: str, chain_id: str, symbol: str) -> t
         params={"keyword": symbol, "chainIds": chain_id, "orderBy": "volume24h"},
     )
     search_items = search_json.get("data") or []
-    first = _first_matching_token(search_items, symbol)
+    first = _first_matching_token(search_items, symbol, exact_only=exact_only)
     if not first:
         raise LookupError(f"Token not found in live search: {symbol}")
 
@@ -1085,7 +1092,7 @@ def _require_httpx():
     return httpx
 
 
-def _first_matching_token(items: list[dict[str, Any]], symbol: str) -> dict[str, Any] | None:
+def _first_matching_token(items: list[dict[str, Any]], symbol: str, *, exact_only: bool = False) -> dict[str, Any] | None:
     if not items:
         return None
 
@@ -1093,6 +1100,8 @@ def _first_matching_token(items: list[dict[str, Any]], symbol: str) -> dict[str,
     scored: list[tuple[int, dict[str, Any]]] = []
     for item in items:
         score = _token_match_score(item, target)
+        if exact_only and score < 80:
+            continue
         if score > 0:
             scored.append((score, item))
 
@@ -1100,7 +1109,7 @@ def _first_matching_token(items: list[dict[str, Any]], symbol: str) -> dict[str,
         scored.sort(key=lambda pair: pair[0], reverse=True)
         return scored[0][1]
 
-    return items[0]
+    return None if exact_only else items[0]
 
 
 def _matching_signal_items(items: list[dict[str, Any]], symbol: str, contract: str | None) -> list[dict[str, Any]]:

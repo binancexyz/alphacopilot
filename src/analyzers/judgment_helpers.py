@@ -13,7 +13,8 @@ def append_posture_note_to_brief(brief: AnalysisBrief, symbol: str) -> str:
     note = portfolio_note_for(symbol)
     if not note:
         return ""
-    brief.top_risks.append(note)
-    if brief.why_it_matters:
+    if note not in brief.top_risks:
+        brief.top_risks.append(note)
+    if brief.why_it_matters and note not in brief.why_it_matters:
         brief.why_it_matters += f" {note}"
     return note

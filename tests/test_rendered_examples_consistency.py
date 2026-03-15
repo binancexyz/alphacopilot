@@ -11,7 +11,7 @@ def test_compact_brief_thin_footer_does_not_duplicate_liquidity_warning():
     rendered = format_brief(brief)
     assert "Liquidity: — limited" in rendered
     assert rendered.count("Thin liquidity") == 0
-    assert "**⚠️ Thin payload**" in rendered
+    assert "⚠️ Thin payload" in rendered
 
 
 
@@ -24,7 +24,7 @@ def test_token_ownership_block_keeps_three_rows_when_partial():
         top_risks=["Runtime detail: HTTP live mode requires the optional dependency 'httpx'. Install requirements.txt or use file:// live mode"],
     )
     rendered = format_brief(brief)
-    assert "**💼 Ownership**" in rendered
+    assert "💼 Ownership" in rendered
     assert "Holders: —" in rendered
     assert "Smart money: none visible" in rendered
     assert "Top-10 concentration: —" in rendered

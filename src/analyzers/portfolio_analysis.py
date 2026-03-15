@@ -132,8 +132,8 @@ def _margin_snapshot(margin_account: dict[str, Any], prices: dict[str, Any], btc
 def get_portfolio_snapshot() -> dict[str, Any]:
     live_service = LiveMarketDataService(
         base_url=settings.binance_skills_base_url,
-        api_key=settings.binance_api_key,
-        api_secret=settings.binance_api_secret,
+        bridge_api_key=settings.bridge_api_key or settings.api_auth_key,
+        bridge_api_header=settings.bridge_api_header,
     )
 
     context = live_service.get_portfolio_context()

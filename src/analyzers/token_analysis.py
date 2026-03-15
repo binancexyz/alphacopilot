@@ -59,7 +59,8 @@ def analyze_token(symbol: str) -> AnalysisBrief:
             brief.why_it_matters += f" Binance Spot confirms active pricing on {pair} with a {change:+.2f}% 24h move."
 
     ownership_lines = []
-    if token_context.holders > 0:
+    major_quote_asset = bool(quote and symbol.upper() in {"BTC", "ETH", "BNB", "SOL", "XRP", "DOGE", "ADA", "TRX", "TON", "AVAX", "LINK"})
+    if token_context.holders > 1 and not major_quote_asset:
         ownership_lines.append(f"Holders: {token_context.holders:,}")
     ownership_lines.append(f"Smart money: {token_context.smart_money_count} wallet{'s' if token_context.smart_money_count != 1 else ''}" if token_context.smart_money_count > 0 else "Smart money: none visible")
     if token_context.top_holder_concentration_pct > 0:

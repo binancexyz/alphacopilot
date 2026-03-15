@@ -11,11 +11,11 @@ def test_wallet_thin_state_keeps_premium_structure():
         risk_tags=[RiskTag(name="Follow Verdict", level="Medium", note="Unknown")],
     )
     rendered = format_brief(brief)
-    assert "**⚡ Behavior**" in rendered
+    assert "⚡ Behavior" in rendered
     assert "Activity: Limited" in rendered
     assert "Top move: No rotation visible" in rendered
     assert "Drift: Follow signal unavailable" in rendered
-    assert "**⚠️ Thin payload · Not a follow signal**" in rendered
+    assert "⚠️ Thin payload · Not a follow signal" in rendered
 
 
 
@@ -28,8 +28,8 @@ def test_portfolio_unavailable_state_keeps_holdings_block():
         why_it_matters="This command is read-only, but it still depends on valid Binance API credentials and account-read permission.",
     )
     rendered = format_brief(brief)
-    assert "**⚡ Posture**" in rendered
-    assert "**💼 Top Holdings**" in rendered
+    assert "⚡ Posture" in rendered
+    assert "💼 Top Holdings" in rendered
     assert "No priced holdings visible" in rendered
     assert "Read-only snapshot unavailable" in rendered
     assert "Runtime dependency missing" in rendered or "Read-only estimate" in rendered

@@ -131,7 +131,7 @@ def normalize_signal_context(payload: dict) -> SignalContext:
         smart_money_inflow_usd=_to_float(payload.get("smart_money_inflow_usd")),
         signal_age_hours=_to_float(payload.get("signal_age_hours")),
         signal_freshness=str(payload.get("signal_freshness", "UNKNOWN")),
-        audit_gate=str(payload.get("audit_gate", "ALLOW")),
+        audit_gate=str(payload.get("audit_gate", "") or ""),
         blocked_reason=str(payload.get("blocked_reason", "")),
         funding_rate=_to_float(payload.get("funding_rate")),
         long_short_ratio=_to_float(payload.get("long_short_ratio")),

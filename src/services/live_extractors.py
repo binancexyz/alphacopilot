@@ -405,7 +405,8 @@ def extract_signal_context(raw: dict[str, Any], token: str) -> dict[str, Any]:
     first_signal = _first_item(signal.get("data")) or signal
     audit = raw.get("query-token-audit", {})
     audit_payload = _normalize_audit_keys(audit.get("data", audit))
-    audit_flags, audit_risks = _extract_audit_flags_and_risks(audit_payload)
+    audit_visible = bool(audit_payload) and bool(audit_payload.get("hasResult")) and bool(audit_payload.get("isSupported"))
+    audit_flags, audit_risks = _extract_audit_flags_and_risks(audit_payload) if audit_visible else ([], [])
     token_view = _token_info_view(token_info, token)
     resolved_symbol = token_view["symbol"]
     futures_snapshot = _futures_snapshot(futures)
@@ -418,7 +419,7 @@ def extract_signal_context(raw: dict[str, Any], token: str) -> dict[str, Any]:
     supporting_context = _build_signal_context(signal)
     signal_age_hours = _signal_age_hours(first_signal)
     signal_freshness = _signal_freshness(signal_age_hours, has_signal_data=_signal_has_live_data(first_signal))
-    audit_gate, blocked_reason = _audit_gate_state(audit_payload, audit_flags)
+    audit_gate, blocked_reason = _audit_gate_state(audit_payload, audit_flags) if audit_visible else ("", "")
 
     context = {
         "token": first_signal.get("ticker") or resolved_symbol or token,
@@ -1284,8 +1285,23 @@ def _extract_watchtoday_exchange_board(market_rank: dict[str, Any]) -> list[str]
     return _unique(rows)[:3]
 
 
+def _normalize_narrative_label(label: str) -> str:
+    cleaned = str(label or "").strip()
+    mapping = {
+        "Community Recognition Level": "Community",
+        "Launch Platform": "Launchpads",
+        "Wash Trading Behavior": "Wash-trading risk",
+        "AI Analysis": "AI",
+        "Volume Trend": "Volume trend",
+        "Social Events": "Social momentum",
+        "Sensitive Events": "Sensitive events",
+        "Fourmeme Mode": "Fourmeme",
+    }
+    return mapping.get(cleaned, cleaned)
+
+
 def _extract_top_narratives(market_rank: dict[str, Any], meme_rush: dict[str, Any]) -> list[str]:
-    direct_market = [str(x) for x in market_rank.get("top_narratives", []) or []]
+    direct_market = [_normalize_narrative_label(str(x)) for x in market_rank.get("top_narratives", []) or []]
     if direct_market:
         return direct_market
 
@@ -1293,7 +1309,7 @@ def _extract_top_narratives(market_rank: dict[str, Any], meme_rush: dict[str, An
     tokens = market_rank.get("data", {}).get("tokens", []) or market_rank.get("tokens", []) or []
     for item in tokens[:8]:
         for label in (item.get("tokenTag") or {}).keys():
-            out.append(str(label))
+            out.append(_normalize_narrative_label(str(label)))
     leaderboard = market_rank.get("data", {}).get("leaderBoardList", []) or market_rank.get("leaderBoardList", []) or []
     for item in leaderboard[:3]:
         brief = item.get("socialHypeInfo", {}).get("socialSummaryBriefTranslated") or item.get("socialHypeInfo", {}).get("socialSummaryBrief")
@@ -1303,8 +1319,8 @@ def _extract_top_narratives(market_rank: dict[str, Any], meme_rush: dict[str, An
     for topic in topics[:5]:
         name = topic.get("topicNameEn") or topic.get("name") or topic.get("topicNameCn") or topic.get("type")
         if name:
-            out.append(str(name))
-    out.extend([str(x) for x in meme_rush.get("top_narratives", []) or []])
+            out.append(_normalize_narrative_label(str(name)))
+    out.extend([_normalize_narrative_label(str(x)) for x in meme_rush.get("top_narratives", []) or []])
     cleaned = []
     for item in out:
         short = str(item).strip()

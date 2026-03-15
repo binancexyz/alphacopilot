@@ -44,7 +44,7 @@ def test_analyze_token_propagates_quote_context_into_deep_brief():
         token_analysis._fetch_market_quote = old_fetch
 
     rendered = format_brief(brief)
-    assert '**🧩 BNB $667.55 +2.42% 📈 #4**' in rendered
+    assert '🧩 BNB $667.55 +2.42% 📈 #4' in rendered
     assert 'Liquidity:' in rendered
     assert 'BNBUSDT' in rendered or '$59.3M' in rendered
 

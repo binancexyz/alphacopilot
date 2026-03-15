@@ -11,7 +11,7 @@ def test_format_signal_card_keeps_setup_structure_when_thin():
         audit_gate="WARN",
     )
     rendered = format_brief(brief)
-    assert "**⚡ Setup**" in rendered
+    assert "⚡ Setup" in rendered
     assert "Entry zone: — limited" in rendered
     assert "Signal age: — limited" in rendered
     assert "Invalidation: Needs confirmation" in rendered or "Invalidation: Thin payload" in rendered
@@ -28,8 +28,8 @@ def test_format_token_card_keeps_ownership_structure_when_thin():
         audit_gate="WARN",
     )
     rendered = format_brief(brief)
-    assert "**⚡ Snapshot**" in rendered
-    assert "**💼 Ownership**" in rendered
+    assert "⚡ Snapshot" in rendered
+    assert "💼 Ownership" in rendered
     assert "Holders: —" in rendered
     assert "Smart money: —" in rendered
     assert "Liquidity: — limited" in rendered
@@ -44,9 +44,9 @@ def test_format_watchtoday_card_keeps_sections_when_thin():
         top_risks=["Too many daily market lanes are still sparse, so this board should be treated as lower-confidence."],
     )
     rendered = format_brief(brief)
-    assert "**⚡ Signals**" in rendered
+    assert "⚡ Signals" in rendered
     assert "No clean board leader yet" in rendered
-    assert "**🔥 Attention**" in rendered
+    assert "🔥 Attention" in rendered
     assert "Attention is limited" in rendered
     assert "Sparse lane coverage" in rendered
 

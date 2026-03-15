@@ -125,7 +125,8 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
         tags.append(RiskTag(name="Market Cap", level="Info", note=_human_money(market_cap)))
     if signal.smart_money_count > 0:
         tags.append(RiskTag(name="Smart Money", level="Info", note=f"{signal.smart_money_count} wallet{'s' if signal.smart_money_count != 1 else ''}"))
-    if token.holders > 0:
+    major_quote_asset = bool(quote and display_symbol in _MAJOR_SYMBOLS)
+    if token.holders > 1 and not major_quote_asset:
         tags.append(RiskTag(name="Holders", level="Info", note=f"{token.holders:,}"))
     if token.top_holder_concentration_pct > 0:
         tags.append(RiskTag(name="Ownership", level="Info", note=f"Top-10 concentration {token.top_holder_concentration_pct:.1f}%"))

@@ -11,7 +11,7 @@ def test_format_compact_brief_card_renders_market_section_and_wallet_count():
     rendered = format_brief(brief)
     assert "Signal: Active follow-through · 12 wallets" in rendered
     assert "Trend: K-line rising" in rendered
-    assert "**📊 Market**" in rendered
+    assert "📊 Market" in rendered
     assert "Volume 24h: $1.2B" in rendered
     assert "Market Cap: $85.0B" in rendered
 
@@ -39,7 +39,7 @@ def test_format_token_card_renders_market_and_momentum_sections():
     )
     rendered = format_brief(brief)
     assert "Momentum: 5m +1.2% | 1h +3.4% | 4h +5.6%" in rendered
-    assert "**📊 Market**" in rendered
+    assert "📊 Market" in rendered
     assert "KOL holders: 8 (4.5%)" in rendered
     assert "Pro holders: 3 (2.2%)" in rendered
 
@@ -63,7 +63,7 @@ def test_format_signal_card_renders_context_section():
         ],
     )
     rendered = format_brief(brief)
-    assert "**📊 Context**" in rendered
+    assert "📊 Context" in rendered
     assert "Volume 24h: $1.2B" in rendered
     assert "Market Cap: $45.0B" in rendered
     assert "Max Gain: +45.2%" in rendered
@@ -88,12 +88,12 @@ def test_format_watchtoday_card_caps_extra_sections_at_six_total():
         ],
     )
     rendered = format_brief(brief)
-    assert "**🏦 Exchange Board**" in rendered
-    assert "**👀 Top 3 Picks**" in rendered
-    assert "**🌊 Narrative**" in rendered
-    assert "**🚀 Meme Watch**" in rendered
-    assert "**📈 Futures Sentiment**" not in rendered
-    assert "**🏆 Top Traders**" not in rendered
+    assert "🏦 Exchange Board" in rendered
+    assert "👀 Top 3 Picks" in rendered
+    assert "🌊 Narrative" in rendered
+    assert "🚀 Meme Watch" in rendered
+    assert "📈 Futures Sentiment" not in rendered
+    assert "🏆 Top Traders" not in rendered
 
 
 def test_format_audit_card_renders_market_context_section():
@@ -105,7 +105,7 @@ def test_format_audit_card_renders_market_context_section():
         audit_gate="ALLOW",
     )
     rendered = format_brief(brief)
-    assert "**📊 Market Context**" in rendered
+    assert "📊 Market Context" in rendered
     assert "Price: $612.50" in rendered
     assert "Volume 24h: $1.2B" in rendered
 
@@ -133,9 +133,9 @@ def test_format_portfolio_card_renders_margin_trend_and_five_holdings():
     rendered = format_brief(brief)
     assert "Lead group: Majors 58.0%" in rendered
     assert "USDT ~$15,000.00 (12.5%)" in rendered
-    assert "**🏦 Margin**" in rendered
+    assert "🏦 Margin" in rendered
     assert "borrowed $2,000.00" in rendered
-    assert "**📈 Snapshot Trend**" in rendered
+    assert "📈 Snapshot Trend" in rendered
 
 
 def test_format_wallet_card_renders_value_holdings_and_narrative():
@@ -163,5 +163,5 @@ def test_format_wallet_card_renders_value_holdings_and_narrative():
     assert "~$240,000" in rendered
     assert "Style: selective diversified momentum-seeking" in rendered
     assert "Narrative: AI, L1" in rendered
-    assert "**💼 Holdings**" in rendered
+    assert "💼 Holdings" in rendered
     assert "BTC 17.0%" in rendered
