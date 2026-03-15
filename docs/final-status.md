@@ -30,7 +30,7 @@
 - blueprint docs for the next upgrade stage: skill-command matrix, output evolution plan, and refreshed build checklist
 - challenge/campaign docs: challenge package, judge cheat sheet, live proof appendix, judge Q&A prep
 - public-alpha docs: refreshed README, public-alpha release checklist, public release audit
-- tests and checks
+- tests and checks, with the current note that `make check` passes locally while the full test suite is presently blocked by a remaining factory-default expectation mismatch
 - GitHub repo pushed
 
 ## What remains external/runtime-dependent
@@ -50,5 +50,5 @@
 - continue bridge/runtime stabilization for live usage
 
 ## Project state
-Bibipilot is now beyond a scaffold: it has working live publishing, a maintained premium daily Square engine, a broader slash-command layer, and a clearer runtime-first Binance Skills direction.
-The current best path is no longer generic polishing. It is to deepen the Binance-skill-backed judgment layer so Bibipilot becomes a stronger research -> judgment -> publishing product.
+Bibipilot is now beyond a scaffold: it has working live publishing, a maintained premium daily Square engine, a locked 5-command public surface, and a clearer runtime-first Binance Skills direction.
+The current best path is no longer broad surface expansion. It is to deepen runtime evidence quality so `/signal`, `/watchtoday`, and external-wallet `/holdings` reads become as convincing as the current private `/holdings` posture path.

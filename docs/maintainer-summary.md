@@ -16,7 +16,7 @@ If you come back later and want the shortest summary possible:
 - slash outputs now use a more premium tree-style presentation across the main command family
 - `/brief` now acts as the flagship asset entry point, including a deeper `brief <symbol> deep` path
 - `/signal` now includes explicit invalidation framing and absorbs the risk story more cleanly
-- `/holdings` now unifies private portfolio posture and external wallet behavior under one mental model
+- `/holdings` now unifies private portfolio posture and external wallet behavior under one mental model, and the current locked product promise is posture + analytics + Alpha exposure
 - `/audit` now surfaces audit-validity limits more honestly and includes a meme lens section
 - `/watchtoday` now renders live market lanes plus an Exchange Board anchor with more selective section logic
 - Binance Spot read-only grounding now strengthens `/brief` and `/watchtoday`
@@ -27,7 +27,7 @@ If you come back later and want the shortest summary possible:
 - GitHub repo is already pushed
 
 ## Best next engineering move
-Deepen live coverage and runtime quality: richer external-wallet and speculative-context evidence, better logging/health visibility, stronger watchtoday lane population, and cleaner live bridge reliability under partial failures.
+Deepen live coverage and runtime quality: richer external-wallet and speculative-context evidence, better logging/health visibility, stronger watchtoday lane population, cleaner live bridge reliability under partial failures, and a fix for the current factory-default test mismatch.
 
 ## Best next presentation move
 Add screenshots, a short demo asset, and a few example live Square post links, then optionally trim public docs noise for a cleaner open-source first impression.
