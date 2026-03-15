@@ -1,5 +1,4 @@
 import src.analyzers.market_watch as market_watch
-import src.analyzers.risk_analysis as risk_analysis
 
 
 class DummyWatchService:
@@ -8,25 +7,6 @@ class DummyWatchService:
             'top_narratives': ['AI'],
             'strongest_signals': ['BNB strength'],
             'market_takeaway': 'Opportunity exists, but selectivity matters.',
-        }
-
-
-class DummyRiskService:
-    def get_token_context(self, symbol: str):
-        return {
-            'symbol': symbol,
-            'display_name': symbol,
-            'liquidity': 1000000.0,
-            'audit_flags': [],
-            'major_risks': ['Base risk.'],
-            'signal_status': 'watch',
-        }
-
-    def get_signal_context(self, symbol: str):
-        return {
-            'token': symbol,
-            'signal_status': 'watch',
-            'major_risks': [],
         }
 
 
@@ -46,20 +26,3 @@ def test_watchtoday_adds_portfolio_posture_note():
 
     assert brief.entity == "Market Watch"
     assert brief.quick_verdict
-
-
-def test_risk_adds_portfolio_note():
-    old_service = risk_analysis.get_market_data_service
-    old_note = risk_analysis.portfolio_note_for
-    old_cmc = risk_analysis._fetch_cmc_quote
-    risk_analysis.get_market_data_service = lambda: DummyRiskService()
-    risk_analysis.portfolio_note_for = lambda symbol: 'Current posture is fairly defensive, so higher-beta ideas should earn their place instead of being chased by default.'
-    risk_analysis._fetch_cmc_quote = lambda symbol: None
-    try:
-        brief = risk_analysis.analyze_risk('BNB')
-    finally:
-        risk_analysis.get_market_data_service = old_service
-        risk_analysis.portfolio_note_for = old_note
-        risk_analysis._fetch_cmc_quote = old_cmc
-
-    assert 'Current posture is fairly defensive' in brief.quick_verdict

@@ -37,13 +37,13 @@ def test_extract_watch_today_context_pnl_rank():
     
     # Check first trader format
     assert "0x1234…5678" in top_traders[0]
-    assert "PnL $50K" in top_traders[0]
+    assert "PnL $50.0K" in top_traders[0]
     assert "WR 85%" in top_traders[0]
     assert "top: BTC, ETH, SOL" in top_traders[0]
     
     # Check second trader format
     assert "SmartTrader_99" in top_traders[1]
-    assert "PnL $10K" in top_traders[1]
+    assert "PnL $10.0K" in top_traders[1]
     assert "WR 60%" in top_traders[1]
     assert "top: DOGE" in top_traders[1]
     

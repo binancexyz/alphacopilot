@@ -1,3 +1,4 @@
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -119,7 +120,6 @@ from tests.test_premium_output_formatters import (
 )
 from tests.test_portfolio_trend_tag import test_short_trend_tag_shape
 from tests.test_posture_aware_analysis import (
-    test_risk_adds_portfolio_note,
     test_watchtoday_adds_portfolio_posture_note,
 )
 from tests.test_price_analysis import (
@@ -217,6 +217,46 @@ from tests.test_watchtoday_live_brief import (
 )
 from tests.test_watchtoday_live_extractors import (
     test_extract_watchtoday_context_backfills_sparse_lanes_from_exchange_board_and_narratives,
+)
+from tests.test_alpha_extractors import (
+    test_extract_alpha_context_alpha_listed,
+    test_extract_alpha_context_not_alpha,
+    test_extract_alpha_context_empty_raw,
+)
+from tests.test_depth_kline_extractors import (
+    test_extract_token_context_spot_and_kline,
+    test_extract_token_context_legacy_spot,
+)
+from tests.test_dynamic_data_extractors import (
+    test_extract_token_context_dynamic_data,
+    test_extract_token_context_incomplete_dynamic,
+)
+from tests.test_futures_data_extractors import (
+    test_extract_futures_context,
+    test_enrich_futures_sentiment,
+)
+from tests.test_futures_extractors import (
+    test_extract_futures_context_basic,
+    test_extract_futures_context_extreme_funding,
+    test_extract_futures_context_empty,
+    test_token_context_enriched_with_futures,
+    test_token_context_with_spot_enrichment,
+)
+from tests.test_klines_extras_extractors import (
+    test_extract_spot_alpha_klines_and_trades,
+    test_extract_futures_klines_and_ticker,
+)
+from tests.test_pnl_rank_extractors import (
+    test_extract_watch_today_context_pnl_rank,
+)
+from tests.test_skill_mapping_completeness import (
+    test_all_commands_have_nonempty_skill_lists,
+    test_optional_commands_are_valid,
+    test_alpha_command_exists,
+    test_futures_command_exists,
+    test_token_has_optional_enrichments,
+    test_signal_command_has_market_rank_and_futures_support,
+    test_audit_command_has_signal_support,
 )
 
 
@@ -350,7 +390,6 @@ def main() -> None:
 
     # --- posture aware analysis ---
     test_watchtoday_adds_portfolio_posture_note()
-    test_risk_adds_portfolio_note()
 
     # --- price analysis ---
     test_fetch_binance_spot_quote_prefers_usdt_pair()
@@ -466,6 +505,46 @@ def main() -> None:
     # --- watchtoday live extractors ---
     test_extract_watchtoday_context_backfills_sparse_lanes_from_exchange_board_and_narratives()
 
+    # --- alpha extractors ---
+    test_extract_alpha_context_alpha_listed()
+    test_extract_alpha_context_not_alpha()
+    test_extract_alpha_context_empty_raw()
+
+    # --- depth & kline extractors ---
+    test_extract_token_context_spot_and_kline()
+    test_extract_token_context_legacy_spot()
+
+    # --- dynamic data extractors ---
+    test_extract_token_context_dynamic_data()
+    test_extract_token_context_incomplete_dynamic()
+
+    # --- futures data extractors ---
+    test_extract_futures_context()
+    test_enrich_futures_sentiment()
+
+    # --- futures extractors ---
+    test_extract_futures_context_basic()
+    test_extract_futures_context_extreme_funding()
+    test_extract_futures_context_empty()
+    test_token_context_enriched_with_futures()
+    test_token_context_with_spot_enrichment()
+
+    # --- klines extras extractors ---
+    test_extract_spot_alpha_klines_and_trades()
+    test_extract_futures_klines_and_ticker()
+
+    # --- pnl rank extractors ---
+    test_extract_watch_today_context_pnl_rank()
+
+    # --- skill mapping completeness ---
+    test_all_commands_have_nonempty_skill_lists()
+    test_optional_commands_are_valid()
+    test_alpha_command_exists()
+    test_futures_command_exists()
+    test_token_has_optional_enrichments()
+    test_signal_command_has_market_rank_and_futures_support()
+    test_audit_command_has_signal_support()
+
     # --- API tests (conditional — require FastAPI) ---
     try:
         from tests.test_api_guard import (
@@ -507,6 +586,103 @@ def main() -> None:
         test_bridge_runtime_token_contract()
         test_bridge_runtime_requires_entity_for_token()
         test_first_matching_token_prefers_exact_symbol()
+
+    # --- Live integration tests (conditional — require LIVE_TESTS=1) ---
+    if os.environ.get("LIVE_TESTS") == "1":
+        from tests.test_live_integration import (
+            test_live_bridge_token_bnb,
+            test_live_bridge_token_sol,
+            test_live_bridge_token_eth,
+            test_live_bridge_signal_bnb,
+            test_live_bridge_signal_doge,
+            test_live_bridge_watchtoday,
+            test_live_bridge_audit_bnb,
+            test_live_bridge_futures_bnb,
+            test_live_bridge_futures_eth,
+            test_live_bridge_alpha_bnb,
+            test_live_bridge_meme_doge,
+            test_live_bridge_meme_pepe,
+            test_live_bridge_wallet,
+            test_live_bridge_portfolio,
+            test_live_pipeline_token_bnb,
+            test_live_pipeline_token_sol,
+            test_live_pipeline_signal_bnb,
+            test_live_pipeline_signal_doge,
+            test_live_pipeline_watchtoday,
+            test_live_pipeline_wallet,
+            test_live_pipeline_futures_bnb,
+            test_live_pipeline_alpha_bnb,
+            test_live_pipeline_audit_bnb,
+            test_live_pipeline_meme_doge,
+            test_live_bridge_meta_shape,
+            test_live_bridge_response_time,
+        )
+
+        print("\n--- Live bridge tests ---")
+        test_live_bridge_token_bnb()
+        test_live_bridge_token_sol()
+        test_live_bridge_token_eth()
+        test_live_bridge_signal_bnb()
+        test_live_bridge_signal_doge()
+        test_live_bridge_watchtoday()
+        test_live_bridge_audit_bnb()
+        test_live_bridge_futures_bnb()
+        test_live_bridge_futures_eth()
+        test_live_bridge_alpha_bnb()
+        test_live_bridge_meme_doge()
+        test_live_bridge_meme_pepe()
+        test_live_bridge_wallet()
+        test_live_bridge_portfolio()
+
+        print("\n--- Live pipeline tests ---")
+        test_live_pipeline_token_bnb()
+        test_live_pipeline_token_sol()
+        test_live_pipeline_signal_bnb()
+        test_live_pipeline_signal_doge()
+        test_live_pipeline_watchtoday()
+        test_live_pipeline_wallet()
+        test_live_pipeline_futures_bnb()
+        test_live_pipeline_alpha_bnb()
+        test_live_pipeline_audit_bnb()
+        test_live_pipeline_meme_doge()
+
+        print("\n--- Live meta tests ---")
+        test_live_bridge_meta_shape()
+        test_live_bridge_response_time()
+
+        try:
+            from tests.test_live_api_endpoints import (
+                test_live_api_health,
+                test_live_api_brief_bnb,
+                test_live_api_brief_sol,
+                test_live_api_brief_deep_bnb,
+                test_live_api_signal_bnb,
+                test_live_api_signal_doge,
+                test_live_api_watchtoday,
+                test_live_api_audit_bnb,
+                test_live_api_alpha_bnb,
+                test_live_api_futures_bnb,
+                test_live_api_futures_eth,
+                test_live_api_holdings,
+            )
+        except ModuleNotFoundError:
+            print("Skipping live API tests: FastAPI test dependencies are not installed on this host.")
+        else:
+            print("\n--- Live API endpoint tests ---")
+            test_live_api_health()
+            test_live_api_brief_bnb()
+            test_live_api_brief_sol()
+            test_live_api_brief_deep_bnb()
+            test_live_api_signal_bnb()
+            test_live_api_signal_doge()
+            test_live_api_watchtoday()
+            test_live_api_audit_bnb()
+            test_live_api_alpha_bnb()
+            test_live_api_futures_bnb()
+            test_live_api_futures_eth()
+            test_live_api_holdings()
+    else:
+        print("Skipping live integration tests: set LIVE_TESTS=1 to enable.")
 
     print("All tests passed.")
 

@@ -7,7 +7,7 @@ def test_extract_alpha_context_alpha_listed():
     raw = {
         "alpha": {
             "is_alpha_listed": True,
-            "token_list": [{"symbol": "BNB"}],
+            "token_list": [{"symbol": "BNB", "price": "600.5", "volume24h": "12345", "percentChange24h": "2.3", "priceHigh24h": "610", "priceLow24h": "590"}],
             "ticker": {
                 "lastPrice": "600.5",
                 "volume": "12345",
