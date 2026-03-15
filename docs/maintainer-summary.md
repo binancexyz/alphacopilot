@@ -1,8 +1,8 @@
 # Maintainer Summary
 
 ## Current scope
-- Canonical product surface: `brief`, `signal`, `audit`, `holdings`, `watchtoday`
-- Secondary API surface: `alpha`, `futures`
+- Canonical product surface: `brief`, `signal`, `audit`, `portfolio`, `wallet`, `watchtoday`, `alpha`, `futures`
+- Compatibility aliases: `holdings`
 - Production runtime surfaces kept in repo: CLI, REST API, bridge API, Square publishing
 
 ## Repo rules

@@ -309,6 +309,13 @@ from tests.test_futures_context_model import (
     test_normalize_futures_context,
     test_normalize_futures_context_defaults,
 )
+from tests.test_main import (
+    test_main_routes_alpha_command_without_symbol,
+    test_main_routes_futures_command,
+    test_main_routes_holdings_alias_to_wallet,
+    test_main_routes_portfolio_command,
+    test_main_routes_wallet_command,
+)
 
 
 def main() -> None:
@@ -656,6 +663,13 @@ def main() -> None:
     test_normalize_futures_context()
     test_normalize_futures_context_defaults()
 
+    # --- CLI routing ---
+    test_main_routes_portfolio_command()
+    test_main_routes_wallet_command()
+    test_main_routes_alpha_command_without_symbol()
+    test_main_routes_futures_command()
+    test_main_routes_holdings_alias_to_wallet()
+
     # --- API tests (conditional — require FastAPI) ---
     try:
         from tests.test_api_guard import (
@@ -664,12 +678,17 @@ def main() -> None:
             test_rate_limit_allows_first_request,
         )
         from tests.test_api import (
+            test_alpha_endpoint,
             test_brief_endpoint,
             test_brief_deep_endpoint,
+            test_futures_endpoint,
             test_health,
             test_health_payload_shape,
-            test_holdings_endpoint,
+            test_holdings_aliases_portfolio,
+            test_holdings_aliases_wallet,
+            test_portfolio_endpoint,
             test_runtime_report_endpoint,
+            test_wallet_endpoint,
             test_wallet_endpoint_rejects_bad_address,
             test_watchtoday_endpoint,
         )
@@ -689,8 +708,13 @@ def main() -> None:
         test_health_payload_shape()
         test_brief_endpoint()
         test_brief_deep_endpoint()
-        test_holdings_endpoint()
+        test_portfolio_endpoint()
+        test_wallet_endpoint()
+        test_holdings_aliases_portfolio()
+        test_holdings_aliases_wallet()
         test_watchtoday_endpoint()
+        test_alpha_endpoint()
+        test_futures_endpoint()
         test_wallet_endpoint_rejects_bad_address()
         test_runtime_report_endpoint()
         test_bridge_health()
@@ -774,7 +798,9 @@ def main() -> None:
                 test_live_api_alpha_bnb,
                 test_live_api_futures_bnb,
                 test_live_api_futures_eth,
-                test_live_api_holdings,
+                test_live_api_holdings_alias,
+                test_live_api_portfolio,
+                test_live_api_wallet,
             )
         except ModuleNotFoundError:
             print("Skipping live API tests: FastAPI test dependencies are not installed on this host.")
@@ -791,7 +817,9 @@ def main() -> None:
             test_live_api_alpha_bnb()
             test_live_api_futures_bnb()
             test_live_api_futures_eth()
-            test_live_api_holdings()
+            test_live_api_portfolio()
+            test_live_api_wallet()
+            test_live_api_holdings_alias()
     else:
         print("Skipping live integration tests: set LIVE_TESTS=1 to enable.")
 

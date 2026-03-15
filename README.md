@@ -20,10 +20,13 @@ Bibipilot is a production-first crypto research and publishing copilot. The reta
 | `brief <symbol> deep` | deeper asset judgment |
 | `signal <symbol>` | setup validation |
 | `audit <symbol>` | security-first token brief |
-| `holdings [address]` | portfolio or wallet posture |
+| `portfolio` | Binance Spot portfolio posture |
+| `wallet <address>` | external wallet behavior |
 | `watchtoday` | market board |
+| `alpha [symbol]` | Binance Alpha board or symbol-specific Alpha context |
+| `futures <symbol>` | Binance Futures positioning and squeeze context |
 
-Secondary API endpoints `alpha` and `futures` remain available, but they are not part of the canonical command map.
+Compatibility aliases remain available for `holdings` on the CLI and rendered API, but `portfolio` and `wallet` are now the canonical names.
 
 ## Quick start
 

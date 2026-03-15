@@ -1,9 +1,15 @@
 PYTHON=python3
 
-.PHONY: brief holdings watchtoday signal audit check test test-live api bridge-api bridge-live square-draft square-publish diary-morning diary-night daily-post install-diary-cron
+.PHONY: brief portfolio wallet holdings watchtoday signal audit alpha futures check test test-live api bridge-api bridge-live square-draft square-publish diary-morning diary-night daily-post install-diary-cron
 
 brief:
 	$(PYTHON) src/main.py brief BNB
+
+portfolio:
+	$(PYTHON) src/main.py portfolio
+
+wallet:
+	$(PYTHON) src/main.py wallet 0x1234567890ab
 
 holdings:
 	$(PYTHON) src/main.py holdings 0x1234567890ab
@@ -16,6 +22,12 @@ signal:
 
 audit:
 	$(PYTHON) src/main.py audit BNB
+
+alpha:
+	$(PYTHON) src/main.py alpha
+
+futures:
+	$(PYTHON) src/main.py futures BTC
 
 api:
 	uvicorn src.api:app --host 0.0.0.0 --port 8000

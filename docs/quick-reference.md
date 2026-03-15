@@ -6,9 +6,12 @@ python3 src/main.py brief BNB
 python3 src/main.py brief BNB deep
 python3 src/main.py signal DOGE
 python3 src/main.py audit BNB
-python3 src/main.py holdings
-python3 src/main.py holdings 0x1234567890ab
+python3 src/main.py portfolio
+python3 src/main.py wallet 0x1234567890ab
 python3 src/main.py watchtoday
+python3 src/main.py alpha
+python3 src/main.py alpha BNB
+python3 src/main.py futures BTC
 ```
 
 ## REST API
@@ -22,11 +25,13 @@ All API routes are `GET` routes.
 | `/brief?symbol=BNB&deep=true` | deeper token brief |
 | `/signal?token=DOGE` | signal validation |
 | `/audit?symbol=BNB` | audit-focused brief |
-| `/holdings` | portfolio posture |
-| `/holdings?address=0x...` | external wallet posture |
+| `/portfolio` | portfolio posture |
+| `/wallet?address=0x...` | external wallet posture |
 | `/watchtoday` | market board |
-| `/alpha?symbol=BNB` | secondary alpha view |
-| `/futures?symbol=BTC` | secondary futures view |
+| `/alpha?symbol=BNB` | Binance Alpha board or symbol-specific Alpha view |
+| `/futures?symbol=BTC` | Binance Futures positioning view |
+
+Compatibility alias: `/holdings` and `/holdings?address=0x...` still work, but `portfolio` and `wallet` are canonical.
 
 ## Bridge API
 ```bash

@@ -59,17 +59,61 @@ def test_watchtoday_endpoint():
     assert "Watchtoday" in payload["rendered"]
 
 
-def test_holdings_endpoint():
-    response = client.get("/holdings")
+def test_portfolio_endpoint():
+    response = client.get("/portfolio")
     assert response.status_code == 200
     payload = response.json()
-    assert payload["command"] == "holdings"
+    assert payload["command"] == "portfolio"
     assert payload["mode"] in {"mock", "live"}
     assert "Holdings Binance Spot" in payload["rendered"]
 
 
-def test_wallet_endpoint_rejects_bad_address():
-    response = client.get("/holdings", params={"address": "not-a-wallet"})
-    assert response.status_code == 400
+def test_wallet_endpoint():
+    response = client.get("/wallet", params={"address": "0x1234567890ab"})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["command"] == "wallet"
+    assert payload["entity"] == "0x1234567890ab"
+    assert payload["mode"] in {"mock", "live"}
+    assert "Wallet" in payload["rendered"]
 
+
+def test_holdings_aliases_portfolio():
+    response = client.get("/holdings")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["command"] == "portfolio"
+
+
+def test_holdings_aliases_wallet():
+    response = client.get("/holdings", params={"address": "0x1234567890ab"})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["command"] == "wallet"
+    assert payload["entity"] == "0x1234567890ab"
+
+
+def test_alpha_endpoint():
+    response = client.get("/alpha", params={"symbol": "BNB"})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["command"] == "alpha"
+    assert payload["entity"] == "BNB"
+    assert payload["mode"] in {"mock", "live"}
+    assert payload["rendered"]
+
+
+def test_futures_endpoint():
+    response = client.get("/futures", params={"symbol": "BTC"})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["command"] == "futures"
+    assert payload["entity"] == "BTC"
+    assert payload["mode"] in {"mock", "live"}
+    assert payload["rendered"]
+
+
+def test_wallet_endpoint_rejects_bad_address():
+    response = client.get("/wallet", params={"address": "not-a-wallet"})
+    assert response.status_code == 400
 

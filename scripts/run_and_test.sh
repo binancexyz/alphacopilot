@@ -20,7 +20,13 @@ echo
 echo "== Smoke tests =="
 python3 src/main.py brief BNB | sed -n '1,20p'
 echo
-python3 src/main.py holdings 0x1234567890ab | sed -n '1,20p'
+python3 src/main.py portfolio | sed -n '1,20p'
+echo
+python3 src/main.py wallet 0x1234567890ab | sed -n '1,20p'
+echo
+python3 src/main.py alpha | sed -n '1,20p'
+echo
+python3 src/main.py futures BTC | sed -n '1,20p'
 echo
 echo "-- Square draft --"
 python3 src/square_cli.py token BNB | sed -n '1,10p'

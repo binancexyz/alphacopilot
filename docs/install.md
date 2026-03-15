@@ -20,9 +20,11 @@ python3 src/main.py brief BTC
 python3 src/main.py brief BNB deep
 python3 src/main.py signal DOGE
 python3 src/main.py audit BNB
-python3 src/main.py holdings
-python3 src/main.py holdings 0x1234567890ab
+python3 src/main.py portfolio
+python3 src/main.py wallet 0x1234567890ab
 python3 src/main.py watchtoday
+python3 src/main.py alpha
+python3 src/main.py futures BTC
 ```
 
 ## Local API

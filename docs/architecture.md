@@ -12,8 +12,8 @@ CLI / REST API / Bridge / Square CLI
 ```
 
 ## Runtime surfaces
-- `src/main.py`: canonical CLI for `brief`, `signal`, `audit`, `holdings`, `watchtoday`
-- `src/api.py`: rendered REST API for the same product surface plus secondary `alpha` and `futures`
+- `src/main.py`: canonical CLI for `brief`, `signal`, `audit`, `portfolio`, `wallet`, `watchtoday`, `alpha`, `futures`
+- `src/api.py`: rendered REST API for the same canonical product surface, with compatibility aliases retained for `holdings`
 - `src/bridge_api.py`: raw bundle bridge for runtime integrations
 - `src/square_cli.py` and `src/square_diary.py`: Binance Square drafting and publishing
 
@@ -42,6 +42,6 @@ CLI / REST API / Bridge / Square CLI
 - Docker runs as a non-root user.
 
 ## Command posture
-- Canonical product surface: `brief`, `signal`, `audit`, `holdings`, `watchtoday`
-- Secondary API surface: `alpha`, `futures`
+- Canonical product surface: `brief`, `signal`, `audit`, `portfolio`, `wallet`, `watchtoday`, `alpha`, `futures`
+- Compatibility aliases: `holdings` maps to `portfolio` or `wallet` depending on whether an address is supplied
 - Development-only scaffolding should not define the production architecture

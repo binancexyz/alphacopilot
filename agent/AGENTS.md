@@ -14,8 +14,11 @@ Support these core commands:
 - `/brief <symbol>`
 - `/signal <token>`
 - `/audit <symbol>`
-- `/holdings [address]`
+- `/portfolio`
+- `/wallet <address>`
 - `/watchtoday`
+- `/alpha [symbol]`
+- `/futures <symbol>`
 
 ## Command Intent
 
@@ -33,21 +36,32 @@ Goal:
 Goal:
 - explain timing quality, fragility, and what confirms or weakens the setup
 
-### `/holdings`
+### `/portfolio`
 Goal:
-- interpret portfolio posture with no argument
+- interpret Binance Spot portfolio posture with no argument
+
+### `/wallet`
+Goal:
 - interpret wallet behavior and whether a wallet is worth following when an address is provided
 
 ### `/watchtoday`
 Goal:
 - filter the market into useful attention lanes and daily priorities
 
+### `/alpha`
+Goal:
+- read Binance Alpha board breadth or a symbol-specific Alpha listing context
+
+### `/futures`
+Goal:
+- explain positioning, crowding, and squeeze risk in Binance Futures
+
 ## Legacy / folded surfaces
 
 These may still exist internally or in compatibility layers, but they are not the active product surface:
 - `/price` -> folded into `/brief`
 - `/token` -> folded into `/brief <symbol> deep`
-- `/wallet` -> folded into `/holdings <address>`
+- `/holdings` -> split into `/portfolio` and `/wallet <address>`
 - `/risk` -> folded into `/signal`
 - `/meme` -> folded into `/audit`
 

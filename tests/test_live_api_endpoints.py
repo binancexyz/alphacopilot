@@ -14,6 +14,7 @@ from src.api import app
 from src.config import settings
 
 client = TestClient(app)
+_TEST_BSC_ADDRESS = "0x8894e0a0c962cb723c1ef8f1d2793028d2634765"
 
 
 def test_live_api_health() -> None:
@@ -106,12 +107,32 @@ def test_live_api_futures_eth() -> None:
     assert payload["rendered"], "rendered output must be non-empty"
 
 
-def test_live_api_holdings() -> None:
+def test_live_api_portfolio() -> None:
     if not settings.binance_api_key:
-        print("  SKIP  test_live_api_holdings (no BINANCE_API_KEY)")
+        print("  SKIP  test_live_api_portfolio (no BINANCE_API_KEY)")
+        return
+    response = client.get("/portfolio")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["command"] == "portfolio"
+    assert payload["rendered"], "rendered output must be non-empty"
+
+
+def test_live_api_wallet() -> None:
+    response = client.get("/wallet", params={"address": _TEST_BSC_ADDRESS})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["command"] == "wallet"
+    assert payload["entity"] == _TEST_BSC_ADDRESS
+    assert payload["rendered"], "rendered output must be non-empty"
+
+
+def test_live_api_holdings_alias() -> None:
+    if not settings.binance_api_key:
+        print("  SKIP  test_live_api_holdings_alias (no BINANCE_API_KEY)")
         return
     response = client.get("/holdings")
     assert response.status_code == 200
     payload = response.json()
-    assert payload["command"] == "holdings"
+    assert payload["command"] == "portfolio"
     assert payload["rendered"], "rendered output must be non-empty"

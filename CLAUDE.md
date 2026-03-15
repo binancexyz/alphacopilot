@@ -13,18 +13,26 @@ make check          # Compile-check all .py files (py_compile)
 make test           # Run full test suite (tests/run_tests.py)
 make api            # Start REST API on :8000
 make bridge-api     # Start OpenClaw bridge on :8010
-make token          # CLI: token analysis for BNB
+make brief          # CLI: compact brief for BNB
 make signal         # CLI: signal analysis for DOGE
-make wallet         # CLI: wallet analysis
+make portfolio      # CLI: Binance Spot portfolio posture
+make wallet         # CLI: wallet behavior analysis
 make watchtoday     # CLI: daily market board
+make alpha          # CLI: Binance Alpha board
+make futures        # CLI: Binance Futures posture
 ```
 
 **CLI usage:** `python3 src/main.py <command> [args]`
 - `brief <symbol>` — fast default read; add `deep` for full token judgment
 - `signal <symbol>` — timing quality, setup fragility
-- `holdings [address]` — portfolio posture (no arg) or wallet behavior (0x address)
-- `watchtoday` — daily market board
 - `audit <symbol>` — security/safety read with meme lens
+- `portfolio` — Binance Spot portfolio posture
+- `wallet <address>` — wallet behavior (0x address)
+- `watchtoday` — daily market board
+- `alpha [symbol]` — Binance Alpha board or symbol-specific Alpha context
+- `futures <symbol>` — Binance Futures positioning and squeeze context
+
+Compatibility alias: `holdings [address]` still works, but `portfolio` and `wallet` are canonical.
 
 **Before any PR:** `make check && make test`
 

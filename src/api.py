@@ -132,6 +132,56 @@ def _brief_response(command: str, entity: str, brief) -> BriefResponse:
     )
 
 
+def _portfolio_response() -> BriefResponse:
+    return _brief_response("portfolio", "portfolio", analyze_portfolio())
+
+
+def _wallet_response(address: str) -> BriefResponse:
+    if not looks_like_wallet_address(address):
+        raise HTTPException(status_code=400, detail="Wallet address must start with 0x and look valid.")
+    normalized = normalize_wallet_input(address)
+    return _brief_response("wallet", normalized, analyze_wallet(normalized))
+
+
+def _alpha_response(symbol: str | None) -> BriefResponse:
+    normalized = normalize_token_input(symbol) if symbol else ""
+    svc = live_service()
+    context = svc.get_alpha_context(normalized)
+    brief = analyze_alpha(normalized or None, context)
+    entity = normalized or "binance-alpha"
+    runtime = build_runtime_meta("alpha", entity)
+    brief = apply_runtime_meta(brief, runtime)
+    warning = brief.runtime_warning or runtime.get("warning") or _mode_warning()
+    return BriefResponse(
+        command="alpha",
+        entity=entity,
+        mode=settings.app_mode,
+        rendered=format_brief(brief),
+        warning=warning,
+        runtime_state=brief.runtime_state or runtime.get("state"),
+        runtime=runtime,
+    )
+
+
+def _futures_response(symbol: str) -> BriefResponse:
+    normalized = normalize_token_input(symbol)
+    svc = live_service()
+    context = svc.get_futures_context(normalized)
+    brief = analyze_futures(normalized, context)
+    runtime = build_runtime_meta("futures", normalized)
+    brief = apply_runtime_meta(brief, runtime)
+    warning = brief.runtime_warning or runtime.get("warning") or _mode_warning()
+    return BriefResponse(
+        command="futures",
+        entity=normalized,
+        mode=settings.app_mode,
+        rendered=format_brief(brief),
+        warning=warning,
+        runtime_state=brief.runtime_state or runtime.get("state"),
+        runtime=runtime,
+    )
+
+
 @app.get("/brief", response_model=BriefResponse)
 def brief(request: Request, _: None = Depends(enforce_api_guard), symbol: str = Query(..., min_length=1, max_length=20, description="Token symbol, e.g. BNB"), deep: bool = Query(False, description="Use deeper asset judgment mode")) -> BriefResponse:
     normalized = normalize_token_input(symbol)
@@ -152,14 +202,21 @@ def audit(request: Request, _: None = Depends(enforce_api_guard), symbol: str = 
     return _brief_response("audit", normalized, analyze_audit(normalized))
 
 
+@app.get("/portfolio", response_model=BriefResponse)
+def portfolio(request: Request, _: None = Depends(enforce_api_guard)) -> BriefResponse:
+    return _portfolio_response()
+
+
+@app.get("/wallet", response_model=BriefResponse)
+def wallet(request: Request, _: None = Depends(enforce_api_guard), address: str = Query(..., min_length=12, max_length=128, description="Wallet address starting with 0x")) -> BriefResponse:
+    return _wallet_response(address)
+
+
 @app.get("/holdings", response_model=BriefResponse)
 def holdings(request: Request, _: None = Depends(enforce_api_guard), address: str | None = Query(None, min_length=12, max_length=128, description="Optional wallet address starting with 0x")) -> BriefResponse:
     if address:
-        if not looks_like_wallet_address(address):
-            raise HTTPException(status_code=400, detail="Wallet address must start with 0x and look valid.")
-        normalized = normalize_wallet_input(address)
-        return _brief_response("holdings", normalized, analyze_wallet(normalized))
-    return _brief_response("holdings", "portfolio", analyze_portfolio())
+        return _wallet_response(address)
+    return _portfolio_response()
 
 
 @app.get("/watchtoday", response_model=BriefResponse)
@@ -169,43 +226,12 @@ def watchtoday(request: Request, _: None = Depends(enforce_api_guard)) -> BriefR
 
 @app.get("/alpha", response_model=BriefResponse)
 def alpha(request: Request, _: None = Depends(enforce_api_guard), symbol: str | None = Query(None, min_length=1, max_length=20, description="Optional token symbol, e.g. BNB")) -> BriefResponse:
-    normalized = normalize_token_input(symbol) if symbol else ""
-    svc = live_service()
-    context = svc.get_alpha_context(normalized)
-    brief = analyze_alpha(normalized or None, context)
-    entity = normalized or "binance-alpha"
-    runtime = build_runtime_meta("alpha", entity)
-    brief = apply_runtime_meta(brief, runtime)
-    warning = brief.runtime_warning or runtime.get("warning") or _mode_warning()
-    return BriefResponse(
-        command="alpha",
-        entity=entity,
-        mode=settings.app_mode,
-        rendered=format_brief(brief),
-        warning=warning,
-        runtime_state=brief.runtime_state or runtime.get("state"),
-        runtime=runtime,
-    )
+    return _alpha_response(symbol)
 
 
 @app.get("/futures", response_model=BriefResponse)
 def futures(request: Request, _: None = Depends(enforce_api_guard), symbol: str = Query(..., min_length=1, max_length=20, description="Token symbol, e.g. BTC")) -> BriefResponse:
-    normalized = normalize_token_input(symbol)
-    svc = live_service()
-    context = svc.get_futures_context(normalized)
-    brief = analyze_futures(normalized, context)
-    runtime = build_runtime_meta("futures", normalized)
-    brief = apply_runtime_meta(brief, runtime)
-    warning = brief.runtime_warning or runtime.get("warning") or _mode_warning()
-    return BriefResponse(
-        command="futures",
-        entity=normalized,
-        mode=settings.app_mode,
-        rendered=format_brief(brief),
-        warning=warning,
-        runtime_state=brief.runtime_state or runtime.get("state"),
-        runtime=runtime,
-    )
+    return _futures_response(symbol)
 
 def _mode_warning() -> str | None:
     if settings.app_mode == "mock":
