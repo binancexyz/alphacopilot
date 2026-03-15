@@ -53,6 +53,13 @@ class TokenContext:
     kline_trend: str = ""
     kline_above_ma20: bool = False
     top_trader_interest: bool = False
+    # Enhanced fields
+    btc_change_24h: float = 0.0
+    volume_trend: str = ""  # increasing/decreasing/spike/flat
+    momentum_score: float = 0.0  # weighted multi-timeframe score
+    relative_strength_btc: float = 0.0  # pct_change_24h - btc_change_24h
+    support_level: float = 0.0
+    resistance_level: float = 0.0
 
 
 @dataclass
@@ -95,6 +102,11 @@ class WatchTodayContext:
     exchange_board: list[str] = field(default_factory=list)
     futures_sentiment: list[str] = field(default_factory=list)
     top_traders: list[str] = field(default_factory=list)
+    # Enhanced fields
+    market_regime: str = ""  # trending/ranging/volatile/squeeze
+    btc_change_24h: float = 0.0
+    btc_dominance: float = 0.0
+    total_market_volume_change: float = 0.0
 
 
 @dataclass
@@ -155,3 +167,33 @@ class SignalContext:
     funding_rate: float = 0.0
     long_short_ratio: float = 0.0
     funding_sentiment: str = ""
+    # Enhanced fields
+    price_high_24h: float = 0.0
+    price_low_24h: float = 0.0
+    btc_change_24h: float = 0.0
+    volume_trend: str = ""  # increasing/decreasing/spike/flat
+
+
+@dataclass
+class FuturesContext:
+    symbol: str
+    funding_rate: float = 0.0
+    funding_rate_sentiment: str = "neutral"
+    open_interest: float = 0.0
+    long_short_ratio: float = 0.0
+    top_trader_long_short_ratio: float = 0.0
+    taker_buy_sell_ratio: float = 0.0
+    mark_price: float = 0.0
+    index_price: float = 0.0
+    ticker_volume_24h: float = 0.0
+    price_change_pct_24h: float = 0.0
+    major_risks: list[str] = field(default_factory=list)
+    runtime_warning: str = ""
+    # Trend fields
+    funding_rate_8h_ago: float = 0.0
+    funding_rate_24h_ago: float = 0.0
+    oi_change_pct_24h: float = 0.0
+    oi_change_pct_4h: float = 0.0
+    premium_pct: float = 0.0
+    liquidation_24h_long: float = 0.0
+    liquidation_24h_short: float = 0.0

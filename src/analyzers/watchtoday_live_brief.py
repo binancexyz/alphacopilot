@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from src.analyzers.thresholds import BTC_TRENDING_THRESHOLD, BTC_VOLATILE_THRESHOLD
 from src.formatters.heuristics import watch_today_signal_quality
 from src.models.context import WatchTodayContext
 from src.models.schemas import AnalysisBrief, BriefSection, RiskTag
@@ -17,6 +18,23 @@ LANE_LABELS = {
     "futures_sentiment": "Futures Sentiment",
     "top_traders": "Top Traders",
 }
+
+
+def _detect_market_regime(ctx: WatchTodayContext) -> str:
+    if ctx.market_regime:
+        return ctx.market_regime
+    btc = abs(ctx.btc_change_24h)
+    has_squeeze = any("squeeze" in s.lower() for s in ctx.futures_sentiment) if ctx.futures_sentiment else False
+    if has_squeeze and btc < BTC_TRENDING_THRESHOLD:
+        return "squeeze"
+    if btc >= BTC_VOLATILE_THRESHOLD:
+        return "volatile"
+    if btc >= BTC_TRENDING_THRESHOLD:
+        direction = "up" if ctx.btc_change_24h > 0 else "down"
+        return f"trending-{direction}"
+    if btc < 1.0 and len(ctx.strongest_signals) <= 1:
+        return "ranging"
+    return "mixed"
 
 
 def _watch_lane_summary(ctx: WatchTodayContext) -> tuple[list[str], list[str]]:
@@ -120,6 +138,17 @@ def build_watchtoday_brief(ctx: WatchTodayContext) -> AnalysisBrief:
     evidence_level, evidence_note = _watch_evidence_level(ctx)
 
     risk_tags: list[RiskTag] = [RiskTag(name="Evidence Quality", level=evidence_level, note=evidence_note)]
+
+    # Market regime tag
+    regime = _detect_market_regime(ctx)
+    if regime:
+        regime_level = "High" if "volatile" in regime else "Medium" if "trending" in regime or regime == "squeeze" else "Info"
+        risk_tags.append(RiskTag(name="Market Regime", level=regime_level, note=regime.replace("-", " ").title()))
+
+    if ctx.btc_change_24h != 0:
+        btc_level = "High" if abs(ctx.btc_change_24h) >= BTC_VOLATILE_THRESHOLD else "Medium" if abs(ctx.btc_change_24h) >= BTC_TRENDING_THRESHOLD else "Low"
+        risk_tags.append(RiskTag(name="BTC 24h", level=btc_level, note=f"{ctx.btc_change_24h:+.1f}%"))
+
     if ctx.risk_zones:
         risk_tags.append(RiskTag(name="Narrative Risk", level="High", note=", ".join(ctx.risk_zones[:3])))
     if ctx.strongest_signals:

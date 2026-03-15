@@ -35,6 +35,44 @@ def _momentum_note(ctx: TokenContext) -> str:
     return " | ".join(parts)
 
 
+def _compute_momentum_score(ctx: TokenContext) -> float:
+    if ctx.momentum_score != 0:
+        return ctx.momentum_score
+    weights = [(ctx.pct_change_5m, 0.1), (ctx.pct_change_1h, 0.25), (ctx.pct_change_4h, 0.35), (ctx.pct_change_24h, 0.3)]
+    score = sum(value * weight for value, weight in weights if value != 0)
+    return round(score, 2)
+
+
+def _volume_trend_note(ctx: TokenContext) -> str:
+    if ctx.volume_trend:
+        return ctx.volume_trend
+    if ctx.volume_5m <= 0 or ctx.volume_1h <= 0:
+        return ""
+    ratio_5m_to_1h = (ctx.volume_5m * 12) / ctx.volume_1h if ctx.volume_1h > 0 else 0
+    if ratio_5m_to_1h >= 2.0:
+        return "spike"
+    if ratio_5m_to_1h >= 1.3:
+        return "increasing"
+    if ratio_5m_to_1h <= 0.5:
+        return "decreasing"
+    return "flat"
+
+
+def _relative_strength_note(ctx: TokenContext) -> str:
+    if ctx.btc_change_24h == 0 or ctx.pct_change_24h == 0:
+        return ""
+    relative = ctx.pct_change_24h - ctx.btc_change_24h
+    if relative > 3:
+        return f"Strong outperformance vs BTC (+{relative:.1f}pp)"
+    if relative > 1:
+        return f"Slight outperformance vs BTC (+{relative:.1f}pp)"
+    if relative < -3:
+        return f"Underperforming BTC ({relative:.1f}pp)"
+    if relative < -1:
+        return f"Slight underperformance vs BTC ({relative:.1f}pp)"
+    return f"Tracking BTC ({relative:+.1f}pp)"
+
+
 def _buy_sell_note(ctx: TokenContext) -> str:
     if ctx.buy_sell_ratio <= 0:
         return ""
@@ -233,6 +271,31 @@ def build_token_brief(ctx: TokenContext) -> AnalysisBrief:
         risk_tags.append(RiskTag(name="Meme Lifecycle", level="Medium", note=f"{ctx.meme_lifecycle} | {ctx.meme_bonded_progress:.0f}% bonded"))
     if ctx.top_trader_interest:
         risk_tags.append(RiskTag(name="Top Trader Interest", level="Medium", note="Visible on top-earning trader tables"))
+
+    # Enhanced: momentum score
+    momentum = _compute_momentum_score(ctx)
+    if momentum != 0:
+        m_level = "High" if momentum > 3 else "Low" if momentum < -3 else "Medium"
+        risk_tags.append(RiskTag(name="Momentum Score", level=m_level, note=f"{momentum:+.1f} (weighted multi-timeframe)"))
+
+    # Enhanced: volume trend
+    vol_trend = _volume_trend_note(ctx)
+    if vol_trend:
+        v_level = "High" if vol_trend == "spike" else "Medium" if vol_trend == "increasing" else "Low"
+        risk_tags.append(RiskTag(name="Volume Trend", level=v_level, note=vol_trend.title()))
+
+    # Enhanced: relative strength vs BTC
+    rs_note = _relative_strength_note(ctx)
+    if rs_note:
+        relative = ctx.pct_change_24h - ctx.btc_change_24h
+        rs_level = "High" if relative > 3 else "Low" if relative < -3 else "Medium"
+        risk_tags.append(RiskTag(name="Relative Strength", level=rs_level, note=rs_note))
+
+    # Enhanced: support/resistance levels
+    if ctx.support_level > 0:
+        risk_tags.append(RiskTag(name="Support", level="Info", note=f"${ctx.support_level:,.2f}"))
+    if ctx.resistance_level > 0:
+        risk_tags.append(RiskTag(name="Resistance", level="Info", note=f"${ctx.resistance_level:,.2f}"))
 
     if state == "blocked":
         quick_verdict = "Blocked. Audit risk is too high."

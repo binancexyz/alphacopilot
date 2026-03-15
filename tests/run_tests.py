@@ -253,6 +253,67 @@ from tests.test_skill_mapping_completeness import (
     test_signal_command_has_market_rank_and_futures_support,
     test_audit_command_has_signal_support,
 )
+from tests.test_cache import (
+    test_cache_set_and_get,
+    test_cache_miss_returns_none,
+    test_cache_expiry,
+    test_cache_stats_counts,
+    test_cache_clear,
+)
+from tests.test_snapshot_history import (
+    test_save_and_load_snapshot,
+    test_snapshot_delta_detects_quality_shift,
+    test_snapshot_delta_returns_empty_when_no_previous,
+    test_signal_delta_detects_state_shift,
+    test_watchtoday_delta_detects_regime_shift,
+)
+from tests.test_futures_enhanced import (
+    test_futures_oi_trend_interpretation,
+    test_futures_liquidation_data,
+    test_futures_funding_trend_rising,
+    test_futures_empty_context_still_works,
+)
+from tests.test_signal_enhanced import (
+    test_signal_dynamic_entry_zone_uses_atr,
+    test_signal_fallback_entry_zone_when_no_atr_data,
+    test_signal_risk_reward_ratio,
+    test_signal_take_profit_zone,
+    test_signal_btc_drag_detection,
+    test_signal_relative_strength_outperforming,
+    test_signal_volume_trend_tag,
+)
+from tests.test_token_enhanced import (
+    test_momentum_score_computation,
+    test_volume_trend_spike_detection,
+    test_volume_trend_decreasing,
+    test_volume_trend_returns_existing,
+    test_relative_strength_outperformance,
+    test_relative_strength_underperformance,
+    test_token_brief_includes_momentum_and_volume_tags,
+    test_token_brief_includes_support_resistance,
+)
+from tests.test_market_regime import (
+    test_market_regime_trending_up,
+    test_market_regime_trending_down,
+    test_market_regime_volatile,
+    test_market_regime_ranging,
+    test_market_regime_squeeze,
+    test_market_regime_uses_existing,
+    test_watchtoday_brief_includes_regime_tag,
+    test_watchtoday_brief_includes_btc_tag,
+)
+from tests.test_audit_enhanced import (
+    test_rugpull_score_blocked_high,
+    test_rugpull_score_clean_low,
+    test_rugpull_score_moderate_with_high_tax,
+    test_rugpull_score_honeypot,
+    test_rugpull_score_caps_at_100,
+)
+from tests.test_futures_context_model import (
+    test_futures_context_dataclass,
+    test_normalize_futures_context,
+    test_normalize_futures_context_defaults,
+)
 
 
 def main() -> None:
@@ -548,6 +609,67 @@ def main() -> None:
     test_token_has_optional_enrichments()
     test_signal_command_has_market_rank_and_futures_support()
     test_audit_command_has_signal_support()
+
+    # --- caching layer ---
+    test_cache_set_and_get()
+    test_cache_miss_returns_none()
+    test_cache_expiry()
+    test_cache_stats_counts()
+    test_cache_clear()
+
+    # --- snapshot history (tmp_path adapted) ---
+    test_save_and_load_snapshot(Path(tempfile.mkdtemp()))
+    test_snapshot_delta_detects_quality_shift(Path(tempfile.mkdtemp()))
+    test_snapshot_delta_returns_empty_when_no_previous()
+    test_signal_delta_detects_state_shift(Path(tempfile.mkdtemp()))
+    test_watchtoday_delta_detects_regime_shift(Path(tempfile.mkdtemp()))
+
+    # --- futures enhanced ---
+    test_futures_oi_trend_interpretation()
+    test_futures_liquidation_data()
+    test_futures_funding_trend_rising()
+    test_futures_empty_context_still_works()
+
+    # --- signal enhanced ---
+    test_signal_dynamic_entry_zone_uses_atr()
+    test_signal_fallback_entry_zone_when_no_atr_data()
+    test_signal_risk_reward_ratio()
+    test_signal_take_profit_zone()
+    test_signal_btc_drag_detection()
+    test_signal_relative_strength_outperforming()
+    test_signal_volume_trend_tag()
+
+    # --- token enhanced ---
+    test_momentum_score_computation()
+    test_volume_trend_spike_detection()
+    test_volume_trend_decreasing()
+    test_volume_trend_returns_existing()
+    test_relative_strength_outperformance()
+    test_relative_strength_underperformance()
+    test_token_brief_includes_momentum_and_volume_tags()
+    test_token_brief_includes_support_resistance()
+
+    # --- market regime ---
+    test_market_regime_trending_up()
+    test_market_regime_trending_down()
+    test_market_regime_volatile()
+    test_market_regime_ranging()
+    test_market_regime_squeeze()
+    test_market_regime_uses_existing()
+    test_watchtoday_brief_includes_regime_tag()
+    test_watchtoday_brief_includes_btc_tag()
+
+    # --- audit enhanced ---
+    test_rugpull_score_blocked_high()
+    test_rugpull_score_clean_low()
+    test_rugpull_score_moderate_with_high_tax()
+    test_rugpull_score_honeypot()
+    test_rugpull_score_caps_at_100()
+
+    # --- futures context model ---
+    test_futures_context_dataclass()
+    test_normalize_futures_context()
+    test_normalize_futures_context_defaults()
 
     # --- API tests (conditional — require FastAPI) ---
     try:

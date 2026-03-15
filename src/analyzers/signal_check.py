@@ -3,9 +3,11 @@ from __future__ import annotations
 from src.analyzers.judgment_helpers import append_posture_note_to_brief
 from src.analyzers.price_analysis import _fetch_market_quote
 from src.analyzers.signal_live_brief import build_signal_brief
+from src.analyzers.thresholds import ATR_FALLBACK_PCT, ATR_ZONE_MULTIPLIER
 from src.models.schemas import AnalysisBrief, RiskTag
 from src.services.factory import get_market_data_service
 from src.services.normalizers import normalize_signal_context
+from src.services.snapshot_history import describe_snapshot_delta, save_snapshot
 
 
 def _has_risk_tag(brief: AnalysisBrief, name: str) -> bool:
@@ -30,9 +32,17 @@ def analyze_signal(token: str) -> AnalysisBrief:
         brief.risk_tags.insert(0, RiskTag(name="Header Market", level="Info", note=f"{price}|{change}|{rank}"))
 
     if signal_context.trigger_price > 0 and not _has_risk_tag(brief, "Entry Zone"):
-        zone_low = signal_context.trigger_price * 0.99
-        zone_high = signal_context.trigger_price * 1.01
-        brief.risk_tags.append(RiskTag(name="Entry Zone", level="Info", note=f"${zone_low:,.2f} – ${zone_high:,.2f}"))
+        atr_pct = ATR_FALLBACK_PCT
+        if signal_context.price_high_24h > 0 and signal_context.price_low_24h > 0 and signal_context.price_high_24h > signal_context.price_low_24h:
+            atr_pct = (signal_context.price_high_24h - signal_context.price_low_24h) / signal_context.trigger_price
+            atr_pct = min(atr_pct * ATR_ZONE_MULTIPLIER, 0.10)
+            atr_pct = max(atr_pct, 0.005)
+        zone_low = signal_context.trigger_price * (1.0 - atr_pct)
+        zone_high = signal_context.trigger_price * (1.0 + atr_pct)
+        zone_note = f"${zone_low:,.2f} – ${zone_high:,.2f}"
+        if atr_pct != ATR_FALLBACK_PCT:
+            zone_note += f" (ATR-adjusted ±{atr_pct * 100:.1f}%)"
+        brief.risk_tags.append(RiskTag(name="Entry Zone", level="Info", note=zone_note))
 
     if quote and source == "Binance Spot":
         pair = str(quote.get("exchange_symbol") or token)
@@ -81,5 +91,21 @@ def analyze_signal(token: str) -> AnalysisBrief:
         else:
             invalidation = "Breaks if confirmation does not improve in the next cycle."
         brief.risk_tags.append(RiskTag(name="Invalidation", level="Info", note=invalidation))
+
+    # Historical delta tracking
+    snapshot_data = {
+        "signal_quality": brief.signal_quality,
+        "state": brief.quick_verdict.split(".")[0] if brief.quick_verdict else "",
+        "conviction": brief.conviction,
+    }
+    try:
+        delta_summary, delta_watch = describe_snapshot_delta("signal", signal_context.token, snapshot_data)
+        if delta_summary:
+            brief.risk_tags.append(RiskTag(name="Delta", level="Info", note=delta_summary))
+        if delta_watch:
+            brief.what_to_watch_next = delta_watch[:1] + brief.what_to_watch_next[:3]
+        save_snapshot("signal", signal_context.token, snapshot_data)
+    except Exception:
+        pass
 
     return brief

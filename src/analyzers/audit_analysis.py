@@ -1,26 +1,16 @@
 from __future__ import annotations
 
+from src.analyzers.thresholds import RUGPULL_HIGH, RUGPULL_MODERATE
 from src.models.schemas import AnalysisBrief, BriefSection, RiskTag
 from src.analyzers.meme_analysis import analyze_meme
 from src.services.factory import get_market_data_service
+from src.services.snapshot_history import describe_snapshot_delta, save_snapshot
+from src.utils.formatting import human_money as _human_money
 
 
 _CONTRACT_KEYS = ("contract", "code", "verified", "mint", "owner", "blacklist", "proxy", "scam")
 _LIQUIDITY_KEYS = ("liquidity", "tax", "sell", "buy", "slippage", "pool", "trade")
 _STRUCTURE_KEYS = ("holder", "concentration", "risk level", "wash", "honeypot", "hidden", "risk")
-
-
-def _human_money(value: float) -> str:
-    abs_value = abs(value)
-    if abs_value >= 1_000_000_000_000:
-        return f"${value / 1_000_000_000_000:.1f}T"
-    if abs_value >= 1_000_000_000:
-        return f"${value / 1_000_000_000:.1f}B"
-    if abs_value >= 1_000_000:
-        return f"${value / 1_000_000:.1f}M"
-    if abs_value >= 1_000:
-        return f"${value / 1_000:.1f}K"
-    return f"${value:,.2f}"
 
 
 def _pick_finding(items: list[str], *keywords: str) -> str:
@@ -41,6 +31,55 @@ def _collect_matches(items: list[str], keywords: tuple[str, ...]) -> list[str]:
             matches.append(item)
     return matches
 
+
+
+def _rugpull_score(audit_gate: str, audit_flags: list[str], concentration: float, liquidity: float, buy_tax: float, sell_tax: float) -> tuple[int, str]:
+    score = 0
+    factors: list[str] = []
+
+    if audit_gate == "BLOCK":
+        score += 30
+        factors.append("blocked audit")
+    elif audit_gate == "WARN":
+        score += 10
+        factors.append("audit caution")
+
+    # Contract flags
+    dangerous_flags = {"scam", "honeypot", "blacklist", "hidden owner", "proxy", "not verified"}
+    for flag in audit_flags:
+        lower = flag.lower()
+        if any(d in lower for d in dangerous_flags):
+            score += 15
+            factors.append(lower.split(",")[0].strip()[:30])
+            break
+
+    # Tax friction
+    if sell_tax >= 10:
+        score += 20
+        factors.append(f"high sell tax {sell_tax:.0f}%")
+    elif sell_tax >= 5:
+        score += 10
+        factors.append(f"elevated sell tax {sell_tax:.0f}%")
+
+    # Concentration risk
+    if concentration >= 80:
+        score += 15
+        factors.append("extreme concentration")
+    elif concentration >= 50:
+        score += 8
+        factors.append("high concentration")
+
+    # Liquidity
+    if 0 < liquidity < 100_000:
+        score += 10
+        factors.append("very thin liquidity")
+    elif 0 < liquidity < 500_000:
+        score += 5
+        factors.append("thin liquidity")
+
+    score = min(score, 100)
+    level = "High" if score >= RUGPULL_HIGH else "Moderate" if score >= RUGPULL_MODERATE else "Low"
+    return score, f"{level} ({score}/100) — {', '.join(factors[:3])}" if factors else f"{level} ({score}/100)"
 
 
 def _severity(audit_gate: str, risk_level: str, audit_limited: bool, audit_flags: list[str]) -> str:
@@ -168,6 +207,12 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
         tags.append(RiskTag(name="Audit Validity", level="Valid", note="Result is based on a supported audit payload."))
     tags.append(RiskTag(name="Severity", level=severity, note=risk_level))
 
+    # Rug-pull probability score
+    concentration = float(audit.get("top_holder_concentration_pct") or 0)
+    rugpull_score, rugpull_note = _rugpull_score(audit_gate, audit_flags, concentration, liquidity, buy_tax, sell_tax)
+    rugpull_level = "High" if rugpull_score >= RUGPULL_HIGH else "Medium" if rugpull_score >= RUGPULL_MODERATE else "Low"
+    tags.append(RiskTag(name="Rug-Pull Risk", level=rugpull_level, note=rugpull_note))
+
     sections: list[BriefSection] = []
     if smart_money_count > 0 or signal_status not in {"", "unknown", "unmatched"}:
         signal_lines = [f"Setup: {signal_status or 'unknown'}"]
@@ -216,7 +261,7 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
     except Exception:
         tags.append(RiskTag(name="Meme Lens", level="Info", note="Meme lens unavailable"))
 
-    return AnalysisBrief(
+    brief = AnalysisBrief(
         entity=f"Audit: {display_symbol}",
         quick_verdict=packed,
         signal_quality=severity,
@@ -230,3 +275,28 @@ def analyze_audit(symbol: str) -> AnalysisBrief:
         audit_gate=audit_gate,
         blocked_reason=blocked_reason,
     )
+
+    # Historical audit trail
+    snapshot_data = {
+        "audit_gate": audit_gate,
+        "severity": severity,
+        "rugpull_score": rugpull_score,
+        "flags_count": len(audit_flags),
+    }
+    try:
+        from src.services.snapshot_history import latest_snapshot as _latest
+        prev = _latest("audit", display_symbol)
+        if prev:
+            prev_gate = str(prev.get("audit_gate") or "")
+            if prev_gate and prev_gate != audit_gate:
+                trail_note = f"Gate changed: {prev_gate} → {audit_gate}"
+                brief.risk_tags.append(RiskTag(name="Audit Trail", level="Medium", note=trail_note))
+            elif prev_gate == audit_gate:
+                brief.risk_tags.append(RiskTag(name="Audit Trail", level="Info", note="No change since last check"))
+        else:
+            brief.risk_tags.append(RiskTag(name="Audit Trail", level="Info", note="First audit check recorded"))
+        save_snapshot("audit", display_symbol, snapshot_data)
+    except Exception:
+        pass
+
+    return brief

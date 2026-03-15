@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.models.context import MemeContext, SignalContext, TokenContext, WalletContext, WalletHolding, WatchTodayContext
+from src.models.context import FuturesContext, MemeContext, SignalContext, TokenContext, WalletContext, WalletHolding, WatchTodayContext
 from src.utils.converters import safe_float as _to_float, safe_int as _to_int
 
 
@@ -54,6 +54,12 @@ def normalize_token_context(payload: dict) -> TokenContext:
         kline_trend=str(payload.get("kline_trend", "")),
         kline_above_ma20=bool(payload.get("kline_above_ma20", False)),
         top_trader_interest=bool(payload.get("top_trader_interest", False)),
+        btc_change_24h=_to_float(payload.get("btc_change_24h")),
+        volume_trend=str(payload.get("volume_trend", "")),
+        momentum_score=_to_float(payload.get("momentum_score")),
+        relative_strength_btc=_to_float(payload.get("relative_strength_btc")),
+        support_level=_to_float(payload.get("support_level")),
+        resistance_level=_to_float(payload.get("resistance_level")),
     )
 
 
@@ -96,6 +102,10 @@ def normalize_watch_today_context(payload: dict) -> WatchTodayContext:
         exchange_board=[str(x) for x in payload.get("exchange_board", [])],
         futures_sentiment=[str(x) for x in payload.get("futures_sentiment", [])],
         top_traders=[str(x) for x in payload.get("top_traders", [])],
+        market_regime=str(payload.get("market_regime", "")),
+        btc_change_24h=_to_float(payload.get("btc_change_24h")),
+        btc_dominance=_to_float(payload.get("btc_dominance")),
+        total_market_volume_change=_to_float(payload.get("total_market_volume_change")),
     )
 
 
@@ -126,6 +136,10 @@ def normalize_signal_context(payload: dict) -> SignalContext:
         funding_rate=_to_float(payload.get("funding_rate")),
         long_short_ratio=_to_float(payload.get("long_short_ratio")),
         funding_sentiment=str(payload.get("funding_sentiment", "")),
+        price_high_24h=_to_float(payload.get("price_high_24h")),
+        price_low_24h=_to_float(payload.get("price_low_24h")),
+        btc_change_24h=_to_float(payload.get("btc_change_24h")),
+        volume_trend=str(payload.get("volume_trend", "")),
     )
 
 
@@ -158,4 +172,29 @@ def normalize_meme_context(payload: dict) -> MemeContext:
         meme_score=_to_float(payload.get("meme_score")),
         social_brief=str(payload.get("social_brief", "")),
         top_holder_concentration_pct=_to_float(payload.get("top_holder_concentration_pct")),
+    )
+
+
+def normalize_futures_context(payload: dict) -> FuturesContext:
+    return FuturesContext(
+        symbol=str(payload.get("symbol", "UNKNOWN")).upper(),
+        funding_rate=_to_float(payload.get("funding_rate")),
+        funding_rate_sentiment=str(payload.get("funding_rate_sentiment", "neutral")),
+        open_interest=_to_float(payload.get("open_interest")),
+        long_short_ratio=_to_float(payload.get("long_short_ratio")),
+        top_trader_long_short_ratio=_to_float(payload.get("top_trader_long_short_ratio")),
+        taker_buy_sell_ratio=_to_float(payload.get("taker_buy_sell_ratio")),
+        mark_price=_to_float(payload.get("mark_price")),
+        index_price=_to_float(payload.get("index_price")),
+        ticker_volume_24h=_to_float(payload.get("ticker_volume_24h")),
+        price_change_pct_24h=_to_float(payload.get("price_change_pct_24h")),
+        major_risks=[str(x) for x in payload.get("major_risks", [])],
+        runtime_warning=str(payload.get("runtime_warning", "")).strip(),
+        funding_rate_8h_ago=_to_float(payload.get("funding_rate_8h_ago")),
+        funding_rate_24h_ago=_to_float(payload.get("funding_rate_24h_ago")),
+        oi_change_pct_24h=_to_float(payload.get("oi_change_pct_24h")),
+        oi_change_pct_4h=_to_float(payload.get("oi_change_pct_4h")),
+        premium_pct=_to_float(payload.get("premium_pct")),
+        liquidation_24h_long=_to_float(payload.get("liquidation_24h_long")),
+        liquidation_24h_short=_to_float(payload.get("liquidation_24h_short")),
     )

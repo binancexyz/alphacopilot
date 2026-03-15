@@ -140,6 +140,13 @@ class MockMarketDataService:
             "ticker_volume_24h": 0.0,
             "price_change_pct_24h": 0.0,
             "major_risks": ["No live Binance Futures payload available in mock mode."],
+            "funding_rate_8h_ago": 0.0,
+            "funding_rate_24h_ago": 0.0,
+            "oi_change_pct_24h": 0.0,
+            "oi_change_pct_4h": 0.0,
+            "premium_pct": 0.0,
+            "liquidation_24h_long": 0.0,
+            "liquidation_24h_short": 0.0,
         }
 
     def get_portfolio_context(self) -> NormalizedDict:

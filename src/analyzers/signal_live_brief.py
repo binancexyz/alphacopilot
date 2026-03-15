@@ -1,6 +1,16 @@
 from __future__ import annotations
 
-from src.analyzers.thresholds import EXIT_RATE_HIGH, EXIT_RATE_MODERATE, LIQUIDITY_DEEP, LIQUIDITY_MODERATE, LIQUIDITY_THIN
+from src.analyzers.thresholds import (
+    ATR_FALLBACK_PCT,
+    ATR_ZONE_MULTIPLIER,
+    EXIT_RATE_HIGH,
+    EXIT_RATE_MODERATE,
+    LIQUIDITY_DEEP,
+    LIQUIDITY_MODERATE,
+    LIQUIDITY_THIN,
+    RR_GOOD,
+    RR_MINIMUM_VIABLE,
+)
 from src.formatters.heuristics import signal_quality_from_signal
 from src.models.context import SignalContext
 from src.models.schemas import AnalysisBrief, RiskTag
@@ -192,10 +202,40 @@ def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
         if ctx.long_short_ratio > 0:
             futures_note.append(f"L/S {ctx.long_short_ratio:.2f}")
         risk_tags.append(RiskTag(name="Futures Sentiment", level=futures_level, note=" | ".join(futures_note)))
+
+    # Dynamic entry zone: ATR-based when high/low data is available, fallback to ±1%
     if ctx.trigger_price > 0:
-        zone_low = ctx.trigger_price * 0.99
-        zone_high = ctx.trigger_price * 1.01
-        risk_tags.append(RiskTag(name="Entry Zone", level="Info", note=f"${zone_low:,.2f} – ${zone_high:,.2f}"))
+        atr_pct = ATR_FALLBACK_PCT
+        if ctx.price_high_24h > 0 and ctx.price_low_24h > 0 and ctx.price_high_24h > ctx.price_low_24h:
+            atr_pct = (ctx.price_high_24h - ctx.price_low_24h) / ctx.trigger_price
+            atr_pct = min(atr_pct * ATR_ZONE_MULTIPLIER, 0.10)  # cap at 10%
+            atr_pct = max(atr_pct, 0.005)  # floor at 0.5%
+        zone_low = ctx.trigger_price * (1.0 - atr_pct)
+        zone_high = ctx.trigger_price * (1.0 + atr_pct)
+        zone_note = f"${zone_low:,.2f} – ${zone_high:,.2f}"
+        if atr_pct != ATR_FALLBACK_PCT:
+            zone_note += f" (ATR-adjusted ±{atr_pct * 100:.1f}%)"
+        risk_tags.append(RiskTag(name="Entry Zone", level="Info", note=zone_note))
+
+        # Risk/Reward ratio: entry to recent high vs entry to invalidation
+        if ctx.current_price > 0 and ctx.price_high_24h > 0:
+            target = ctx.price_high_24h
+            entry = ctx.trigger_price
+            invalidation = zone_low
+            reward = abs(target - entry) if target > entry else 0.0
+            risk = abs(entry - invalidation) if entry > invalidation else abs(entry * atr_pct)
+            if risk > 0:
+                rr_ratio = reward / risk
+                rr_level = "High" if rr_ratio >= RR_GOOD else "Medium" if rr_ratio >= RR_MINIMUM_VIABLE else "Low"
+                rr_note = f"{rr_ratio:.1f}:1"
+                if rr_ratio < RR_MINIMUM_VIABLE:
+                    rr_note += " (below minimum viable)"
+                risk_tags.append(RiskTag(name="Risk/Reward", level=rr_level, note=rr_note))
+
+        # Take-profit suggestion from recent high/resistance
+        if ctx.price_high_24h > 0 and ctx.price_high_24h > ctx.trigger_price:
+            risk_tags.append(RiskTag(name="Take-Profit Zone", level="Info", note=f"~${ctx.price_high_24h:,.2f} (recent 24h high)"))
+
     risk_tags.append(RiskTag(name="Invalidation", level="Info", note=_signal_invalidation(ctx)))
     if ctx.max_gain > 0:
         risk_tags.append(RiskTag(name="Max Gain", level="Info", note=f"+{ctx.max_gain:.1f}%"))
@@ -204,8 +244,19 @@ def build_signal_brief(ctx: SignalContext) -> AnalysisBrief:
         risk_tags.append(RiskTag(name="Smart Money Inflow", level=inflow_level, note=f"~{_human_money(ctx.smart_money_inflow_usd)}"))
     if ctx.volume_24h > 0:
         risk_tags.append(RiskTag(name="Volume 24h", level="Info", note=_human_money(ctx.volume_24h)))
+    if ctx.volume_trend:
+        vol_level = "High" if ctx.volume_trend == "spike" else "Medium" if ctx.volume_trend == "increasing" else "Low"
+        risk_tags.append(RiskTag(name="Volume Trend", level=vol_level, note=ctx.volume_trend.title()))
     if ctx.market_cap > 0:
         risk_tags.append(RiskTag(name="Market Cap", level="Info", note=_human_money(ctx.market_cap)))
+
+    # BTC correlation check
+    if ctx.btc_change_24h != 0 and ctx.pct_change_24h != 0:
+        relative = ctx.pct_change_24h - ctx.btc_change_24h
+        if abs(ctx.btc_change_24h) >= 2 and relative < -2:
+            risk_tags.append(RiskTag(name="BTC Drag", level="High", note=f"BTC {ctx.btc_change_24h:+.1f}% is dragging — token underperforming by {abs(relative):.1f}pp"))
+        elif abs(ctx.btc_change_24h) >= 2 and relative > 2:
+            risk_tags.append(RiskTag(name="Relative Strength", level="Medium", note=f"Outperforming BTC by {relative:.1f}pp despite BTC at {ctx.btc_change_24h:+.1f}%"))
 
     if state == "blocked":
         quick_verdict = "Blocked. Audit risk too high."

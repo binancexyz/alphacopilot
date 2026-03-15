@@ -4,6 +4,7 @@ from src.analyzers.judgment_helpers import portfolio_note_for
 from src.analyzers.price_analysis import _fetch_market_quote
 from src.services.factory import get_market_data_service
 from src.services.normalizers import normalize_signal_context, normalize_token_context
+from src.services.snapshot_history import describe_snapshot_delta, save_snapshot
 from src.models.schemas import AnalysisBrief, RiskTag
 from src.formatters.brief_formatter import _human_money
 
@@ -89,9 +90,24 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
 
     volume_24h = float(quote.get("volume_24h") or token.volume_24h or 0) if quote else token.volume_24h
     market_cap = float(quote.get("market_cap") or token.market_cap or 0) if quote else token.market_cap
+
+    # Compute momentum score
+    momentum_weights = [(token.pct_change_5m, 0.1), (token.pct_change_1h, 0.25), (token.pct_change_4h, 0.35), (change, 0.3)]
+    momentum_score = round(sum(v * w for v, w in momentum_weights if v != 0), 2)
+
+    # Volume trend from multi-timeframe volume
+    vol_trend = token.volume_trend
+    if not vol_trend and token.volume_5m > 0 and token.volume_1h > 0:
+        ratio = (token.volume_5m * 12) / token.volume_1h if token.volume_1h > 0 else 0
+        vol_trend = "spike" if ratio >= 2.0 else "increasing" if ratio >= 1.3 else "decreasing" if ratio <= 0.5 else "flat"
+
+    # Relative strength vs BTC
+    btc_change = token.btc_change_24h
+    relative_strength = round(change - btc_change, 2) if btc_change != 0 else 0.0
+
     why = (
         f"{display_name}|{display_symbol}|{price}|{change}|{rank}|{signal.signal_status}|{token.liquidity}|{top_risk}|{verdict}|"
-        f"{volume_24h}|{market_cap}|{signal.smart_money_count}|{token.kline_trend}"
+        f"{volume_24h}|{market_cap}|{signal.smart_money_count}|{token.kline_trend}|{momentum_score}|{vol_trend}|{relative_strength}"
     )
 
     tags: list[RiskTag] = []
@@ -141,7 +157,7 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
             elif trading_days >= 365:
                 tags.append(RiskTag(name="Maturity", level="Low", note=f"Vintage market ({trading_days}+ days)"))
 
-    return AnalysisBrief(
+    brief = AnalysisBrief(
         entity=f"Brief: {display_symbol}",
         quick_verdict=why,
         signal_quality=signal_quality if quote_source == "Binance Spot" or signal_quality != "High" else "Medium",
@@ -152,3 +168,21 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
         conviction=None,
         beginner_note=None,
     )
+
+    # Historical delta tracking
+    snapshot_data = {
+        "signal_quality": brief.signal_quality,
+        "quick_verdict": verdict,
+        "conviction": signal_quality,
+        "price": price,
+        "change": change,
+    }
+    try:
+        delta_summary, delta_watch = describe_snapshot_delta("brief", display_symbol, snapshot_data)
+        if delta_summary:
+            brief.risk_tags.append(RiskTag(name="Delta", level="Info", note=delta_summary))
+        save_snapshot("brief", display_symbol, snapshot_data)
+    except Exception:
+        pass
+
+    return brief
