@@ -405,7 +405,12 @@ def extract_signal_context(raw: dict[str, Any], token: str) -> dict[str, Any]:
     first_signal = _first_item(signal.get("data")) or signal
     audit = raw.get("query-token-audit", {})
     audit_payload = _normalize_audit_keys(audit.get("data", audit))
-    audit_visible = bool(audit_payload) and bool(audit_payload.get("hasResult")) and bool(audit_payload.get("isSupported"))
+    audit_visible = bool(audit_payload) and (
+        (bool(audit_payload.get("hasResult")) and bool(audit_payload.get("isSupported")))
+        or bool(audit_payload.get("flags"))
+        or bool(audit_payload.get("risks"))
+        or bool(audit_payload.get("riskItems"))
+    )
     audit_flags, audit_risks = _extract_audit_flags_and_risks(audit_payload) if audit_visible else ([], [])
     token_view = _token_info_view(token_info, token)
     resolved_symbol = token_view["symbol"]
