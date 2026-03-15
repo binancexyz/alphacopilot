@@ -54,24 +54,24 @@ Bibipilot is designed for that gap. It does not try to be a full autonomous trad
 
 ## What it does
 
-Bibipilot now has a clean **7-command live surface**:
+Bibipilot now has a clean **5-command public surface**:
 
 | Command | What it answers |
 |---------|------------------|
 | `/brief <symbol>` | What matters about this asset right now? |
 | `/signal <symbol>` | Is this setup real, risky, or breaking down? |
 | `/audit <symbol>` | Is this structurally safe enough to trust? |
-| `/holdings [address]` | What is this posture telling me? |
+| `/holdings [address]` | What is this posture, behavior, and Alpha exposure telling me? |
 | `/watchtoday` | What deserves attention across the market today? |
-| `/alpha [symbol]` | What is happening on Binance Alpha right now? |
-| `/futures <symbol>` | What is Binance Futures positioning saying right now? |
 
 That gives Bibipilot a simple product story:
-- **Research** → `/brief`, `/watchtoday`, `/alpha`
+- **Research** → `/brief`, `/watchtoday`
 - **Judgment** → `/signal`, `/audit`
-- **Posture** → `/holdings`, `/futures`
+- **Posture** → `/holdings`
 
 `/brief <symbol> deep` remains the richer asset-judgment path when you want more than the compact default answer.
+
+Older `/alpha` and `/futures` paths are treated as folded or supporting surfaces rather than part of the main public command map.
 
 For the cleanest one-page public explanation, see [`docs/public-command-card.md`](docs/public-command-card.md).
 

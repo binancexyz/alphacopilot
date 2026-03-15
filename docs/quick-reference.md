@@ -8,18 +8,16 @@
 | `/brief <symbol>` | Fast default asset read; can go deeper when data supports it |
 | `/signal <symbol>` | Setup validation with invalidation and risk merged in |
 | `/audit <symbol>` | Security-first token read with conditional meme lens |
-| `/holdings [address]` | Portfolio posture or external wallet behavior |
+| `/holdings [address]` | Portfolio posture or external wallet behavior, with posture + analytics + Alpha exposure |
 | `/watchtoday` | Daily board with smart-money signals first and attention separated cleanly |
-| `/alpha [symbol]` | Binance Alpha board by default, token detail optionally |
-| `/futures <symbol>` | Binance Futures positioning and leverage context |
 
 For a cleaner public-facing one-page version, see [`public-command-card.md`](public-command-card.md).
 
 ## API Endpoints (v0.2.1)
 
 Current note:
-- live **CLI/product commands** are `brief`, `signal`, `audit`, `holdings`, `watchtoday`, `alpha`, and `futures`
-- the API matches that same live surface
+- the canonical **public/product commands** are `brief`, `signal`, `audit`, `holdings`, and `watchtoday`
+- supporting API/CLI paths such as `alpha` and `futures` may still exist, but they are not part of the locked main public surface
 
 | Method | Path | Purpose |
 |--------|------|---------|

@@ -41,6 +41,7 @@
 - No argument → your private Binance Spot posture
 - Address argument → public wallet behavior read
 - One command for ownership/posture intelligence
+- Current product promise: posture + analytics + Alpha exposure
 
 **Examples:**
 - `python3 src/main.py holdings`
@@ -59,30 +60,11 @@
 
 ---
 
-### `/alpha [symbol]`
-**Purpose:** Binance Alpha discovery surface.
-- No argument → live Binance Alpha board
-- Optional symbol → token-specific Alpha detail
-- Discovery / board / Alpha-token context
-
-**Examples:**
-- `python3 src/main.py alpha`
-- `python3 src/main.py alpha RIVER`
-
----
-
-### `/futures <symbol>`
-**Purpose:** Binance Futures positioning surface.
-- Funding / open interest / ratio context
-- Perp posture rather than spot discovery
-- Best used after `/brief` or alongside `/signal`
-
-**Example:** `python3 src/main.py futures BTC`
-
----
-
 ## Compatibility commands
-These are legacy or folded surfaces, not the public command map.
+These are legacy, folded, or supporting surfaces rather than the public command map.
+
+- `/alpha [symbol]` → supporting Binance Alpha read; not part of the main public surface
+- `/futures <symbol>` → supporting futures positioning read; not part of the main public surface
 
 - `/token <symbol>` → use `/brief <symbol> deep`
 - `/portfolio` → use `/holdings`
@@ -96,9 +78,9 @@ These are legacy or folded surfaces, not the public command map.
 ---
 
 ## Product grouping
-- **Research** → `/brief`, `/watchtoday`, `/alpha`
+- **Research** → `/brief`, `/watchtoday`
 - **Judgment** → `/signal`, `/audit`
-- **Posture** → `/holdings`, `/futures`
+- **Posture** → `/holdings`
 
 ---
 

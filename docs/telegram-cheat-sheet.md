@@ -9,9 +9,8 @@ Use these commands in chat:
 - `/holdings` — your posture
 - `/holdings <address>` — wallet behavior
 - `/watchtoday` — market board
-- `/alpha` — Binance Alpha board
-- `/alpha <symbol>` — Binance Alpha token detail
-- `/futures <symbol>` — Binance Futures positioning
+
+Legacy/supporting paths may still exist internally, but the main public surface is now the 5-command map above.
 
 ## Best daily flow
 

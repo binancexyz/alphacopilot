@@ -1,20 +1,18 @@
 # Command Architecture
 
 ## Live Command Map
-Bibipilot now has a single public command story built around **7 commands**.
+Bibipilot now has a single public command story built around **5 commands**.
 
 ### Research
 - `/brief <symbol>` — fast read, with deeper asset judgment when data supports it
 - `/watchtoday` — daily market board
-- `/alpha [symbol]` — Binance Alpha board by default, Alpha token detail optionally
 
 ### Judgment
 - `/signal <symbol>` — setup + risk + invalidation
 - `/audit <symbol>` — safety read with meme lens folded into findings/context
 
 ### Posture
-- `/holdings [address]` — private portfolio posture or external wallet behavior
-- `/futures <symbol>` — Binance Futures positioning / leverage posture
+- `/holdings [address]` — private portfolio posture or external wallet behavior, including posture + analytics + Alpha exposure
 
 ---
 
@@ -29,6 +27,8 @@ These commands still exist for compatibility or internal utility, but they shoul
 | `/risk` | `/signal` |
 | `/meme` | `/audit` |
 | `/price` | hidden utility |
+| `/alpha` | supporting / folded Alpha surface |
+| `/futures` | supporting / folded futures surface |
 | `careers` | removed from public product surface |
 | `/watch` | removed alias |
 

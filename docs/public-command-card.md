@@ -13,15 +13,12 @@ A one-page public command reference for Bibipilot.
 | `/holdings` | Private Binance Spot posture | Your account posture |
 | `/holdings <address>` | External wallet behavior read | Public wallet study |
 | `/watchtoday` | Daily market board | What matters today |
-| `/alpha` | Binance Alpha overview board | Discovery / board read |
-| `/alpha <symbol>` | Binance Alpha token detail | Alpha-token drill-down |
-| `/futures <symbol>` | Binance Futures positioning read | Perp / leverage posture |
 
 ## Product Map
 
-- **Research** → `/brief`, `/brief deep`, `/watchtoday`, `/alpha`
+- **Research** → `/brief`, `/brief deep`, `/watchtoday`
 - **Judgment** → `/signal`, `/audit`
-- **Posture** → `/holdings`, `/futures`
+- **Posture** → `/holdings`
 
 ## Output Shape
 
@@ -44,8 +41,6 @@ Most commands follow the same compact pattern:
 - `/holdings` → `⚡ Posture`
 - `/holdings <address>` → `⚡ Behavior`
 - `/watchtoday` → `⚡ Signals` + `🔥 Attention`
-- `/alpha` → Alpha board / Alpha market snapshot
-- `/futures` → Futures positioning snapshot
 
 ## Real Current Example Shapes
 
