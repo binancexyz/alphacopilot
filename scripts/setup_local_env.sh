@@ -35,9 +35,9 @@ pip install -r requirements.txt
 echo
 echo "[5/5] Preparing .env"
 if [[ ! -f .env ]]; then
-  cp env.local.template .env
+  cp .env.example .env
   chmod 600 .env || true
-  echo "Created .env from env.local.template"
+  echo "Created .env from .env.example"
 else
   echo ".env already exists; leaving it unchanged"
 fi

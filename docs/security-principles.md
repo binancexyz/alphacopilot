@@ -1,19 +1,23 @@
 # Security Principles
 
-## 1. Research first, execution later
-Bibipilot should begin as a research copilot, not an execution bot.
+## Required controls
+- Keep the public API behind `API_AUTH_ENABLED=true` with a non-empty `API_AUTH_KEY`.
+- Keep rate limiting enabled unless a stronger upstream limit is guaranteed.
+- Use `BRIDGE_API_KEY` for bridge/runtime adapter auth instead of forwarding Binance account secrets.
+- Keep `BINANCE_API_KEY` and `BINANCE_API_SECRET` limited to flows that truly need account-backed access.
+- Never commit `.env`, live payload files, or secrets.
 
-## 2. Least privilege
-If API keys are ever used, start with the minimum permissions possible. Read-only is strongly preferred for early versions.
+## Runtime behavior
+- Treat `APP_MODE=mock` as a development convenience only.
+- Treat `APP_MODE=live` as invalid outside development if `BINANCE_SKILLS_BASE_URL` is missing.
+- Prefer dry-run modes for Square publishing until credentials and content flow are verified.
+- Fail soft in analysis output when live payloads are partial, but fail fast on missing production auth/config.
 
-## 3. Normalize before trusting
-Do not let raw runtime/tool outputs directly drive user-facing conclusions. Normalize them first.
+## Data handling
+- Normalize raw payloads before analysis.
+- Keep risk and data-quality warnings visible in rendered output.
+- Avoid trusting redirects or unconstrained file paths in live adapters.
 
-## 4. Missing data should reduce confidence
-If the system lacks audit, ranking, or signal context, lower conviction and say so.
-
-## 5. Keep risk visible
-The product should never hide risk in favor of hype.
-
-## 6. Separate research from action
-Any future execution path should be clearly separated from research/analysis logic.
+## Operating model
+- Bibipilot is a research and publishing system, not an autonomous trading engine.
+- New execution features should remain isolated from the current analysis and publishing paths.

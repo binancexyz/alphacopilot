@@ -17,12 +17,13 @@ from src.analyzers.portfolio_analysis import analyze_portfolio
 from src.analyzers.signal_check import analyze_signal
 from src.analyzers.token_analysis import analyze_token
 from src.analyzers.wallet_analysis import analyze_wallet
-from src.config import config_warnings, settings
+from src.config import config_errors, config_warnings, settings
 from src.formatters.brief_formatter import format_brief
 from src.services.api_guard import enforce_api_guard, guard_status
 from src.services.runtime_report import apply_runtime_meta, build_runtime_meta, live_service
 from src.utils.parsing import normalize_token_input, normalize_wallet_input
 from src.utils.validation import looks_like_wallet_address
+from src.version import __version__
 
 logger = logging.getLogger("bibipilot.api")
 
@@ -31,17 +32,22 @@ logger = logging.getLogger("bibipilot.api")
 async def lifespan(app: FastAPI):
     for warning in config_warnings():
         logger.warning("startup_config_warning warning=%s", warning)
+    errors = config_errors("api")
+    if errors:
+        for error in errors:
+            logger.error("startup_config_error error=%s", error)
+        raise RuntimeError("Invalid production configuration: " + " | ".join(errors))
     yield
 
 
-app = FastAPI(title="Bibipilot API", version="0.2.1", lifespan=lifespan)
+app = FastAPI(title="Bibipilot API", version=__version__, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[],
     allow_credentials=False,
     allow_methods=["GET"],
-    allow_headers=["X-API-Key"],
+    allow_headers=[settings.api_auth_header],
 )
 
 

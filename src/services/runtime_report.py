@@ -12,8 +12,8 @@ from src.services.live_service import LiveMarketDataService
 def live_service() -> LiveMarketDataService:
     return LiveMarketDataService(
         base_url=settings.binance_skills_base_url,
-        api_key=settings.binance_api_key,
-        api_secret=settings.binance_api_secret,
+        bridge_api_key=settings.bridge_api_key or settings.api_auth_key,
+        bridge_api_header=settings.bridge_api_header,
     )
 
 

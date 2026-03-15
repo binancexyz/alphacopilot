@@ -21,4 +21,3 @@ Never commit secrets to the repository.
 Also review:
 - `SECURITY-CHECKLIST.md`
 - `docs/security-principles.md`
-- `docs/security-notes.md`

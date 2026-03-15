@@ -32,6 +32,8 @@ class Settings:
     binance_skills_base_url: str = os.getenv("BINANCE_SKILLS_BASE_URL", "")
     binance_api_key: str = os.getenv("BINANCE_API_KEY", "")
     binance_api_secret: str = os.getenv("BINANCE_API_SECRET", "")
+    bridge_api_key: str = os.getenv("BRIDGE_API_KEY", "")
+    bridge_api_header: str = os.getenv("BRIDGE_API_HEADER", "X-API-Key")
     api_host: str = os.getenv("API_HOST", "0.0.0.0")
     api_port: int = int(os.getenv("API_PORT", "8000"))
     square_api_key: str = os.getenv("BINANCE_SQUARE_API_KEY", "")
@@ -73,3 +75,20 @@ def config_warnings() -> list[str]:
     if settings.api_rate_limit_enabled and settings.api_rate_limit_window_seconds <= 0:
         warnings.append("API_RATE_LIMIT_WINDOW_SECONDS must be positive.")
     return warnings
+
+
+def config_errors(service: str = "all") -> list[str]:
+    errors: list[str] = []
+    env = settings.app_env.strip().lower()
+    locked_down_env = env not in {"", "development", "dev", "local", "test"}
+
+    service_key = service.strip().lower() or "all"
+    if locked_down_env and settings.app_mode == "live" and not settings.binance_skills_base_url:
+        errors.append("APP_MODE=live requires BINANCE_SKILLS_BASE_URL outside development.")
+    if locked_down_env and service_key in {"all", "api"} and (not settings.api_auth_enabled or not settings.api_auth_key.strip()):
+        errors.append("APP_ENV outside development requires API_AUTH_ENABLED=true and a non-empty API_AUTH_KEY.")
+    if locked_down_env and service_key in {"all", "bridge"}:
+        bridge_auth_key = (settings.bridge_api_key or settings.api_auth_key).strip()
+        if not bridge_auth_key:
+            errors.append("APP_ENV outside development requires BRIDGE_API_KEY or API_AUTH_KEY for bridge access.")
+    return errors

@@ -1,16 +1,45 @@
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from datetime import datetime, UTC
 from typing import Any
+import logging
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field
 
-from src.config import settings
+from src.config import config_errors, config_warnings, settings
+from src.services.api_guard import bridge_guard_status, enforce_bridge_guard
 from src.services.binance_skill_bridge import _first_matching_token, fetch_live_bundle
 from src.services.binance_skill_mapping import COMMAND_SKILL_MAP
+from src.version import __version__
 
-app = FastAPI(title="Bibipilot Live Bridge", version="0.2.0")
+logger = logging.getLogger("bibipilot.bridge")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    for warning in config_warnings():
+        logger.warning("startup_config_warning warning=%s", warning)
+    errors = config_errors("bridge")
+    if errors:
+        for error in errors:
+            logger.error("startup_config_error error=%s", error)
+        raise RuntimeError("Invalid production configuration: " + " | ".join(errors))
+    yield
+
+
+app = FastAPI(title="Bibipilot Live Bridge", version=__version__, lifespan=lifespan)
+
+
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response: Response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Content-Security-Policy"] = "default-src 'none'"
+    return response
 
 
 class BridgeMeta(BaseModel):
@@ -32,17 +61,19 @@ class BridgeResponse(BaseModel):
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
+def health(_: None = Depends(enforce_bridge_guard)) -> dict[str, object]:
     return {
         "status": "ok",
         "service": "bridge",
         "mode": "live-enabled" if settings.bridge_live_enabled else "scaffold",
+        "guard": bridge_guard_status(),
     }
 
 
 @app.get("/runtime", response_model=BridgeResponse)
 def runtime(
-    command: str = Query(..., description="token|signal|wallet|watchtoday|audit|meme|portfolio"),
+    _: None = Depends(enforce_bridge_guard),
+    command: str = Query(..., description="token|signal|wallet|watchtoday|audit|meme|portfolio|alpha|futures"),
     entity: str = Query("", description="symbol or address when relevant"),
 ) -> BridgeResponse:
     command_key = command.strip().lower()

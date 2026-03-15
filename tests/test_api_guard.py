@@ -21,6 +21,12 @@ def test_guard_status_shape():
     assert 'rate_limit_enabled' in status
 
 
+def test_bridge_guard_status_shape():
+    status = api_guard.bridge_guard_status()
+    assert 'auth_enabled' in status
+    assert 'auth_header' in status
+
+
 def test_rate_limit_allows_first_request():
     old_enabled = api_guard.settings.api_rate_limit_enabled
     old_requests = api_guard.settings.api_rate_limit_requests
@@ -46,7 +52,7 @@ def test_auth_rejects_wrong_key():
     api_guard.settings.api_auth_header = 'X-API-Key'
     try:
         try:
-            api_guard._enforce_auth(None, _request(headers={'X-API-Key': 'wrong'}))
+            api_guard.enforce_api_guard(_request(headers={'X-API-Key': 'wrong'}))
             raise AssertionError('expected unauthorized')
         except HTTPException as exc:
             assert exc.status_code == 401
@@ -54,3 +60,19 @@ def test_auth_rejects_wrong_key():
         api_guard.settings.api_auth_enabled = old_enabled
         api_guard.settings.api_auth_key = old_key
         api_guard.settings.api_auth_header = old_header
+
+
+def test_bridge_auth_rejects_wrong_key():
+    old_key = api_guard.settings.bridge_api_key
+    old_header = api_guard.settings.bridge_api_header
+    api_guard.settings.bridge_api_key = 'bridge-secret'
+    api_guard.settings.bridge_api_header = 'X-Bridge-Key'
+    try:
+        try:
+            api_guard.enforce_bridge_guard(_request(headers={'X-Bridge-Key': 'wrong'}))
+            raise AssertionError('expected unauthorized')
+        except HTTPException as exc:
+            assert exc.status_code == 401
+    finally:
+        api_guard.settings.bridge_api_key = old_key
+        api_guard.settings.bridge_api_header = old_header

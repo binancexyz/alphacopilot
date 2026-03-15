@@ -1,12 +1,12 @@
 PYTHON=python3
 
-.PHONY: token wallet watchtoday signal check test test-live runtime-demo api bridge-api bridge-live square-draft square-publish diary-morning diary-night daily-post install-diary-cron
+.PHONY: brief holdings watchtoday signal audit check test test-live api bridge-api bridge-live square-draft square-publish diary-morning diary-night daily-post install-diary-cron
 
-token:
-	$(PYTHON) src/main.py token BNB
+brief:
+	$(PYTHON) src/main.py brief BNB
 
-wallet:
-	$(PYTHON) src/main.py wallet 0x1234567890ab
+holdings:
+	$(PYTHON) src/main.py holdings 0x1234567890ab
 
 watchtoday:
 	$(PYTHON) src/main.py watchtoday
@@ -14,8 +14,8 @@ watchtoday:
 signal:
 	$(PYTHON) src/main.py signal DOGE
 
-runtime-demo:
-	$(PYTHON) src/runtime_demo.py token BNB examples/payloads/token-bnb.json
+audit:
+	$(PYTHON) src/main.py audit BNB
 
 api:
 	uvicorn src.api:app --host 0.0.0.0 --port 8000
@@ -44,7 +44,7 @@ install-diary-cron:
 	bash scripts/install_square_diary_cron.sh
 
 check:
-	$(PYTHON) -m py_compile src/main.py src/runtime_demo.py src/config.py src/api.py src/bridge_api.py src/square_cli.py src/binance_careers.py src/square_diary.py src/analyzers/*.py src/formatters/*.py src/models/*.py src/services/*.py src/utils/*.py tests/*.py
+	$(PYTHON) -m py_compile src/*.py src/analyzers/*.py src/formatters/*.py src/models/*.py src/services/*.py src/utils/*.py tests/*.py
 
 test:
 	$(PYTHON) tests/run_tests.py

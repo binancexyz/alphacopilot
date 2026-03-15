@@ -1,7 +1,7 @@
 [project]
 name = "bibipilot"
-version = "0.1.0"
-description = "Signal-and-risk research copilot built around OpenClaw and Binance Skills Hub"
+version = "0.2.1"
+description = "Production-first crypto research, posture, and Binance Square publishing copilot"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }

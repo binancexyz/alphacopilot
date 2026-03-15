@@ -1,64 +1,50 @@
-# Install / Run
+# Install
 
 ## Requirements
-- Python 3.10+ required (all features work on 3.10; 3.12 is used in Docker for best performance)
-- For local venv setup on Ubuntu/Debian: `python3-venv`
+- Python 3.10 or newer
+- `python3-venv` if you are creating a local virtualenv
 
-## Quick start
+## Local setup
 ```bash
 git clone https://github.com/binancexyz/bibipilot.git
 cd bibipilot
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env
 ```
 
-## CLI usage
+## First commands
 ```bash
 python3 src/main.py brief BTC
 python3 src/main.py brief BNB deep
 python3 src/main.py signal DOGE
+python3 src/main.py audit BNB
 python3 src/main.py holdings
 python3 src/main.py holdings 0x1234567890ab
-python3 src/main.py audit BNB
 python3 src/main.py watchtoday
 ```
 
-## API quick start
+## Local API
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
 make api
 ```
 
-The API runs at `http://localhost:8000`. Check `/health` for status.
+Default listen address is `http://127.0.0.1:8000`.
 
-## Docker quick start
+## Local checks
 ```bash
-docker build -t bibipilot .
-docker run --rm -p 8000:8000 -e APP_MODE=mock bibipilot
+make check
+make test
 ```
 
-## Environment
-Copy `.env.example` to `.env` when you start wiring live integrations.
+## Runtime modes
+- `APP_MODE=mock` is the default developer mode.
+- `APP_MODE=live` requires `BINANCE_SKILLS_BASE_URL`.
+- Account-backed portfolio flows also require `BINANCE_API_KEY` and `BINANCE_API_SECRET`.
 
-Bibipilot auto-loads `.env` and `.env.local` values when present, so environment variables do not need to be manually exported each time.
-
-## Development checks
-```bash
-make check   # compile checks
-make test    # test suite
-```
-
-## Current mode
-Default mode is `mock` (`APP_MODE=mock`). That means the scaffold works offline while the live Binance/OpenClaw integration can be tested with `APP_MODE=live`.
-
-## Dependencies
-| Package | Version | Purpose |
-|---------|---------|---------|
-| python-dotenv | 1.2.2 | Environment variable loading |
-| rich | 13.7.1 | Terminal output formatting |
-| fastapi | 0.135.1 | REST API framework |
-| uvicorn | 0.41.0 | ASGI server |
-| httpx | 0.28.1 | HTTP client for API calls |
+## Environment notes
+- `.env` and `.env.local` are auto-loaded by `src/config.py`.
+- Use `BRIDGE_API_KEY` when your live runtime adapter requires request authentication.
+- Use `API_AUTH_ENABLED=true` and `API_AUTH_KEY` before exposing the REST API publicly.
+- Square publishing requires `BINANCE_SQUARE_API_KEY`.

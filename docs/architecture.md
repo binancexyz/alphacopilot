@@ -1,117 +1,47 @@
 # Architecture
 
-## Goal
-Build a production-ready research copilot that is easy to extend, secure by default, and cleanly separated across runtime, logic, and output layers.
+Bibipilot is organized around a production runtime boundary:
 
-## Design Principle
-Keep the **runtime**, **domain logic**, and **output formatting** separate.
+```text
+CLI / REST API / Bridge / Square CLI
+  -> parsing + validation
+  -> data access services
+  -> extractors + normalizers
+  -> analyzers
+  -> formatters / post builders
+```
 
-This lets the project:
-- use OpenClaw now for challenge alignment
-- serve a FastAPI REST API for programmatic access
-- keep Python logic reusable across runtimes
-- migrate to a different runtime if needed
-- align cleanly with Binance Skills as runtime-invoked capabilities
+## Runtime surfaces
+- `src/main.py`: canonical CLI for `brief`, `signal`, `audit`, `holdings`, `watchtoday`
+- `src/api.py`: rendered REST API for the same product surface plus secondary `alpha` and `futures`
+- `src/bridge_api.py`: raw bundle bridge for runtime integrations
+- `src/square_cli.py` and `src/square_diary.py`: Binance Square drafting and publishing
 
-## Layers
+## Service boundary
+- `src/services/factory.py` selects `mock` or `live` mode from `APP_MODE`.
+- `src/services/live_service.py` is the only runtime adapter for live bundle fetching.
+- `src/services/mock_service.py` keeps local development and tests deterministic.
+- `src/services/live_extractors.py` and `src/services/normalizers.py` convert raw payloads into stable analysis input.
 
-### 1. Runtime Layer
-Current implementations:
-- **OpenClaw** — agent runtime, chat orchestration, tool routing
-- **FastAPI REST API** (v0.2.1) — programmatic access to all research briefs
-- **Live bridge API** (v0.2.0) — OpenClaw runtime integration
+## Domain boundary
+- `src/analyzers/` contains command-specific judgment logic.
+- `src/models/` defines shared output types.
+- `src/formatters/` renders terminal and API-facing presentation.
 
-### 2. Crypto Capability Layer
-Current choice:
-- **Binance Skills Hub** (primary)
-- **Binance Spot API** (supporting, read-only)
+## External dependencies
+- Binance Skills-style runtime adapter via `BINANCE_SKILLS_BASE_URL`
+- Binance account APIs for portfolio-backed flows that require `BINANCE_API_KEY` and `BINANCE_API_SECRET`
+- Binance Square publish endpoint for post creation
+- Optional market enrichment via CoinMarketCap
 
-Responsibilities:
-- token intelligence via `query-token-info`
-- wallet/address intelligence via `query-address-info`
-- market rankings via `crypto-market-rank`
-- signal data via `trading-signal`
-- token audit checks via `query-token-audit`
-- meme trend context via `meme-rush`
-- required publishing via `square-post`
-- deferred execution via `spot`
+## Security model
+- The main API uses timing-safe API key comparison and rate limiting.
+- The bridge can use a dedicated `BRIDGE_API_KEY` instead of reusing Binance account secrets.
+- Live HTTP calls reject non-HTTP(S) schemes and disable redirects.
+- File-backed live mode constrains payload reads to the configured base directory.
+- Docker runs as a non-root user.
 
-### 3. Domain Logic Layer
-Current choice:
-- Python modules in `src/analyzers/` (14 modules)
-
-Responsibilities:
-- synthesize tool outputs
-- interpret signal quality and conviction levels
-- summarize wallet behavior
-- attach risk tags and severity
-- produce conviction summaries
-- build command-specific AnalysisBrief objects
-
-### 4. Output Layer
-Current choice:
-- Python formatters in `src/formatters/`
-
-Responsibilities:
-- convert analysis into consistent sections
-- keep replies concise and readable
-- enforce product voice
-- render rich terminal output
-
-### 5. Interface Layer
-Current implementations:
-- **CLI** — `src/main.py` with 10 research commands
-- **FastAPI** — `src/api.py` with 8 REST endpoints
-- **Bridge** — `src/bridge_api.py` for OpenClaw integration
-- **Square CLI** — `src/square_cli.py` for publishing
-- **Diary engine** — `src/square_diary.py` for scheduled posting
-
-Future options:
-- web UI
-- other messaging surfaces
-
-## Security Layer
-- API key authentication (HMAC timing-safe via `hmac.compare_digest`)
-- Rate limiting (configurable requests per window)
-- SSRF protection (`follow_redirects=False`, URL scheme validation)
-- Path traversal prevention (`Path.is_relative_to`)
-- Security headers on all responses
-- Non-root container execution
-
-## Service Architecture
-- **Service factory** (`src/services/factory.py`) — selects mock or live service based on `APP_MODE`
-- **Mock service** (`src/services/mock_service.py`) — hardcoded payloads for offline development
-- **Live service** (`src/services/live_service.py`) — real Binance Skills adapter with caching
-- **Normalizers** (`src/services/normalizers.py`) — standardize payload structure
-- **Live extractors** (`src/services/live_extractors.py`) — extract data from bridge responses
-
-## Command Map
-
-### `/brief <symbol>`
-Input → token info + signal + market context + Spot → fast market synthesis
-
-### `/brief <symbol> deep`
-Input → token info + market rank + trading signal + token audit + Spot → structured deeper asset brief with conviction
-
-### `/signal <token>`
-Input → trading signal + token context + audit + Spot → signal quality + confirmation conditions + invalidation
-
-### `/holdings`
-Input → signed Binance account read + live price map + local snapshot history → private posture summary
-
-### `/holdings <address>`
-Input → address info + optional token enrichment + optional trader context → behavior summary + risk posture
-
-### `/audit <symbol>`
-Input → token audit + token info + merged meme lens when relevant → security audit card
-
-### `/watchtoday`
-Input → market rank + meme rush + trading signals + Spot → top narratives + smart-money context + risk zones
-
-## Migration Strategy
-To make runtime migration easy:
-- keep prompts and agent files under `agent/`
-- keep reusable logic under `src/`
-- avoid putting core business logic only in prompt text
-- treat OpenClaw as one runtime shell, not the entire product
-- FastAPI already provides a runtime-independent API surface
+## Command posture
+- Canonical product surface: `brief`, `signal`, `audit`, `holdings`, `watchtoday`
+- Secondary API surface: `alpha`, `futures`
+- Development-only scaffolding should not define the production architecture

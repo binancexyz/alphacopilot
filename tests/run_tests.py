@@ -34,14 +34,6 @@ from tests.test_normalizers import (
     test_normalize_wallet_context,
     test_normalize_watch_today_context,
 )
-from tests.test_runtime_bridge_templates import (
-    test_run_signal_flow,
-    test_run_token_flow,
-    test_run_token_flow_uses_raw_payload_when_provided,
-    test_run_wallet_flow,
-    test_run_watchtoday_flow,
-    test_run_watchtoday_flow_uses_raw_payload_when_provided,
-)
 from tests.test_analyzer_return_types import test_analyzers_return_analysis_brief_instances
 from tests.test_audit_analysis import (
     test_analyze_audit_adds_market_context_when_market_data_is_available,
@@ -67,7 +59,11 @@ from tests.test_brief_analysis import (
     test_analyze_brief_uses_binance_spot_context,
 )
 from tests.test_brief_posture_aware import test_analyze_brief_adds_portfolio_posture_note
-from tests.test_config_validation import test_config_warnings_reports_live_without_base_url
+from tests.test_config_validation import (
+    test_config_errors_require_bridge_auth_outside_development,
+    test_config_errors_require_locked_down_auth_outside_development,
+    test_config_warnings_reports_live_without_base_url,
+)
 from tests.test_env_autoload import test_config_autoload_reads_local_env
 from tests.test_exposure_groups import (
     test_classify_asset_supports_exchange_and_data_buckets,
@@ -131,7 +127,6 @@ from tests.test_runtime_bridge_live_stub import (
     test_wallet_from_raw_returns_text,
     test_watchtoday_from_raw_returns_text,
 )
-from tests.test_runtime_demo import test_runtime_demo_signal, test_runtime_demo_token
 from tests.test_runtime_footer_cleanup import (
     test_signal_footer_prefers_dependency_label_over_degraded_duplication,
     test_watchtoday_footer_prefers_clean_runtime_labels,
@@ -332,14 +327,6 @@ def main() -> None:
     test_extract_wallet_context_adds_audit_overlay_when_holdings_are_flagged()
     test_extract_watch_today_context_from_skill_shapes()
 
-    # --- runtime bridge templates ---
-    test_run_token_flow()
-    test_run_signal_flow()
-    test_run_wallet_flow()
-    test_run_watchtoday_flow()
-    test_run_token_flow_uses_raw_payload_when_provided()
-    test_run_watchtoday_flow_uses_raw_payload_when_provided()
-
     # --- live service (tmp_path adapted) ---
     test_live_service_loads_token_payload_from_file_directory(Path(tempfile.mkdtemp()))
     test_live_service_supports_nested_command_paths(Path(tempfile.mkdtemp()))
@@ -398,6 +385,8 @@ def main() -> None:
 
     # --- config validation ---
     test_config_warnings_reports_live_without_base_url()
+    test_config_errors_require_locked_down_auth_outside_development()
+    test_config_errors_require_bridge_auth_outside_development()
 
     # --- env autoload (tmp_path adapted) ---
     test_config_autoload_reads_local_env(Path(tempfile.mkdtemp()))
@@ -469,10 +458,6 @@ def main() -> None:
     test_signal_from_raw_returns_text()
     test_wallet_from_raw_returns_text()
     test_watchtoday_from_raw_returns_text()
-
-    # --- runtime demo ---
-    test_runtime_demo_token()
-    test_runtime_demo_signal()
 
     # --- runtime footer cleanup ---
     test_signal_footer_prefers_dependency_label_over_degraded_duplication()

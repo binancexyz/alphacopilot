@@ -32,10 +32,10 @@ class LiveMarketDataService:
     Expected raw payload shapes match ``src/services/live_extractors.py``.
     """
 
-    def __init__(self, base_url: str, api_key: str = "", api_secret: str = "") -> None:
+    def __init__(self, base_url: str, bridge_api_key: str = "", bridge_api_header: str = "X-API-Key") -> None:
         self.base_url = (base_url or "").strip()
-        self.api_key = api_key
-        self.api_secret = api_secret
+        self.bridge_api_key = bridge_api_key.strip()
+        self.bridge_api_header = bridge_api_header.strip() or "X-API-Key"
         self._last_runtime_event: dict[str, Any] = {
             "status": "idle",
             "command": "",
@@ -162,10 +162,8 @@ class LiveMarketDataService:
             params["entity"] = entity
 
         headers = {"Accept": "application/json"}
-        if self.api_key:
-            headers["X-API-Key"] = self.api_key
-        if self.api_secret:
-            headers["X-API-Secret"] = self.api_secret
+        if self.bridge_api_key:
+            headers[self.bridge_api_header] = self.bridge_api_key
 
         endpoint = self.base_url.rstrip("/")
         if not endpoint.startswith(("https://", "http://")):

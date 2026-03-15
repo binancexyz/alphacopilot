@@ -1,29 +1,12 @@
 # Binance Square Posting
 
-This repo now includes Binance Square short-post drafting and publishing aligned to the Binance `square-post` skill spec.
-
-## Confirmed API
-- Method: `POST`
-- URL: `https://www.binance.com/bapi/composite/v1/public/pgc/openApi/content/add`
-- Required header: `X-Square-OpenAPI-Key`
-- Required header: `Content-Type: application/json`
-- Required header: `clienttype: binanceSkill`
-- Body field: `bodyTextOnly`
-
-## Safety model
-- the API key is read from environment variables only
-- do not hardcode it in source files
-- do not commit `.env`
-- use draft mode first before enabling publish mode
-- never display full API keys; mask them if you show them at all
-
-## Environment variables
+## Environment
 - `BINANCE_SQUARE_API_KEY`
-- `BINANCE_SQUARE_API_BASE_URL` (default: `https://www.binance.com`)
-- `BINANCE_SQUARE_API_PUBLISH_PATH` (default: `/bapi/composite/v1/public/pgc/openApi/content/add`)
-- `BINANCE_SQUARE_API_KEY_HEADER` (default: `X-Square-OpenAPI-Key`)
+- `BINANCE_SQUARE_API_BASE_URL`
+- `BINANCE_SQUARE_API_PUBLISH_PATH`
+- `BINANCE_SQUARE_API_KEY_HEADER`
 
-## Draft a post
+## Drafting
 ```bash
 python3 src/square_cli.py token BNB
 python3 src/square_cli.py signal DOGE
@@ -31,58 +14,19 @@ python3 src/square_cli.py watchtoday
 python3 src/square_diary.py night-diary --dry-run
 ```
 
-## Publish a post
+## Publishing
 ```bash
 python3 src/square_cli.py token BNB --publish
 python3 src/square_diary.py night-diary --publish
 ```
 
-## Scheduled content engine
-This repo includes a scheduled Square content engine in `src/square_diary.py`.
+## Behavior
+- Draft mode is the default and should be used first.
+- The publisher masks API keys in CLI output.
+- Successful publish responses are converted into `https://www.binance.com/square/post/{id}` URLs when Binance returns a content id.
+- Scheduled posting is handled by `scripts/install_square_diary_cron.sh`.
 
-Current schedule in `Asia/Phnom_Penh`:
-- 21:30 — `night-diary`
-
-This is now intentionally a **one-post-per-day premium mode**. The goal is not slot coverage. The goal is publishing one post that is actually worth attention.
-
-Install/update the cron schedule with:
-
-```bash
-bash scripts/install_square_diary_cron.sh
-```
-
-## Quality layer
-The scheduled engine now includes:
-- stronger opening variation and less template-like nightly voice
-- context-aware topic selection weighted toward fresh repo/work context
-- diary / builder / market night-mode variation
-- a cringe/generic filter that can block weak posts before publish
-- performance logging in `tmp/square_post_log.jsonl`
-- weekly recap generation in `tmp/square_weekly_recap.md`
-
-Internal note: the code may still keep article-seed files for future writing workflows, but **article publishing is not a supported product path right now**. The confirmed live path is Binance Square text posts only.
-
-## Success behavior
-On success, Binance returns a content id. The post URL format is:
-
-```text
-https://www.binance.com/square/post/{id}
-```
-
-## Error notes
-Known important codes include:
-- `000000` success
-- `220009` daily post limit exceeded
-- `220003` API key not found
-- `220004` API key expired
-- `20013` content length limited
-- `220011` content body must not be empty
-- `10005` identity verification required
-
-## Current implementation notes
-- this repo sends `bodyTextOnly`
-- this repo sends `clienttype: binanceSkill`
-- this repo parses `data.id` and constructs the final post URL when available
-- the scheduled content engine now focuses on a single daily `night-diary` publishing slot
-- the daily post is expected to lean into the strongest honest diary / builder / market angle available that day
-- the scheduled engine keeps a lightweight local state file at `tmp/square_diary_state.json` to reduce repeated hooks and topics across recurring posts
+## Safety notes
+- Do not hardcode Square credentials.
+- Keep `.env` private.
+- Treat publish mode as an operational action, not a test helper.
