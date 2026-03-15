@@ -387,9 +387,29 @@ def _format_compact_brief_card(brief: AnalysisBrief) -> str:
         market_lines.append(f"Market Cap: {_human_money(market_cap_f)}")
     if smart_money_count_i > 0:
         market_lines.append(f"Smart money: {smart_money_count_i} wallets")
+    holders_tag = _first_tag(brief, 'Holders')
+    if holders_tag and holders_tag.note:
+        market_lines.append(f"Holders: {holders_tag.note}")
     if market_lines:
         parts.extend(["", "**📊 Market**"])
         parts.extend(_tree_lines(market_lines))
+
+    ownership_lines = []
+    ownership_tag = _first_tag(brief, 'Ownership')
+    sm_holders_tag = _first_tag(brief, 'Smart Money Holders')
+    sm_holding_pct_tag = _first_tag(brief, 'Smart Money Holding %')
+    kline_tag = _first_tag(brief, 'K-line')
+    if ownership_tag and ownership_tag.note:
+        ownership_lines.append(ownership_tag.note.replace('Top-10 concentration ', 'Top-10 concentration: '))
+    if sm_holders_tag and sm_holders_tag.note:
+        ownership_lines.append(f"Smart money holders: {sm_holders_tag.note}")
+    if sm_holding_pct_tag and sm_holding_pct_tag.note:
+        ownership_lines.append(f"Smart money holding: {sm_holding_pct_tag.note}")
+    if kline_tag and kline_tag.note:
+        ownership_lines.append(f"K-line: {kline_tag.note}")
+    if ownership_lines:
+        parts.extend(["", "**💼 Structure**"])
+        parts.extend(_tree_lines(ownership_lines[:4]))
 
     read_lines = []
     if spot_tag and spot_tag.note:

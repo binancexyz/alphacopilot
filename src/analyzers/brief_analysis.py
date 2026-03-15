@@ -5,6 +5,7 @@ from src.analyzers.price_analysis import _fetch_market_quote
 from src.services.factory import get_market_data_service
 from src.services.normalizers import normalize_signal_context, normalize_token_context
 from src.models.schemas import AnalysisBrief, RiskTag
+from src.formatters.brief_formatter import _human_money
 
 
 _MAJOR_SYMBOLS = {"BTC", "ETH", "BNB", "SOL", "XRP", "DOGE", "ADA", "TRX", "TON", "AVAX", "LINK"}
@@ -86,13 +87,33 @@ def analyze_brief(symbol: str) -> AnalysisBrief:
     if quote_source:
         level = "Low" if quote_source == "Binance Spot" else "Info"
         tags.append(RiskTag(name="Source", level=level, note=quote_source if quote_source == "Binance Spot" else "Secondary market data"))
-    
+
+    if volume_24h > 0:
+        tags.append(RiskTag(name="Volume 24h", level="Info", note=_human_money(volume_24h)))
+    if market_cap > 0:
+        tags.append(RiskTag(name="Market Cap", level="Info", note=_human_money(market_cap)))
+    if signal.smart_money_count > 0:
+        tags.append(RiskTag(name="Smart Money", level="Info", note=f"{signal.smart_money_count} wallet{'s' if signal.smart_money_count != 1 else ''}"))
+    if token.holders > 0:
+        tags.append(RiskTag(name="Holders", level="Info", note=f"{token.holders:,}"))
+    if token.top_holder_concentration_pct > 0:
+        tags.append(RiskTag(name="Ownership", level="Info", note=f"Top-10 concentration {token.top_holder_concentration_pct:.1f}%"))
+    if token.smart_money_holders > 0:
+        tags.append(RiskTag(name="Smart Money Holders", level="Info", note=f"{token.smart_money_holders}"))
+    if token.smart_money_holding_pct > 0:
+        tags.append(RiskTag(name="Smart Money Holding %", level="Info", note=f"{token.smart_money_holding_pct:.1f}%"))
+    if token.kline_trend:
+        tags.append(RiskTag(name="K-line", level="Info", note=token.kline_trend))
+
     if quote_source == "Binance Spot" and exchange_symbol:
-        tags.append(RiskTag(name="Binance Spot", level="Low", note=exchange_symbol))
+        spot_note = exchange_symbol
+        if spread_pct > 0:
+            spot_note += f" | spread {spread_pct:.2f}%"
+        tags.append(RiskTag(name="Binance Spot", level="Low", note=spot_note))
         bid_qty = float(quote.get("bid_qty") or 0)
         ask_qty = float(quote.get("ask_qty") or 0)
         trading_days = quote.get("trading_days")
-        
+
         if bid_qty > 0 and ask_qty > 0:
             if bid_qty > ask_qty * 3:
                 tags.append(RiskTag(name="Order Book", level="Low", note="Bid depth significantly outweighs ask depth (3x+)"))
