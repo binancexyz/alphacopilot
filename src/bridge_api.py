@@ -50,7 +50,7 @@ def runtime(
     if skills is None:
         raise HTTPException(status_code=400, detail=f"Unsupported command: {command}")
 
-    if command_key in {"token", "signal", "audit", "meme", "alpha", "futures"} and not entity:
+    if command_key in {"token", "signal", "audit", "meme", "futures"} and not entity:
         raise HTTPException(status_code=400, detail=f"command={command_key} requires entity")
     if command_key == "wallet" and not entity:
         raise HTTPException(status_code=400, detail="command=wallet requires entity")

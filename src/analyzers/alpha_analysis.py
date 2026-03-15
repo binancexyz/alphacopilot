@@ -99,18 +99,28 @@ def analyze_alpha(symbol: str | None, ctx: dict) -> AnalysisBrief:
         )
 
     resolved = str(ctx.get("symbol") or symbol).upper()
+    display_name = str(ctx.get("display_name") or resolved)
     is_listed = bool(ctx.get("is_alpha_listed"))
     price = float(ctx.get("alpha_price") or 0.0)
     change = float(ctx.get("alpha_price_change_24h") or 0.0)
     volume = float(ctx.get("alpha_volume_24h") or 0.0)
+    liquidity = float(ctx.get("alpha_liquidity") or 0.0)
+    market_cap = float(ctx.get("alpha_market_cap") or 0.0)
+    fdv = float(ctx.get("alpha_fdv") or 0.0)
+    holders = int(ctx.get("alpha_holders") or 0)
+    score = float(ctx.get("alpha_rank_score") or 0.0)
+    alpha_id = str(ctx.get("alpha_id") or "").strip()
     audit_gate = str(ctx.get("audit_gate") or "WARN").upper()
 
     if audit_gate == "BLOCK":
-        verdict = f"{resolved} is visible in Alpha context but currently blocked on audit posture."
+        verdict = f"{resolved} is visible on Binance Alpha but currently blocked on audit posture."
         conviction = "Low"
-    elif is_listed and price > 0:
-        verdict = f"{resolved} is listed on Binance Alpha and has live market context."
+    elif is_listed and price > 0 and volume > 0:
+        verdict = f"{resolved} is live on Binance Alpha with real trading activity and a readable market profile."
         conviction = "Medium" if not runtime_warning else "Low"
+    elif is_listed and price > 0:
+        verdict = f"{resolved} is listed on Binance Alpha and price context is visible, but activity depth is still limited."
+        conviction = "Low"
     elif is_listed:
         verdict = f"{resolved} appears on Binance Alpha, but live price context is thin."
         conviction = "Low"
@@ -120,25 +130,37 @@ def analyze_alpha(symbol: str | None, ctx: dict) -> AnalysisBrief:
 
     why_parts = []
     if is_listed:
-        why_parts.append(f"{resolved} is visible in Binance Alpha")
+        why_parts.append(f"{display_name} ({resolved}) is visible in Binance Alpha")
     else:
         why_parts.append(f"{resolved} does not currently resolve cleanly inside Binance Alpha")
+    if score > 0:
+        why_parts.append(f"Alpha score {score:.0f}")
     if price > 0:
         why_parts.append(f"price ${price:,.4f}")
     if change:
         why_parts.append(f"24h {change:+.2f}%")
     if volume > 0:
         why_parts.append(f"volume about ${volume:,.0f}")
+    if liquidity > 0:
+        why_parts.append(f"liquidity about ${liquidity:,.0f}")
+    if market_cap > 0:
+        why_parts.append(f"market cap about ${market_cap:,.0f}")
+    if holders > 0:
+        why_parts.append(f"holders {holders:,}")
     if runtime_warning:
         why_parts.append(runtime_warning)
     why = ". ".join(part.rstrip(".") for part in why_parts) + "."
 
     watch = [
-        "whether Alpha listing context stays available and does not degrade",
-        "whether price action builds follow-through instead of one-candle attention",
+        "whether Alpha ranking and volume stay firm instead of fading after attention arrives",
+        "whether price action holds above the current attention pocket instead of round-tripping the move",
         "whether audit posture improves or worsens before treating the token as higher-conviction",
     ]
     tags = [RiskTag(name="Alpha Listed", level="Medium" if is_listed else "Low", note="Binance Alpha Token listing context.")]
+    if score > 0:
+        tags.append(RiskTag(name="Alpha Score", level="Info", note=f"{score:.0f}"))
+    if alpha_id:
+        tags.append(RiskTag(name="Alpha ID", level="Info", note=alpha_id))
     if audit_gate == "BLOCK":
         tags.append(RiskTag(name="Audit Gate", level="High", note=str(ctx.get("blocked_reason") or "Audit gate is blocking.")))
     if runtime_warning:
@@ -152,8 +174,24 @@ def analyze_alpha(symbol: str | None, ctx: dict) -> AnalysisBrief:
         market_lines.append(f"- 24h change: {change:+.2f}%")
     if volume > 0:
         market_lines.append(f"- 24h volume: ${volume:,.0f}")
+    if liquidity > 0:
+        market_lines.append(f"- Liquidity: ${liquidity:,.0f}")
+    if market_cap > 0:
+        market_lines.append(f"- Market cap: ${market_cap:,.0f}")
+    if fdv > 0:
+        market_lines.append(f"- FDV: ${fdv:,.0f}")
+    if holders > 0:
+        market_lines.append(f"- Holders: {holders:,}")
     if market_lines:
         sections.append(BriefSection(title="📈 Alpha Market", content="\n".join(market_lines)))
+
+    rank_lines = []
+    if score > 0:
+        rank_lines.append(f"- Alpha score: {score:.0f}")
+    if alpha_id:
+        rank_lines.append(f"- Alpha ID: {alpha_id}")
+    if rank_lines:
+        sections.append(BriefSection(title="🧭 Alpha Context", content="\n".join(rank_lines)))
 
     return AnalysisBrief(
         entity=f"Alpha · {resolved}",

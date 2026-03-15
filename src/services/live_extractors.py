@@ -579,14 +579,23 @@ def extract_alpha_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
     token_list = alpha.get("token_list") or []
 
     metadata = token_info.get("metadata", {})
+    alpha_match = None
+    if symbol:
+        for item in token_list:
+            if not isinstance(item, dict):
+                continue
+            item_symbol = str(item.get("symbol") or "").upper()
+            if item_symbol and item_symbol == str(symbol).upper():
+                alpha_match = item
+                break
     search_item = _best_token_match(token_info.get("search"), symbol, metadata) or metadata or token_info
-    resolved_symbol = str(search_item.get("symbol") or metadata.get("symbol") or symbol)
-    display_name = str(search_item.get("name") or metadata.get("name") or resolved_symbol or "Binance Alpha")
+    resolved_symbol = str((alpha_match or {}).get("symbol") or search_item.get("symbol") or metadata.get("symbol") or symbol)
+    display_name = str((alpha_match or {}).get("name") or search_item.get("name") or metadata.get("name") or resolved_symbol or "Binance Alpha")
     audit_payload = _normalize_audit_keys(audit.get("data", audit))
     audit_flags, audit_risks = _extract_audit_flags_and_risks(audit_payload)
     audit_gate, blocked_reason = _audit_gate_state(audit_payload, audit_flags)
 
-    is_alpha_listed = bool(alpha.get("is_alpha_listed", False))
+    is_alpha_listed = bool(alpha_match) or bool(alpha.get("is_alpha_listed", False))
     ticker = alpha.get("ticker", {})
 
     context: dict[str, Any] = {
@@ -595,11 +604,18 @@ def extract_alpha_context(raw: dict[str, Any], symbol: str) -> dict[str, Any]:
         "is_alpha_listed": is_alpha_listed,
         "alpha_token_list": token_list,
         "alpha_listed_count": len(token_list),
-        "alpha_price": _pick_number(ticker, "lastPrice", "price"),
-        "alpha_volume_24h": _pick_number(ticker, "volume", "quoteVolume"),
-        "alpha_price_change_24h": _pick_number(ticker, "priceChangePercent"),
-        "alpha_high_24h": _pick_number(ticker, "highPrice"),
-        "alpha_low_24h": _pick_number(ticker, "lowPrice"),
+        "alpha_rank_score": _to_float((alpha_match or {}).get("score")),
+        "alpha_id": str((alpha_match or {}).get("alphaId") or ""),
+        "alpha_market_cap": _to_float((alpha_match or {}).get("marketCap")),
+        "alpha_fdv": _to_float((alpha_match or {}).get("fdv")),
+        "alpha_liquidity": _to_float((alpha_match or {}).get("liquidity")),
+        "alpha_holders": _to_int((alpha_match or {}).get("holders")),
+        "alpha_listing_time": _to_int((alpha_match or {}).get("listingTime")),
+        "alpha_price": _pick_number(alpha_match or ticker, "price", "lastPrice"),
+        "alpha_volume_24h": _pick_number(alpha_match or ticker, "volume24h", "volume", "quoteVolume"),
+        "alpha_price_change_24h": _pick_number(alpha_match or ticker, "percentChange24h", "priceChangePercent"),
+        "alpha_high_24h": _pick_number(alpha_match or ticker, "priceHigh24h", "highPrice"),
+        "alpha_low_24h": _pick_number(alpha_match or ticker, "priceLow24h", "lowPrice"),
         "audit_gate": audit_gate,
         "blocked_reason": blocked_reason,
         "audit_flags": audit_flags,
