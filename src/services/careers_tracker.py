@@ -8,8 +8,6 @@ import re
 from pathlib import Path
 from typing import Any
 
-import httpx
-
 ROOT = Path(__file__).resolve().parents[2]
 CACHE_PATH = ROOT / "tmp" / "binance_careers_cache.json"
 DEFAULT_CAREERS_URL = "https://www.binance.com/en/careers/job-openings?team=All"
@@ -51,6 +49,8 @@ def fetch_careers_page(url: str = DEFAULT_CAREERS_URL, timeout: float = 20.0) ->
         "Accept-Language": "en-US,en;q=0.9",
         "Cache-Control": "no-cache",
     }
+    import httpx  # type: ignore
+
     with httpx.Client(timeout=timeout, follow_redirects=True, headers=headers) as client:
         response = client.get(url)
         response.raise_for_status()
